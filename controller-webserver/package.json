@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "api.io": "^1.0.1"
+    "api.io": "^1.0.1",
+    "node-traktor-f1": "github:asutherland/node-traktor-f1#de-bitrot"
   }
 }
