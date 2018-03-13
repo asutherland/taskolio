@@ -85,14 +85,14 @@ class ModeDispatcher {
    * @param {ControllerMode} pusheeMode
    */
   pushMode(pusherMode, pusheeMode) {
-    const pusherIndex = this.modeStack.indexOf(pusherMode);
+    let pusherIndex = this.modeStack.indexOf(pusherMode);
     if (pusherIndex === -1) {
       throw new Error("Pusher is not on the mode stack already.");
     }
 
     // If the pusher is a root mode, act like it's the top of the root modes so
     // we don't accidentally pop a root mode.
-    pusherIndex = Math.max(rootModes.length - 1, index);
+    pusherIndex = Math.max(this.rootModes.length - 1, pusherIndex);
 
     // Pop anything above the (effective) pusher.
     if (pusherIndex < this.modeStack.length - 1) {
@@ -100,13 +100,13 @@ class ModeDispatcher {
     }
 
     // Check the mode isn't already in the stack.
-    if (this.modeStack.indexOf(pusheeMode)) {
+    if (this.modeStack.indexOf(pusheeMode) !== -1) {
       throw new Error("Attempting to push already-pushed mode.");
     }
 
     // Now actually push the new mode.
     this.modeStack.push(pusheeMode);
-    this.isDirty = true;
+    this.modeGeneration++;
   }
 
   /**
@@ -124,7 +124,7 @@ class ModeDispatcher {
     }
 
     this.modeStack.splice(index);
-    this.isDirty = true;
+    this.modeGeneration++;
   }
 
   /**

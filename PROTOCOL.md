@@ -141,6 +141,8 @@ the most recent `focusSlotsInventory` message.
     expected to be used by the window-manager when a window is occluded by
     another window but still sufficiently visible to be interacted with as a
     typing target, like the bottom of a terminal window.
+  - empty: There's somehow nothing in the focus slot.  This goes with a null
+    containerId.
 - selectRequestId: If this focusing occurred as the result of a selectThings
   message, this is the id that was provided.  This is a best-effort value.
 
