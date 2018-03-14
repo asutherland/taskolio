@@ -19,15 +19,26 @@ const { ColorPickerMode } = require("./color_picker_mode");
  *
  * Keep in mind that this only tracks bookmarks, not their focused/visible
  * state.  That's handled by the VisibilityTracker.
+ *
+ * Other stuff:
+ * - persistedState: The previous state of this.banks previously saved via
+ *   saveBookmarks().
+ * - saveBookmarks(state): A function to be provided to persist our state
+ *   somewhere on disk.  Currently we expect this to happen via the
+ *   `configstore` npm module that synchronously(?) does IO under
+ *   "~/.config/configustore/taskolio.json".  (It seems like it must for reads
+ *   at least.)
  */
 class BookmarkMode extends BankMixin {
-  constructor({ dispatcher, bookmarkManager }) {
+  constructor({ dispatcher, bookmarkManager, persistedState, saveBookmarks }) {
     super({
-      defaultCellValue: null
+      defaultCellValue: null,
+      initialState: persistedState
     });
 
     this.dispatcher = dispatcher;
     this.bookmarkManager = bookmarkManager;
+    this._saveBookmarks = saveBookmarks;
 
     /** Static 2-charcter label to help convey the current mode. */
     this.modeShortLabel = "bg"; // Bookmark Go
@@ -51,6 +62,7 @@ class BookmarkMode extends BankMixin {
     if (this.pickingForBookmark) {
       this.curBank[index] = this.pickingForBookmark;
       this.pickingForBookmark = null;
+      this._saveBookmarks(this.banks);
     }
   }
 
@@ -65,6 +77,7 @@ class BookmarkMode extends BankMixin {
       this.bookmarkManager.setBookmarkHueSat(
         this.pickingForBookmark, hue, sat);
       this.pickingForBookmark = null;
+      this._saveBookmarks(this.banks);
     }
   }
 

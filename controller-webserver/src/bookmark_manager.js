@@ -79,7 +79,7 @@ class BookmarkManager {
     }
   }
 
-  setBookmarkHueSet(bookmark, hue, sat) {
+  setBookmarkHueSat(bookmark, hue, sat) {
     bookmark.hue = hue;
     bookmark.set = sat;
   }

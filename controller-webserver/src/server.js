@@ -1,6 +1,7 @@
 "use strict";
 
 const WebSocket = require("ws");
+const Configstore = require("configstore");
 
 const { BrainConnection } = require("./brain/conn");
 const { BrainBoss } = require("./brain/boss");
@@ -14,11 +15,14 @@ const { BookmarkMode } = require("./controller/modes/bookmark_mode");
 
 let gBookmarkManager;
 let gBrainBoss;
+let gConfigstore;
 let gControllerDriver;
 let gDispatcher;
 let gVisibilityTracker;
 
 function makeDefaultConfigController() {
+  const configstore = new Configstore("taskolio");
+
   const brainBoss = new BrainBoss();
 
   const visibilityTracker = new VisibilityTracker();
@@ -30,7 +34,11 @@ function makeDefaultConfigController() {
   const dispatcher = new ModeDispatcher();
   const bookmarkMode = new BookmarkMode({
     bookmarkManager,
-    dispatcher
+    dispatcher,
+    persistedState: configstore.get('bookmarks'),
+    saveBookmarks(state) {
+      configstore.set('bookmarks', state);
+    }
   });
   dispatcher.init({
     rootModes: [
@@ -41,6 +49,7 @@ function makeDefaultConfigController() {
 
   gBookmarkManager = bookmarkManager;
   gBrainBoss = brainBoss;
+  gConfigstore = configstore;
   gControllerDriver = controllerDriver;
   gDispatcher = dispatcher;
   gVisibilityTracker = visibilityTracker;
