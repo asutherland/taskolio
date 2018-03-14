@@ -14,6 +14,7 @@ class BrainConnection {
 
   onMessage(data) {
     const obj = JSON.parse(data);
+    //console.log('message', obj.type, obj.payload);
 
     const handlerName = `onMessage_${obj.type}`;
 
@@ -31,7 +32,7 @@ class BrainConnection {
 
   onMessage_focusSlotsInventory(msg) {
     this.visibilityTracker.processFocusSlotsInventory(
-      this.idPrefix, msg.focuSlots);
+      this.idPrefix, msg.focusSlots);
   }
 
   onMessage_thingsExist(msg) {

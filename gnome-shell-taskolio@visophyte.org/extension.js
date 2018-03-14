@@ -1,5 +1,4 @@
 'use strict';
-
 const St = imports.gi.St;
 const Main = imports.ui.main;
 const Tweener = imports.ui.tweener;
@@ -97,7 +96,7 @@ function flattenVisibilityInventory() {
 
 function makeConnection() {
   return new TaskolioClient({
-    endpoint: 'localhost:8008',
+    endpoint: 'ws://localhost:8008/',
 
     /**
      * Handle (re)connecting.
@@ -124,11 +123,12 @@ function makeConnection() {
       // ui/layout.js also maintains an array of JS Monitor instances that hold
       // the monitor geometry.  The array is available via
       // Main.layoutManager.monitors.
+      visiblePerMonitor = new Array(numMonitors);
 
       let focusSlots = Main.layoutManager.monitors.map((monitor) => {
         return {
           focusSlotId: monitor.index,
-          parentDescriptor: `monitor${monitor.id}`,
+          parentDescriptor: `monitor${monitor.index}`,
           // we also have the geometry we could expose here.
         };
       });
@@ -144,7 +144,7 @@ function makeConnection() {
               {
                 containerId: details.id,
                 title: details.title,
-                rawDetails: detils
+                rawDetails: details
               }
             ]
           });

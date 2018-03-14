@@ -15,6 +15,7 @@ class BrainBoss {
   registerClient(brainConn, msg) {
     const idPrefix = msg.uniqueId + ':';
     this.clientsByPrefix.set(msg.uniqueId, brainConn);
+    return idPrefix;
   }
 
   unregisterClient(brainConn, idPrefix) {

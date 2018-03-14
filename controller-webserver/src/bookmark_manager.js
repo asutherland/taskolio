@@ -26,6 +26,7 @@ class BookmarkManager {
     const containerId = this.visTracker.getFocusedContainerId();
     // It's possible nothing is focused.
     if (!containerId) {
+      console.warn('asked to mint bookmark with nothing focused');
       return null;
     }
 
@@ -33,7 +34,7 @@ class BookmarkManager {
       containerId,
       hue: 360 * Math.random(),
       sat: 1.0,
-    }
+    };
   }
 
   /**
@@ -52,6 +53,10 @@ class BookmarkManager {
 
     function traverseArray(arr) {
       for (const obj of arr) {
+        if (!obj) {
+          continue;
+        }
+
         // Support nested arrays.
         if (Array.isArray(obj)) {
           const found = traverseArray(obj);

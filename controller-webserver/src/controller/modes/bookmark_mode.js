@@ -41,7 +41,6 @@ class BookmarkMode extends BankMixin {
     });
   }
 
-
   onCaptureButton(evt) {
     this.pickingForBookmark =
       this.bookmarkManager.mintBookmarkForFocusedThing();

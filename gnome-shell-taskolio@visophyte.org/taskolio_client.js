@@ -1,10 +1,14 @@
+const Lang = imports.lang;
 const Soup = imports.gi.Soup;
+const Mainloop = imports.mainloop;
+const GLib = imports.gi.GLib;
+
 
 /**
  * An allegedly auto-reconnecting websocket connection to the server.
  */
-const TaskolioClient = new Lang.Class({
-  name: "TaskolioClient",
+var TaskolioClient = new Lang.Class({
+  Name: "TaskolioClient",
 
   _init: function(settings) {
     this._settings = settings;
@@ -18,6 +22,7 @@ const TaskolioClient = new Lang.Class({
   },
 
   connect() {
+    global.log("taskolio connecting");
     this.state = 'connecting';
 
     const httpSession = this._httpSession =
@@ -26,7 +31,7 @@ const TaskolioClient = new Lang.Class({
 
     const message = new Soup.Message({
       method: "GET",
-      uri: new Soup.URI(settings.endpoint),
+      uri: new Soup.URI(this._settings.endpoint),
     });
     httpSession.websocket_connect_async(
       message, null, null, null, this.onConnected.bind(this));
@@ -44,11 +49,15 @@ const TaskolioClient = new Lang.Class({
 
   onConnected(session, res) {
     // XXX this may throw on error?  Not sure how the bindings map.
-    this._websocketConnection = session.websocket_connect_finish(res);
-    if (!this._websocketConnection) {
+    try {
+      this._websocketConnection = session.websocket_connect_finish(res);
+    } catch (ex) {
+      global.log("taskolio connection error, will try and reconnect");
       this.onClosed();
       return;
     }
+
+    global.log("taskolio connected");
     this.state = 'connected';
 
     try {
@@ -59,6 +68,7 @@ const TaskolioClient = new Lang.Class({
 
     this._websocketConnection.connect('message', this.onMessage.bind(this));
     this._websocketConnection.connect('closed', this.onClosed.bind(this));
+    this._websocketConnection.connect('error', this.onError.bind(this));
   },
 
   onMessage(connection, type, message) {
@@ -73,6 +83,17 @@ const TaskolioClient = new Lang.Class({
    * On close, notify about our disconnect and
    */
   onClosed(connection) {
+    // if we've already transitioned to disconnected/waiting, just leave
+    // immmediately, but leave a log message for debugging assistance.
+    if (this.state === 'disconnected' ||
+        this.state === 'waiting') {
+      global.log("taskolio redundant close notification, ignored.");
+      return;
+    }
+
+    global.log("taskolio disconnected, shutdown requested: " +
+               this.shutdownRequested + ", timeoutId: " + this._timeoutId);
+
     // XXX uh, will the signals clean up after themselves?  Will something
     // assert?  So many questions...
     this._websocketConnection = null;
@@ -81,13 +102,15 @@ const TaskolioClient = new Lang.Class({
     // Only notify disconnection if we previously notified connection;
     if (this.state === 'connected') {
       this._settings.onDisconnect();
+      this.state = 'disconnected';
     }
 
-    this.state = 'disconnected';
+
 
     if (!this.shutdownRequested && !this._timeoutId) {
       this.state = 'waiting';
       this._timeoutId = Mainloop.timeout_add(5000, () => {
+        global.log("taskolio reconnect wakeup, state: " + this.state);
         this._timeoutId = 0;
         if (this.state === 'waiting') {
           this.connect();
@@ -98,6 +121,10 @@ const TaskolioClient = new Lang.Class({
       GLib.Source.set_name_by_id(this._timeoutId,
                                  '[gnome-shell] ext: taskolio connect timer');
     }
+  },
+
+  onError(connection, err) {
+    global.log("taskolio connection error: " + err);
   },
 
   shutdown() {

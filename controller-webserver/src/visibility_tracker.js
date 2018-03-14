@@ -47,7 +47,8 @@ class VisibilityTracker {
     // re-derive visible container id's.
     this.visibleContainerIds = new Set(this.focusSlotContentsById.values());
 
-    if (this.focusedContainerId.startsWith(mootPrefix)) {
+    if (this.focusedContainerId &&
+        this.focusedContainerId.startsWith(mootPrefix)) {
       this.focusedContainerId = null;
     }
   }
@@ -63,6 +64,7 @@ class VisibilityTracker {
     // Create the (empty) slots.
     for (const info of focusSlots) {
       const fullSlotId = prefix + info.focusSlotId;
+      console.log('setting slot', fullSlotId);
       this.focusSlotContentsById.set(fullSlotId, null);
     }
 
@@ -75,16 +77,22 @@ class VisibilityTracker {
   processThingsExist(prefix, items) {
     for (const item of items) {
       const prefixedContainerId = prefix + item.containerId;
+      console.log('exists:', item.containerId, item.rawDetails);
       this.containersByFullId.set(prefixedContainerId, item);
     }
   }
 
   processThingsVisibilityInventory(prefix, inventory) {
+    console.log('visibility inventory:', inventory);
     for (const item of inventory) {
+      if (!item) {
+        continue;
+      }
+
       // The containerId could be null.
       const prefixedContainerId =
-        inventory.containerId ? (prefix + inventory.containerId) : null;
-      const fullSlotId = prefix + inventory.focusSlotId;
+        item.containerId ? (prefix + item.containerId) : null;
+      const fullSlotId = prefix + item.focusSlotId;
       this.focusSlotContentsById.set(fullSlotId, prefixedContainerId);
 
       // state is one of focused/visible/empty, with focused also counting as
@@ -92,6 +100,7 @@ class VisibilityTracker {
       // (containerId would be null if state was 'empty'.)
       if (item.state === 'focused') {
         this.focusedContainerId = prefixedContainerId;
+        console.log('set focused:', this.focusedContainerId);
       }
     }
 
@@ -104,6 +113,7 @@ class VisibilityTracker {
 
     for (const item of items) {
       const prefixedContainerId = prefix + item.containerId;
+      console.log('gone:', item.containerId);
       this.containersByFullId.delete(prefixedContainerId);
       mootedFullIds.add(prefixedContainerId);
       if (this.focusedContainerId === prefixedContainerId) {
@@ -112,7 +122,7 @@ class VisibilityTracker {
     }
 
     let changedAny = false;
-    for (const [key, value] of this.focusSlotContentsById.items()) {
+    for (const [key, value] of this.focusSlotContentsById.entries()) {
       if (mootedFullIds.has(value)) {
         this.focusSlotContentsById.delete(key);
         changedAny = true;

@@ -23,6 +23,7 @@ function makeDefaultConfigController() {
 
   const visibilityTracker = new VisibilityTracker();
   const bookmarkManager = new BookmarkManager({
+    brainBoss,
     visibilityTracker
   });
 
@@ -71,7 +72,7 @@ const run = async (port) => {
 
   gServer.on("connection", (ws) => {
     const brainConn = new BrainConnection(ws, {
-      boss: gBrainBoss,
+      brainBoss: gBrainBoss,
       visibilityTracker: gVisibilityTracker,
       triggerUpdate: () => {
         gControllerDriver.updateLEDs();

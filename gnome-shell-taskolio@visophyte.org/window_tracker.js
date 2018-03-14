@@ -1,8 +1,11 @@
 'use strict';
 
+const Lang = imports.lang;
 const St = imports.gi.St;
+const Shell = imports.gi.Shell;
 const Main = imports.ui.main;
 const Tweener = imports.ui.tweener;
+const Meta = imports.gi.Meta;
 
 const RE_NATIVE_PTR = /^.+ native@([^\]]+)]$/;
 
@@ -17,13 +20,35 @@ function extractWindowId(win) {
   return match[1];
 }
 
+const WINDOW_TYPE_TO_STR = [];
+const FRAME_TYPE_TO_STR = [];
+function initTypeMaps() {
+  for (let [name, value] of Object.entries(Meta.WindowType)) {
+    WINDOW_TYPE_TO_STR[value] = name.toLowerCase();
+  }
+  for (let [name, value] of Object.entries(Meta.FrameType)) {
+    FRAME_TYPE_TO_STR[value] = name.toLowerCase();
+  }
+}
+initTypeMaps();
+
+/**
+ * Sentinel no-op app if the tracker was unable to map a window to an app.
+ */
+const MISSING_APP = {
+  get_id() { return null; },
+  get_name() { return null; },
+  get_description() { return null; },
+  get_pids() { return []; },
+};
+
 /**
  * Extract interesting details about the window for the benefit of the app
  * logic so it can remain naive about lower level window management details.
  */
 function extractWindowDetails(win, id) {
   let tracker = Shell.WindowTracker.get_default();
-  let app = tracker.get_window_app(win);
+  let app = tracker.get_window_app(win) || MISSING_APP;
 
   return {
     id,
@@ -33,6 +58,15 @@ function extractWindowDetails(win, id) {
     title: win.get_title(),
     // numeric monitor id
     monitor: win.get_monitor(),
+
+    skipTaskbar: win.is_skip_taskbar(),
+    windowType: WINDOW_TYPE_TO_STR[win.get_window_type()],
+    role: win.get_role(),
+    isTransient: !!win.get_transient_for(),
+    isAttachedDialog: win.is_attached_dialog(),
+    mutterHints: win.get_mutter_hints(),
+    frameType: FRAME_TYPE_TO_STR[win.get_frame_type()],
+
     // shell-window-tracker.c figures out how to map from windows to their
     // .desktop meta-info and process-id details, so we provide that too on a
     // per-window basis.
@@ -50,7 +84,7 @@ function extractWindowDetails(win, id) {
 /**
  * See extension.js' "Window Tracking" block comment.
  */
-let WindowTracker = new Lang.Class({
+var WindowTracker = new Lang.Class({
   Name: 'WindowTracker',
   _init({ onWindowAdded, onWindowFocused, onWindowRemoved }) {
     this._windowCreatedId = global.display.connect(
@@ -71,11 +105,11 @@ let WindowTracker = new Lang.Class({
     for (let { win, unmanageId } of this.winInfoById.values()) {
       // (there is no need to tell the app callbacks about this, it's the one
       // shutting us down.)
-      win.disconnected('unmanaged', unmanageId);
+      win.disconnect(unmanageId);
     }
     this.winInfoById = null;
 
-    global.display.disconnect('window-created', this._windowCreatedId);
+    global.display.disconnect(this._windowCreatedId);
     this._windowCreatedId = 0;
 
     global.display.disconnect(this._focusWindowId);
@@ -89,18 +123,19 @@ let WindowTracker = new Lang.Class({
       // NB: We can also get the get the X "Window" type via get_x_window(), but
       // that doesn't seem to be used by gnome-shell's JS logic and it does seem
       // safer to stay a level up from X given the ascendance of Wayland, etc.
-      this.onWindowCreated(actor.get_meta_window());
+      this.onWindowCreated(global.display, actor.get_meta_window());
     }
   },
 
-  onWindowCreated(win) {
+  onWindowCreated(display, win) {
     const winId = extractWindowId(win);
 
     const unmanageId = win.connect('unmanaged', this._bound_onWindowDestroyed);
+    //global.log('unmanaged hookup: ' + unmanageId);
 
-    let data;
+    let data, details;
     try {
-      const details = extractWindowDetails(win, winId);
+      details = extractWindowDetails(win, winId);
       data = this._cb_onWindowAdded(details);
     } catch (ex) {
       global.log('problem invoking onWindowAdded callback:' + ex);
@@ -121,9 +156,18 @@ let WindowTracker = new Lang.Class({
 
   onFocusedWindowChanged() {
     const win = global.display.focus_window;
+    if (!win) {
+      return;
+    }
     const winId = extractWindowId(win);
     const details = extractWindowDetails(win, winId);
     const winfo = this.winInfoById.get(winId);
+    if (!winfo) {
+      // XXX this indicates that onWindowCreated failed/didn't happen yet.  In
+      // the future this will be something we want to log about, but right now
+      // it's very likely to happen, so just bail.
+      return;
+    }
 
     // The Window's state may have changed and we should report that.
     winfo.details = details;
@@ -139,7 +183,8 @@ let WindowTracker = new Lang.Class({
     const winId = extractWindowId(win);
     const winfo = this.winInfoById.get(winId);
 
-    win.disconnect('unmanaged', winfo.unmanageId);
+    //global.log('disconnecting unmanageId: ' + winfo.unmanageId);
+    win.disconnect(winfo.unmanageId);
     winfo.unmanageId = 0;
 
     this.winInfoById.delete(winId);
@@ -160,6 +205,6 @@ let WindowTracker = new Lang.Class({
       return;
     }
 
-    winfo.win.activate();
+    winfo.win.activate(global.get_current_time());
   }
 });
