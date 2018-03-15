@@ -50,23 +50,46 @@ class BookmarkMode extends BankMixin {
     this.pickColorMode = new ColorPickerMode({
       caller: this
     });
+
+    // hackish concept of our own sub-state so that we can handle deletion
+    // explicitly.
+    // TODO: clean up setting/deletion.  Probably want to
+    // - adopt an async handler idiom that waits for the sub-state to pop and
+    //   return a value.  Have the stack manager be aware of and able to
+    //   terminate with that throwing with a bubbling exception being okay,
+    //   but allowing for it to be caught.
+    // - have deletion be its own real sub-mode that makes the existing
+    //   bookmarks pulse or something like that to convey they're at risk.
+    this.activity = 'switch'; // switch is our default.
   }
 
   onCaptureButton(evt) {
-    this.pickingForBookmark =
-      this.bookmarkManager.mintBookmarkForFocusedThing();
+    // XXX see the TODO on activity.
+    if (evt.shift) {
+      this.activity = 'delete';
+    } else {
+      this.activity = 'set-bookmark';
+      this.pickingForBookmark =
+        this.bookmarkManager.mintBookmarkForFocusedThing();
+    }
+
     this.dispatcher.pushMode(this, this.setBookmarkSubMode);
   }
 
   onBookmarkPositionPicked(index) {
-    if (this.pickingForBookmark) {
+    if (this.activity === 'delete') {
+      this.curBank[index] = null;
+      this._saveBookmarks(this.banks);
+    } else if (this.pickingForBookmark) {
       this.curBank[index] = this.pickingForBookmark;
       this.pickingForBookmark = null;
       this._saveBookmarks(this.banks);
     }
+    this.activity = 'switch';
   }
 
   onReverseButton(evt) {
+    this.activity = 'set-color';
     this.pickingForBookmark =
       this.bookmarkManager.findFocusedBookmarkInCollection(this.banks);
     this.dispatcher.pushMode(this, this.pickColorMode);
@@ -79,6 +102,7 @@ class BookmarkMode extends BankMixin {
       this.pickingForBookmark = null;
       this._saveBookmarks(this.banks);
     }
+    this.activity = 'switch';
   }
 
   onGridButton(evt) {
