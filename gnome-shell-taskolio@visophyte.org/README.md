@@ -1,7 +1,49 @@
 gnome-shell extension that communicates with the controller-webserver via
 WebSockets.
 
-### Credits ###
+## TODO ##
+
+### Sub-window clients using the AT-SPI Acessibility API ###
+
+#### Gnome Terminal ####
+
+Gnome Terminal doesn't appear to expose a D-Bus API for tabs, but it is an
+accessible app.  So we can do something like the following to enumerate tabs and
+select them.  Docs for libatspi are at
+https://developer.gnome.org/libatspi/stable/
+
+```js
+const Atspi = imports.gi.Atspi;
+
+// There is a get_desktop_list() method, but that currently returns an empty
+// list for me from looking glass, and it's also defined to only return a single
+// result anyways.
+const desktop = Atspi.get_desktop(0);
+
+// The desktop is itself an AtspiAccessible instance, documented at:
+// https://developer.gnome.org/libatspi/stable/AtspiAccessible.html
+
+// XXX enumerate using desktop.get_child_count() and get_child_at_index(i).
+
+// XXX get_name() will return "gnome-terminal-server" for the terminal app root.
+// The "accerciser" (or dogtail, for less fancy) GUI tool is able to help
+// visualize the hierarchy and interfaces.  The interfaces are things like
+// AtspiSelection which can be coerced/retrieved via get_selection().
+
+// The hierarchy for gnoem-terminal looks like:
+// - `application` title="gnome-terminal-server"
+//   - `frame` title={the current tab's title}.  There is one of these nodes for
+//      each window that's currently open).  The area corresponds to the window
+//      and its titlebar.
+//     - `filler` no title, seems to correspond to the content area of the
+//       window, sans titlebar.
+//       - `menu bar`
+//       - `page tab list`.  Implements Selection interface.
+//         - `page tab` title={tab title}.  There is one of these nodes for each
+//           tab.
+```
+
+## Credits ##
 
 For gnome-shell extensions, existing extensions are invaluable.  I've consulted:
 
