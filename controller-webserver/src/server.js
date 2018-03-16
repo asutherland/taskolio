@@ -9,9 +9,9 @@ const { BrainBoss } = require("./brain/boss");
 const { VisibilityTracker } = require("./visibility_tracker");
 const { BookmarkManager } = require("./bookmark_manager");
 
-const { ControllerDriver } = require("./controller/controller_driver");
-const { ModeDispatcher } = require("./controller/mode_dispatcher");
-const { BookmarkMode } = require("./controller/modes/bookmark_mode");
+const { ControllerDriver } = require("./controller/f1/controller_driver");
+const { ModeDispatcher } = require("./controller/f1/mode_dispatcher");
+const { BookmarkMode } = require("./controller/f1/modes/bookmark_mode");
 
 let gBookmarkManager;
 let gBrainBoss;
