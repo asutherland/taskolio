@@ -28,32 +28,8 @@ class BankMixin {
         }
       }
     }
-    
+
     this.modeShortLabel = "cp";
-  }
-
-    // Hm, maybe it was dumb to optimize for pretty JSON serialization of our
-  // state after all.
-  _getCellByIndex(index) {
-    const bank = this.banks[Math.floor(index / GRID_COLS)];
-    return bank[index % GRID_COLS];
-  }
-
-  _setCellByIndex(index, value) {
-    const bank = this.banks[Math.floor(index / GRID_COLS)];
-    bank[index % GRID_COLS] = value;
-  }
-
-  _forEachCell(func) {
-    let iRow = 0;
-    for (const bank of this.banks) {
-      let iCol = 0;
-      for (const cell of bank) {
-        func(cell, iRow, iCol);
-      }
-      iCol++;
-    }
-    iRow++;
   }
 
   get curBank() {
