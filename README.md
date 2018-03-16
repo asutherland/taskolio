@@ -11,6 +11,103 @@ form factors, and because its non-velocity-sensitive buttons provide a tactile
 click.  (Compare with velocity sensitive pads which necessarily can't have a
 click experience.)
 
+## What Works ##
+
+The gnome-shell extension reports all your windows to the local node.js server
+that talks to your Kontrol F1.  In the future, a Launchpad Pro may work, but
+for now you need a Kontrol F1.
+
+### How to get it to work ###
+
+#### Install the gnome-shell extension
+
+Do something like this to teach gnome-shell about your development checkout and
+where the extension lives in there:
+```
+cd ~/.local/share/gnome-shell
+ln -s /PATH/TO/taskolio/gnome-shell-taskolio@visophyte.org
+```
+
+Now you probably need to restart gnome-shell so it sees the extension.  You can
+do that by hitting Alt-F2 and then typing "r" and hitting enter to refresh
+gnome-shell.  That may only work under X11.  Under Wayland you might need to
+log out and log in again.
+
+The extension will automatically start and try to talk to the node.js server
+every 5 seconds.
+
+#### Get the server thing working.
+
+This should be fairly simple:
+- Have node.js installed.  I use v8.9.x.
+- `cd controller-webserver`
+- `npm install`
+  - If this didn't work, you probably need to install libhid and/or its
+    development libraries.  Check out https://github.com/node-hid/node-hid
+    and the helpful docs there if something went wrong.
+- `node server.js`
+- Curse if you were already using the port the websocket server listens on,
+  because it's not configurable and you'll have to refresh gnome-shell again
+  if you change its source.
+- Wait 5 seconds for the gnome-shell extension to connect.  You should see
+  a tremendous amount of interesting debug spew about all your windows when
+  it does.
+- Move your mouse or press alt-tab so a new window becomes focused to ensure
+  a focus update gets sent through the pipeline.  (The extension doesn't
+  currently report what was focused at startup, an oversight.)
+
+### Using it.
+
+Button pushing:
+- The default mode is "bg" or "bookmark go" mode.  The 2-letter display looks
+  like "bG" in this mode.  Pushing a grid button activates the window
+  corresponding to the bookmark you pushed if that window is still around.
+  Your mouse will not move, but focus will.  I use sloppy focus mode, but this
+  probably works for any focus mode?  I'm not opposed to making the mouse jump
+  around in the future.
+- The "stop" buttons along the bottom of the controller always switch "banks"
+  of bookmarks (or colors).
+- Push "capture" to switch to bookmark setting mode.  The next grid button you
+  push will be assigned a random color and whatever gnome-shell most recently
+  reported as focused.  You can switch banks in this mode.  You can also push
+  capture a second time to leave the mode without assigning a bookmark.
+  Assigning a bookmark returns you back to "bookmark go" mode.
+- Hold down "shift" and push "capture" to switch to bookmark deleting mode.  You
+  can release "shift" once you've released "capture".  The next grid button you
+  push will have its bookmark deleted if it had one.
+- Push "reverse" (which has "color" as its alternate, shifted label, hence the
+  button choice) to enter color picking mode for the currently focused window.
+  This means that if you set a new bookmark using "capture" and then
+  immediately hit "reverse" without messing with your mouse or keyboard, you
+  should now be setting the color of that bookmark.  This breaks if you have
+  foolishly opted to assign a single window multiple bookmarks.
+
+  The grid buttons will switch to displaying the HSV hue colorspace divided
+  into 16 colors.  Switch banks to mess with the saturation.  (The bookmark
+  logic saves the Value to convey when a bookmark's window is missing,
+  there but not visible, visible, and focused.  This will likely change in
+  the future.  Either to HSI with the Intensity expressing that state, or
+  with Intensity only used for daylight/brightness-compensation and with
+  Saturation reclaimed in order to convey focused/visible by making the
+  colors whiter in those cases.
+
+  Assigning a color returns you to "bookmark go" mode.
+- The sliders don't do anything right now, nor do the knobs.  But no one else
+  knows that, so feel free to pretend like they do something cool.
+
+Other info:
+- Your bookmarks get persisted to `~/.config/configustore/taskolio.json`.
+  There is currently no magic inference engine to re-establish bookmarks based
+  on app names or anything like that.  This persistence means that if you
+  ctrl-c the node.js server and make changes, you won't lose your work.  But if
+  your X11/wayland session ends, that's game over.  You'll still get to see
+  the pretty colors with less "value" intensity in an HSV kind of way because
+  of future plans, but it's not useful in any other way.  If you assign a new
+  bookmark to that grid button, the existing color will be rudely clobbered
+  with a new, random one.
+
+# Rambling Follows #
+
 ## Problem Statement ##
 
 Through the years I've used an ad-hoc combination of:
@@ -84,4 +181,4 @@ open a text editor.
 
 One of the realities of software development of a large project like Firefox is
 that working directory checkouts hold a lot of state.  Changing branches willy
-nilly will
+nilly incurs rebuild times.
