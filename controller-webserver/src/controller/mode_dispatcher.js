@@ -54,7 +54,7 @@ class ModeDispatcher {
       "onShiftButton",
       "onReverseButton",
       "onTypeButton",
-      "onSizeBUtton",
+      "onSizeButton",
       "onBrowseButton",
     ];
 
