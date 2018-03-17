@@ -5,7 +5,7 @@ const Tweener = imports.ui.tweener;
 
 // This is weird.  Maybe this is just a cargo-culted idiom?
 const Self = imports.misc.extensionUtils.getCurrentExtension();
-const TaskolioClient = Self.imports.taskolio_client.TaskolioClient;
+const TaskolioClient = Self.imports.taskolio_soup_client.TaskolioClient;
 const WindowTracker = Self.imports.window_tracker.WindowTracker;
 
 // Our auto-reconnecting TaskolioClient.  Initialized in enable() and destroyed

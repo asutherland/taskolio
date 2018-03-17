@@ -61,9 +61,9 @@ var TaskolioClient = new Lang.Class({
     this.state = 'connected';
 
     try {
-      this._cb_onConnect()
-    } catch (ex) {
       this._settings.onConnect();
+    } catch (ex) {
+      global.log("taskolio connect handler threw: " + ex);
     }
 
     this._websocketConnection.connect('message', this.onMessage.bind(this));
@@ -80,7 +80,8 @@ var TaskolioClient = new Lang.Class({
   },
 
   /**
-   * On close, notify about our disconnect and
+   * On close, notify about our disconnect and schedule an auto-reconnect.  This
+   * handler is also used if we fail to connect.
    */
   onClosed(connection) {
     // if we've already transitioned to disconnected/waiting, just leave
