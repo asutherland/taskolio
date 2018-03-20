@@ -10,6 +10,8 @@ class BrainConnection {
 
     // The prefix for all containerId's and similar namespace-able things.
     this.idPrefix = '';
+    // Is this the window manager client?
+    this.isWM = false;
   }
 
   onMessage(data) {
@@ -28,6 +30,7 @@ class BrainConnection {
     // avoiding collisions once we actually have multiple clients, for now,
     // for debugging sanity, let's keep things short.
     this.idPrefix = this.brainBoss.registerClient(this, msg);
+    this.isWM = msg.type === 'window-manager';
   }
 
   onMessage_focusSlotsInventory(msg) {
@@ -45,7 +48,7 @@ class BrainConnection {
 
   onMessage_thingsVisibilityInventory(msg) {
     this.visibilityTracker.processThingsVisibilityInventory(
-      this.idPrefix, msg.inventory);
+      this.idPrefix, msg.inventory, this.isWM);
   }
 
   onClose(code, reason) {

@@ -206,5 +206,14 @@ var WindowTracker = new Lang.Class({
     }
 
     winfo.win.activate(global.get_current_time());
+  },
+
+  getWindow(winId) {
+    const winfo = this.winInfoById.get(winId);
+    if (!winfo) {
+      return;
+    }
+
+    return winfo.win;
   }
 });

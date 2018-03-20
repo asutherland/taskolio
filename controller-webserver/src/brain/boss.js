@@ -23,22 +23,36 @@ class BrainBoss {
     this.clientsByPrefix.delete(barePrefix);
   }
 
-  focusContainerId(prefixedContainerId) {
+  _messageContainerId(prefixedContainerId, messageType, extraProps) {
     const clientId = extractClientId(prefixedContainerId);
     const conn = this.clientsByPrefix.get(clientId);
 
     if (!conn) {
-      console.warn('Got focus request for missing client:', clientId);
+      console.warn('Got', messageType, 'request for missing client:', clientId);
       return;
     }
 
-    conn.sendMessage('selectThings', {
+    conn.sendMessage(messageType, {
       items: [
-        {
-          containerId: extractUnprefixedContainerId(prefixedContainerId)
-        }
+        Object.assign(
+          { containerId: extractUnprefixedContainerId(prefixedContainerId) },
+          extraProps)
       ]
     });
+  }
+
+  focusContainerId(prefixedContainerId) {
+    return this._messageContainerId(
+      prefixedContainerId, 'selectThings',
+      {});
+  }
+
+  fadeContainerId(prefixedContainerId, value) {
+    return this._messageContainerId(
+      prefixedContainerId, 'fadeThings',
+      {
+        value
+      });
   }
 }
 

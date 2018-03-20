@@ -4,6 +4,10 @@
  */
 class VisibilityTracker {
   constructor() {
+    // ### Homogeneous State tracking
+    // Everything in this section doesn't care about window manager clients
+    // versus other clients.
+
     /**
      * Keys are fully-prefixed container ids, values are the contents of the
      * most recent thingExists report for the thing.  The report is stored for
@@ -25,6 +29,26 @@ class VisibilityTracker {
      */
     this.visibleContainerIds = new Set();
 
+    // ### Window-manager aware state tracking.
+
+    //this.focusSlot
+
+    /**
+     * This is the mapping between the window manager's container id's and the
+     * always-mutating Array of focus slot id's contained in that window.
+     * Whenever we receive a thingVisibilityInventory for a non-WM client, we
+     * re-populate this array.
+     */
+    this.windowContainerIdToFocusSlotIds = new Set();
+
+    /**
+     * The window manager client's
+     */
+    this.focusedWindowContainerId = null;
+
+    /**
+     * The most specific focused container that we're aware of.
+     */
     this.focusedContainerId = null;
   }
 
@@ -56,7 +80,7 @@ class VisibilityTracker {
   processFocusSlotsInventory(prefix, focusSlots) {
     // Purge the old focus slots; the delta is more work than is needed.
     for (const prefixedSlotId of this.focusSlotContentsById.keys()) {
-      if (prefixedSlotId.startsWith(mootPrefix)) {
+      if (prefixedSlotId.startsWith(prefix)) {
         this.focusSlotContentsById.delete(prefixedSlotId);
       }
     }
@@ -82,7 +106,7 @@ class VisibilityTracker {
     }
   }
 
-  processThingsVisibilityInventory(prefix, inventory) {
+  processThingsVisibilityInventory(prefix, inventory, isWM) {
     console.log('visibility inventory:', inventory);
     for (const item of inventory) {
       if (!item) {
@@ -99,7 +123,12 @@ class VisibilityTracker {
       // visible, which is why we put everything reported in the visible bucket.
       // (containerId would be null if state was 'empty'.)
       if (item.state === 'focused') {
-        this.focusedContainerId = prefixedContainerId;
+        if (isWM) {
+          this.focusedWindowContainerId = prefixedContainerId;
+          this.focusedContainerId = prefixedContainerId;
+        } else {
+          this.focusedContainerId = prefixedContainerId;
+        }
         console.log('set focused:', this.focusedContainerId);
       }
     }
@@ -166,8 +195,8 @@ class VisibilityTracker {
   }
 
   /**
-   * Returns the container id of whatever's currently focused, or null if
-   * nothing is focused.
+   * Returns the container id of whatever's currently focused at the most
+   * detailed client level, or null if nothing is focused.
    *
    * This is intended to be used directly by the BookmarkManager.  If you're
    * not the BookmarkManager, first consider using its
@@ -176,6 +205,16 @@ class VisibilityTracker {
    */
   getFocusedContainerId() {
     return this.focusedContainerId;
+  }
+
+  /**
+   * Like getFocusedContainerId, but only considering the window manager client.
+   * This is for bookmarking a window rather than its contents.
+   *
+   * @see getFocusedContainerId
+   */
+  getFocusedWindowContainerId() {
+
   }
 }
 

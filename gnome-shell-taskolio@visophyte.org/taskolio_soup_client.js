@@ -106,8 +106,6 @@ var TaskolioClient = new Lang.Class({
       this.state = 'disconnected';
     }
 
-
-
     if (!this.shutdownRequested && !this._timeoutId) {
       this.state = 'waiting';
       this._timeoutId = Mainloop.timeout_add(5000, () => {
@@ -130,6 +128,10 @@ var TaskolioClient = new Lang.Class({
 
   shutdown() {
     this.shutdownRequested = true;
+    // paranoia: seeing multiple events happening, want to more aggressively
+    // trigger disconnect logic.  For now we'll just require that the disconnect
+    // logic is idempotent;
+    this._settings.onDisconnect();
     this.close();
   },
 

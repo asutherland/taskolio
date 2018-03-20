@@ -110,6 +110,11 @@ class BookmarkMode extends BankMixin {
     this.bookmarkManager.focusBookmark(bookmark); // handles nullish bookmarks.
   }
 
+  onSliderMoved(evt) {
+    const bookmark = this.curBank[evt.index];
+    this.bookmarkManager.fadeBookmark(bookmark, evt.value);
+  }
+
   _internalComputeGridColors(scaleLightness) {
     return this.curBank.map((cell) => {
       return this.bookmarkManager.computeRGBColorForBookmark(

@@ -137,6 +137,10 @@ function makeConnection() {
         focusSlots
       });
 
+      if (gWindowTracker) {
+        global.log("taskolio window tracker almost duplicated!");
+        gWindowTracker.shutdown();
+      }
       gWindowTracker = new WindowTracker({
         onWindowAdded(details) {
           gClient.sendMessage('thingsExist', {
@@ -170,9 +174,12 @@ function makeConnection() {
       gWindowTracker.pretendExistingWindowsWereJustAdded();
     },
 
+    // NB: This needs to be (and is) idempotent.
     onDisconnect() {
-      gWindowTracker.shutdown();
-      gWindowTracker = null;
+      if (gWindowTracker) {
+        gWindowTracker.shutdown();
+        gWindowTracker = null;
+      }
     },
 
     onMessage_selectThings(msg) {
@@ -181,6 +188,25 @@ function makeConnection() {
       }
 
       gWindowTracker.activateWindow(msg.items[0].containerId);
+    },
+
+    onMessage_fadeThings(msg) {
+      if (!gWindowTracker) {
+        return;
+      }
+
+      const win = gWindowTracker.getWindow(msg.items[0].containerId);
+      if (!win) {
+        return;
+      }
+
+      const compWin = win.get_compositor_private();
+      if (!compWin) {
+        return;
+      }
+
+      const faderValue = msg.items[0].value;
+      compWin.opacity = 255 * faderValue;
     }
   });
 }

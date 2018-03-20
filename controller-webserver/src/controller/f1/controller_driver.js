@@ -91,7 +91,7 @@ class ControllerDriver {
   }
 
   _makeValueEvent(name, index, value) {
-    const evt = this._makeButtonEvent(name, value);
+    const evt = this._makeButtonEvent(name, index);
     evt.value = value;
     return evt;
   }

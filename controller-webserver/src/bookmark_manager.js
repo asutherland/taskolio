@@ -93,6 +93,23 @@ class BookmarkManager {
   }
 
   /**
+   * Hacky mechanism to tunnel slider values for the top buttons on the current
+   * bank through to whatever the client is.  For the window manager this will
+   * be jokey cross-fades for now, for web-browser clients this would be volume
+   * levels.
+   *
+   * This wants to be a real mechanism, and probably wants to be volume levels
+   * in all cases.
+   */
+  fadeBookmark(bookmark, value) {
+    if (!bookmark) {
+      return;
+    }
+
+    this.brainBoss.fadeContainerId(bookmark.containerId, value)
+  }
+
+  /**
    * Computes the RGB color for the given bookmark given current visibility
    * status and the hue/sat associated with the bookmark.
    *
