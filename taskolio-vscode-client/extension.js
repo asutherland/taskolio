@@ -1,30 +1,211 @@
+'use strict';
+
+const TaskolioClient = require('./src/taskolio_ws_client').TaskolioClient;
+
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 const vscode = require('vscode');
 
-// this method is called when your extension is activated
-// your extension is activated the very first time the command is executed
+// Our auto-reconnecting TaskolioClient.  Initialized in activate() and
+// destroyed in deactivate().
+let gClient;
+
+/**
+ * Given a URI, return its relative path to the base of its enclosing workspace.
+ */
+function normalizeUri(uri, useFolder) {
+  const workspaceFolder = useFolder || vscode.workspace.getWorkspaceFolder(uri);
+  const wsUri = workspaceFolder.uri;
+  // take off what would be a leading '/'.
+  return useFolder.path.substring(wsUri.path.length + 1);
+}
+
+/**
+ * Send an updated focusSlotsInventory to the server.  There will be one
+ * visibleTextEditor per editor pane/column.  We name panes according to their
+ * viewColumn, which should be an integer.  The editors themselves don't matter
+ * to us.
+ *
+ * This method is fired on first connection, plus every time an
+ * onDidChangeTextEditorViewColumn event fires.  Because that may potentially
+ * purge the visibility state of things in the server, we also directly invoke
+ * updateAndSendThingsVisibilityInventory().
+ */
+function updateAndSendFocusSlotsInventory() {
+  if (!gClient) {
+    return;
+  }
+
+  const focusSlots = vscode.window.visibleTextEditors.map((editor) => {
+    // XXX need to investigate states more, but onDidChangeActiveTextEditor says
+    // the active editor can be `undefined` and it's definitely the case that
+    // there can be a "column"/pane with no open tabs (in the singleton case
+    //  at least, they seem to auto-close for the other columsn), so be prepared
+    // for that.
+    if (!editor) {
+      return null;
+    }
+    return {
+      focusSlotId: editor.viewColumn,
+      // This doesn't particularly matter because all our editors live under a
+      // single window and our helloMyNameIs successfully identifies our PID.
+      parentDescriptor: `column${editor.viewColumn}`,
+    };
+  });
+
+  gClient.sendMessage('focusSlotsInventory', {
+    focusSlots
+  });
+  updateAndSendThingsVisibilityInventory();
+}
+
+function updateAndSendThingsVisibilityInventory() {
+  if (!gClient) {
+    return;
+  }
+
+  const inventory = vscode.window.visibleTextEditors.map((editor) => {
+    // there might be an empty column... see the focus slots inventory for
+    // hand-waving.
+    if (!editor || !editor.document) {
+      return null;
+    }
+    return {
+      containerId: normalizeUri(editor.document.uri),
+      focusSlotId: editor.viewColumn,
+      state: vscode.window.activeTextEditor === editor ? 'focused' : 'visible'
+    };
+  });
+
+  gClient.sendMessage('thingsVisibilityInventory', {
+    inventory
+  });
+}
+
+/**
+ * Send a thingExists notification for every file in the workspace.  Note that
+ * this is different that vscode.workspace.textDocuments (all open files) or
+ * vscode.window.textEditors (the currently displayed text editors, one per
+ * pane).
+ *
+ * To accomplish this, we issue a findFiles command for all files and the
+ * default excludes to get a list of all files.
+ */
+async function sendThingsExistForWorkspace() {
+  if (!gClient) {
+    return;
+  }
+
+  const uris = await vscode.workspace.findFiles('**');
+
+  const items = uris.map((uri) => {
+    const normUri = normalizeUri(uri);
+    return {
+      containerId: normUri,
+      title: normUri,
+      // meh, no details.  I suppose we could ask source control for details,
+      // or infer MIME type, but for now... meh.
+      rawDetails: {}
+    }
+  });
+
+  gClient.sendMessage('thingsExist', {
+    items
+  });
+  // Since we are an async process, it's very possible the visibility inventory
+  // already happened, so just send a fresh one now that we've run.
+  // Alternately, we could have our caller wait for us and call.
+  updateAndSendThingsVisibilityInventory();
+}
+
 function activate(context) {
+  context.subscriptions.push(vscode.commands.registerCommand(
+    'taskolio.pushBookmark', function () {
+    // XXX this wants to use a new protocol mechanism to push the folder
+    // hierarchy of the given tree node across, triggering a mode transition
+    // in the controllers or queueing up the hierarchy for placement in an
+    // explicitly supported queue mechanism.
+  }));
 
-    // Use the console to output diagnostic information (console.log) and errors (console.error)
-    // This line of code will only be executed once when your extension is activated
-    console.log('Congratulations, your extension "taskolio-vscode-client" is now active!');
+  context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(() => {
+    // XXX as commented elsewhere, haven't figured out the perfect time to
+    // re-compute the focus slots, so let's just do it every time text editors
+    // change.  After that happens, a visibility inventory will automatically
+    // be sent as well, and that's really what we want to do whenever the
+    // active text editor changes.
+    updateAndSendFocusSlotsInventory();
+  }));
 
-    // The command has been defined in the package.json file
-    // Now provide the implementation of the command with  registerCommand
-    // The commandId parameter must match the command field in package.json
-    let disposable = vscode.commands.registerCommand('extension.sayHello', function () {
-        // The code you place here will be executed every time your command is executed
+  gClient = new TaskolioClient({
+    endpoint: 'ws://localhost:8008/',
 
-        // Display a message box to the user
-        vscode.window.showInformationMessage('Hello World!');
-    });
+    /**
+     * Handle (re)connecting.
+     */
+    onConnect() {
+      const canonWorkspace = vscode.workspace.workspaceFolders[0];
 
-    context.subscriptions.push(disposable);
+      // Tell the server our general meta-info.
+      gClient.sendMessage('helloMyNameIs', {
+        type: 'text-editor',
+        name: 'vscode',
+        // This is truly the root PID, handy, that.
+        rootPid: process.pid,
+        // We use the normalized root path of the canonical workspace.  If
+        // someone uses multiple workspaces, this could potentially still work
+        // out, but we're likely to fall down with the rest of the namespace
+        // stuff where relative-paths would collide between the workspace
+        // folders.
+        uniqueId: canonWorkspace.uri.path,
+        // We're as persistent as you can get, so just send true.
+        persistence: true
+      });
+
+      // report our focus slots inventory (synchronously), also sending a
+      // visibility inventory that will be useless to the server until it gets
+      // info on the containerId's, which happens in the next step.
+      updateAndSendFocusSlotsInventory();
+      // asynchronously enumerate the files in the workspace and report them as
+      // containerId's, triggering a visibility inventory automatically at the
+      // tail end of this.
+      sendThingsExistForWorkspace();
+
+      // TODO: better handle tracking changes to the workspace.  Specifically:
+      // - It seems like we want to use a FileSystemWatcher to know when things
+      //   are changing, but I want to ensure that this won't cost system
+      //   resources.  We really just want to piggy-back on whatever the folder
+      //   tree is doing.
+      // - For now we just make sure we send thingsExist notifications for the
+      //   visible text editors at all time, and this handles the creation of
+      //   new files as they happen.  It doesn't cover deletion of files, but
+      //   that's arguably not the biggest deal unless it starts resulting in
+      //   empty files being created as selecting a bookmark does the wrong
+      //   thing.
+    },
+
+    onDisconnect() {
+    },
+
+    async onMessage_selectThings(msg) {
+      const relPath = msg.items[0].containerId;
+      // map the relative path back to a full path by finding the first
+      // workspace that has it.  The file might also no longer exist.
+      const fullUris = await vscode.workspace.findFiles(relPath);
+      if (fullUris.length) {
+        const fullUri = fullUris[0];
+        console.log("selectThings mapped", relPath, "to", fullUri);
+        vscode.workspace.openTextDocument(fullUri);
+      } else {
+        console.log("selectThings failed to map", relPath);
+      }
+    }
+  });
 }
 exports.activate = activate;
 
 // this method is called when your extension is deactivated
 function deactivate() {
+  gClient.shutdown();
+  gClient = null;
 }
 exports.deactivate = deactivate;
