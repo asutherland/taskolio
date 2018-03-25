@@ -14,27 +14,57 @@ class BookmarkManager {
     this.brainBoss = brainBoss;
   }
 
+  // helper for our bookmark minters
+  _makeBookmark(containerId, focusSlotId) {
+
+    return {
+      containerId,
+      focusSlotId,
+      hue: 360 * Math.random(),
+      sat: 1.0,
+    };
+  }
+
   /**
-   * Create a new bookmark that describes the currently focused container, if
-   * one exists.  Null is returned if nothing was focused or if something else
-   * went wrong.
+   * Create a bookmark at window-level granularity.  If you want the bookmark to
+   * be more specific and refer to containerId's inside an app/its windows, then
+   * use `mintBookmarkForFocusedThing`.
+   */
+  mintBookmarkForFocusedWindow() {
+    const containerId = this.visTracker.getFocusedWindowContainerId();
+    // It's possible nothing is focused.
+    if (!containerId) {
+      console.warn('asked to mint window bookmark with nothing focused');
+      return null;
+    }
+
+    // XXX for now, let's not track the focus slot since that's the monitor and
+    // we're not yet proposing to move windows between monitors.
+    const focusSlotId = null;
+    return this._makeBookmark(containerId, focusSlotId);
+  }
+
+  /**
+   * Create a new bookmark that describes the currently most-focused container,
+   * if one exists.  This bookmark may be more specific than a window if the
+   * window is a taskolio client.  Use `mintBookmarkForFocusedWindow` if you
+   * only want window granularity.
+   *
+   * Null is returned if nothing was focused or if something else went wrong.
    *
    * In the future, additional hooky things will be given the option to attempt
-   * to suggest
+   * to suggest colors for the thing being bookmarked.
    */
   mintBookmarkForFocusedThing() {
     const containerId = this.visTracker.getFocusedContainerId();
     // It's possible nothing is focused.
     if (!containerId) {
-      console.warn('asked to mint bookmark with nothing focused');
+      console.warn('asked to mint specific bookmark with nothing focused');
       return null;
     }
 
-    return {
-      containerId,
-      hue: 360 * Math.random(),
-      sat: 1.0,
-    };
+    const focusSlotId = this.visTracker.getFocusedFocusSlotId();
+    return this._makeBookmark(containerId, focusSlotId);
   }
 
   /**
@@ -84,12 +114,33 @@ class BookmarkManager {
     bookmark.set = sat;
   }
 
+  /**
+   * Focus the given bookmark.  If this is a window bookmark, we only have to
+   * tell the window client.  If this is a bookmark from a more detailed client,
+   * we need to tell the window manager client too if we don't already believe
+   * the window is focused.  (Or more specifically, we don't want to tell the
+   * window manager to focus the window if it's not already focused because this
+   * may raise the window, which may not be desired in non-click-to-focus
+   * scenarios where the window may be partially obscured and that's desirable.
+   * This could alternately be handled by the window manager client itself, but
+   * if we do it here, it's more easily observable if we're looking at our
+   * debug output and what's going over the wire.)
+   */
   focusBookmark(bookmark) {
     if (!bookmark) {
       return;
     }
 
-    this.brainBoss.focusContainerId(bookmark.containerId);
+    const { focusSlotId, windowContainerId, windowFocused } =
+      this.visTracker.figureOutHowToFocusThing(
+        bookmark.containerId, bookmark.focusSlotId);
+
+    // (If bookmark.containerId is already a window containerId, then
+    // windowContainerId will be null.)
+    if (windowContainerId && !windowFocused) {
+      this.brainBoss.focusContainerId(windowContainerId);
+    }
+    this.brainBoss.focusContainerId(bookmark.containerId, focusSlotId);
   }
 
   /**
@@ -121,7 +172,8 @@ class BookmarkManager {
       return NO_BOOKMARK_RGB;
     }
 
-    const visResult = this.visTracker.checkVisibility(bookmark.containerId);
+    const visResult = this.visTracker.checkVisibility(
+      bookmark.containerId, bookmark.focusSlotId);
 
     // uh, we rea
     let brightness;

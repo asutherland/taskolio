@@ -12,11 +12,16 @@ class BrainConnection {
     this.idPrefix = '';
     // Is this the window manager client?
     this.isWM = false;
+
+    // Have we successfully figured out the windows the connection's focus
+    // slots are associated with?  This is meant to be sent only once, so this
+    // variable handles suppression of redundant sends.
+    this.focusSlotsLinked = false;
   }
 
   onMessage(data) {
     const obj = JSON.parse(data);
-    //console.log('message', obj.type, obj.payload);
+    console.log('\n===', this.idPrefix, obj.type);
 
     const handlerName = `onMessage_${obj.type}`;
 
@@ -34,16 +39,26 @@ class BrainConnection {
   }
 
   onMessage_focusSlotsInventory(msg) {
-    this.visibilityTracker.processFocusSlotsInventory(
-      this.idPrefix, msg.focusSlots);
+    const mappedAllSlots = this.visibilityTracker.processFocusSlotsInventory(
+      this.idPrefix, msg.focusSlots, this.isWM);
+
+    // If all the slots were mapped to windows, then we tell the client so that
+    // it can stop doing hacky things like tunneling process id's through
+    // window titles.
+    if (mappedAllSlots && !this.focusSlotsLinked) {
+      this.focusSlotsLinked = true;
+      this.sendMessage('focusSlotsLinked', {});
+    }
   }
 
   onMessage_thingsExist(msg) {
-    this.visibilityTracker.processThingsExist(this.idPrefix, msg.items);
+    this.visibilityTracker.processThingsExist(
+      this.idPrefix, msg.items, this.isWM);
   }
 
   onMessage_thingsGone(msg) {
-    this.visibilityTracker.processThingsGone(this.idPrefix, msg.items);
+    this.visibilityTracker.processThingsGone(
+      this.idPrefix, msg.items, this.isWM);
   }
 
   onMessage_thingsVisibilityInventory(msg) {

@@ -94,11 +94,24 @@ be known to the controller.
 
 Each item in the array should have the following fields:
 - focusSlotId: Unique (within the client) identifier for the focus slot.
-- parentDescriptor: TBD mechanism for non-'window-manager' clients to identify
+
+- parentDescriptors: Mechanism for non-'window-manager' clients to identify
   themselves in a way that allows mapping the focus slot to the container the
   window manager generates for the window.  For 'window-manager' clients, this
   is used to identify the monitor so that human-friendly names can be attached
-  for rule-making purposes.
+  for rule-making purposes.  This information may redundantly duplicate what
+  was sent in `helloMyNameIs`.
+
+  This is an array of zero or more objects whose keys and values will be
+  serialized to string forms to attempt to match against data provided by the
+  window-manager client.
+
+- relativePosition: The location of the focus slot within the top-level element
+  named by the parentDescriptor.  So for a single-window text-editor divided
+  into panes/"columns", each pane would have the same parentDescriptor, but
+  would be differentiated by the relativePositions which might be "left"/"right"
+  or "left"/"middle"/"right" or "top"/"bottom" or maybe numeric identifiers
+  (like vscode uses for column identifiers).
 
 
 #### thingsExist ####

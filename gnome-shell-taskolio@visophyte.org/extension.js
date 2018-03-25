@@ -154,6 +154,25 @@ function makeConnection() {
           });
         },
 
+        /**
+         * Whenever the title changes, re-send the thingsExist message for the
+         * window so the server can see the change.  This allows hacky tunneling
+         * of meta-information about the window through the title.  See the
+         * WindowTracker's logic for slightly more information or the server
+         * `VisibilityTracker` class.
+         */
+        onWindowTitleChanged(details, data) {
+          gClient.sendMessage('thingsExist', {
+            items: [
+              {
+                containerId: details.id,
+                title: details.title,
+                rawDetails: details
+              }
+            ]
+          });
+        },
+
         onWindowFocused(details, data) {
           visiblePerMonitor[details.monitor] = details;
           focusedMonitor = details.monitor;
@@ -207,6 +226,13 @@ function makeConnection() {
 
       const faderValue = msg.items[0].value;
       compWin.opacity = 255 * faderValue;
+    },
+
+    onMessage_focusSlotsLinked(msg) {
+      // Currently, we shouldn't receive this message since we're the window
+      // manager.  But in the future, this might be meaningful if the server
+      // needs us to better help identify monitors.  (Although the coordinate
+      // space should really let us figure most reasonable naming schemes out.)
     }
   });
 }

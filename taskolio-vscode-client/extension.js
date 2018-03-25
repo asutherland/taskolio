@@ -14,10 +14,21 @@ let gClient;
  * Given a URI, return its relative path to the base of its enclosing workspace.
  */
 function normalizeUri(uri, useFolder) {
-  const workspaceFolder = useFolder || vscode.workspace.getWorkspaceFolder(uri);
+  // propagate falseyness without throwing.
+  if (!uri || !uri.path) {
+    return uri;
+  }
+  const workspaceFolder =
+    useFolder || vscode.workspace.getWorkspaceFolder(uri);
+
+  if (!workspaceFolder) {
+    // If we couldn't find a workspace folder, just use the absolute path.
+    return uri.path;
+  }
+
   const wsUri = workspaceFolder.uri;
   // take off what would be a leading '/'.
-  return useFolder.path.substring(wsUri.path.length + 1);
+  return uri.path.substring(wsUri.path.length + 1);
 }
 
 /**
@@ -47,9 +58,10 @@ function updateAndSendFocusSlotsInventory() {
     }
     return {
       focusSlotId: editor.viewColumn,
-      // This doesn't particularly matter because all our editors live under a
-      // single window and our helloMyNameIs successfully identifies our PID.
-      parentDescriptor: `column${editor.viewColumn}`,
+      // We link our columns/panes to our window via our PID.
+      parentDescriptors: [
+        { pid: process.pid }
+      ]
     };
   });
 
@@ -66,8 +78,9 @@ function updateAndSendThingsVisibilityInventory() {
 
   const inventory = vscode.window.visibleTextEditors.map((editor) => {
     // there might be an empty column... see the focus slots inventory for
-    // hand-waving.
-    if (!editor || !editor.document) {
+    // hand-waving.  This might also be an unsaved buffer that accordingly lacks
+    // a URI.
+    if (!editor || !editor.document || !editor.document.uri) {
       return null;
     }
     return {
@@ -118,6 +131,18 @@ async function sendThingsExistForWorkspace() {
   updateAndSendThingsVisibilityInventory();
 }
 
+function tunnelPidThroughWindowTitle(enable) {
+  const config = vscode.workspace.getConfiguration('window');
+  if (!enable) {
+    // Setting the value to undefined removes it.
+    config.update('title', undefined, vscode.ConfigurationTarget.Workspace);
+  } else {
+    const info = config.inspect('title');
+    const titleStr = info.defaultValue + ` PID=${process.pid}`;
+    config.update('title', titleStr, vscode.ConfigurationTarget.Workspace);
+  }
+}
+
 function activate(context) {
   context.subscriptions.push(vscode.commands.registerCommand(
     'taskolio.pushBookmark', function () {
@@ -125,6 +150,7 @@ function activate(context) {
     // hierarchy of the given tree node across, triggering a mode transition
     // in the controllers or queueing up the hierarchy for placement in an
     // explicitly supported queue mechanism.
+    vscode.window.showInformationMessage("Is this a native window...?");
   }));
 
   context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(() => {
@@ -143,6 +169,10 @@ function activate(context) {
      * Handle (re)connecting.
      */
     onConnect() {
+      // We need to re-tunnel every time we connect to the server because the
+      // server may be newly restarted and will not have any persisted mapping.
+      tunnelPidThroughWindowTitle(true);
+
       const canonWorkspace = vscode.workspace.workspaceFolders[0];
 
       // Tell the server our general meta-info.
@@ -186,18 +216,43 @@ function activate(context) {
     onDisconnect() {
     },
 
+    /**
+     * Select a file based on relative path.  Notable things:
+     * - The server internally tries to remember what column the bookmark was
+     *   established in, passing us the focusSlotId.  We don't yet honor that.
+     */
     async onMessage_selectThings(msg) {
-      const relPath = msg.items[0].containerId;
+      const thing = msg.items[0];
+      const relPath = thing.containerId;
+      const column = parseInt(thing.focusSlotId, 10);
       // map the relative path back to a full path by finding the first
       // workspace that has it.  The file might also no longer exist.
       const fullUris = await vscode.workspace.findFiles(relPath);
       if (fullUris.length) {
         const fullUri = fullUris[0];
-        console.log("selectThings mapped", relPath, "to", fullUri);
-        vscode.workspace.openTextDocument(fullUri);
+        //console.log("selectThings mapped", relPath, "to", fullUri);
+        const doc = await vscode.workspace.openTextDocument(fullUri);
+        //console.log("got doc, going to try and show in column", column);
+        const editor = await vscode.window.showTextDocument(doc, column);
+        //console.log("allegedly shown in column", editor.viewColumn);
       } else {
         console.log("selectThings failed to map", relPath);
       }
+    },
+
+    onMessage_fadeThings(msg) {
+      // XXX we currently don't need/want to do anything for fading.
+    },
+
+    /**
+     * The server tells us when it has successfully mapped our focus slots back
+     * to their windows, allowing us to remove the PID we tunnel through our
+     * workspace title (because the window manager hints are for the root vscode
+     * pid rather than our workspace window's root pid as advertised by
+     * process.pid).
+     */
+    onMessage_focusSlotsLinked(msg) {
+      tunnelPidThroughWindowTitle(false);
     }
   });
 }
@@ -207,5 +262,7 @@ exports.activate = activate;
 function deactivate() {
   gClient.shutdown();
   gClient = null;
+
+  tunnelPidThroughWindowTitle(false);
 }
 exports.deactivate = deactivate;

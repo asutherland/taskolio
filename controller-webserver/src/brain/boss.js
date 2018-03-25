@@ -3,6 +3,10 @@ function extractClientId(prefixed) {
 }
 
 function extractUnprefixedContainerId(prefixed) {
+  // propagate null/undefined, don't explode.
+  if (!prefixed) {
+    return prefixed;
+  }
   const idxColon = prefixed.indexOf(':');
   return prefixed.substring(idxColon + 1);
 }
@@ -13,8 +17,9 @@ class BrainBoss {
   }
 
   registerClient(brainConn, msg) {
-    const idPrefix = msg.uniqueId + ':';
-    this.clientsByPrefix.set(msg.uniqueId, brainConn);
+    const idPrefix = `${msg.type}_-_${msg.name}_-_${msg.uniqueId}:`;
+    const barePrefix = idPrefix.slice(0, -1);
+    this.clientsByPrefix.set(barePrefix, brainConn);
     return idPrefix;
   }
 
@@ -41,10 +46,13 @@ class BrainBoss {
     });
   }
 
-  focusContainerId(prefixedContainerId) {
+  focusContainerId(prefixedContainerId, prefixedSlotId) {
+    const focusSlotId = extractUnprefixedContainerId(prefixedSlotId);
     return this._messageContainerId(
       prefixedContainerId, 'selectThings',
-      {});
+      {
+        focusSlotId
+      });
   }
 
   fadeContainerId(prefixedContainerId, value) {

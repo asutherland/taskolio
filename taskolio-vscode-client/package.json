@@ -15,10 +15,15 @@
   ],
   "main": "./extension",
   "contributes": {
+    "commands": [
+      {
+        "command": "taskolio.pushBookmark",
+        "title": "Push Bookmark"
+      }
+    ],
     "menus": {
       "explorer/context": [{
         "command": "taskolio.pushBookmark",
-        "title": "Push Bookmark",
         "group": "navigation"
       }]
     }

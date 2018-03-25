@@ -86,25 +86,29 @@ function extractWindowDetails(win, id) {
  */
 var WindowTracker = new Lang.Class({
   Name: 'WindowTracker',
-  _init({ onWindowAdded, onWindowFocused, onWindowRemoved }) {
+  _init({ onWindowAdded, onWindowTitleChanged, onWindowFocused,
+          onWindowRemoved }) {
     this._windowCreatedId = global.display.connect(
       'window-created', this.onWindowCreated.bind(this));
     this._focusWindowId = global.display.connect(
       'notify::focus-window', this.onFocusedWindowChanged.bind(this));
 
+    this._bound_onTitleChanged = this.onTitleChanged.bind(this);
     this._bound_onWindowDestroyed = this.onWindowDestroyed.bind(this);
 
     this.winInfoById = new Map();
 
     this._cb_onWindowAdded = onWindowAdded;
+    this._cb_onWindowTitleChanged = onWindowTitleChanged;
     this._cb_onWindowFocused = onWindowFocused;
     this._cb_onWindowRemoved = onWindowRemoved;
   },
 
   shutdown() {
-    for (let { win, unmanageId } of this.winInfoById.values()) {
+    for (let { win, titleId, unmanageId } of this.winInfoById.values()) {
       // (there is no need to tell the app callbacks about this, it's the one
       // shutting us down.)
+      win.disconnect(titleId);
       win.disconnect(unmanageId);
     }
     this.winInfoById = null;
@@ -130,6 +134,7 @@ var WindowTracker = new Lang.Class({
   onWindowCreated(display, win) {
     const winId = extractWindowId(win);
 
+    const titleId = win.connect('notify::title', this._bound_onTitleChanged);
     const unmanageId = win.connect('unmanaged', this._bound_onWindowDestroyed);
     //global.log('unmanaged hookup: ' + unmanageId);
 
@@ -144,6 +149,8 @@ var WindowTracker = new Lang.Class({
     const winfo = {
       // The MetaWindow
       win,
+      // The "notify::title" signal id for us to disconnect() later.
+      titleId,
       // The "unmanaged" signal id for us to disconnect() later.
       unmanageId,
       // We'll hold onto and update the details each time the focus changes.
@@ -152,6 +159,30 @@ var WindowTracker = new Lang.Class({
       data
     };
     this.winInfoById.set(winId, winfo);
+  },
+
+  /**
+   * The window's title changed, which we know from explicitly listening on the
+   * "notify::title" signal for the window (all GObject properties have such
+   * notifications).  We do this because for electron runtimes like used by
+   * vscode, the _NET_WM_PID hints may be for the root process, and so we may
+   * need to attempt to tunnel information through the title.  And to
+   * consistently do that, we need to know when the title changes.
+   */
+  onTitleChanged(win) {
+    const winId = extractWindowId(win);
+    const winfo = this.winInfoById.get(winId);
+    if (!winfo) {
+      return;
+    }
+
+    try {
+      // Update the details.  Other things might have changed beyond the title.
+      winfo.details = extractWindowDetails(win, winId);
+      this._cb_onWindowTitleChanged(winfo.details, winfo.data);
+    } catch (ex) {
+      global.log('problem invoking onWindowTitleChanged callback:' + ex);
+    }
   },
 
   onFocusedWindowChanged() {
@@ -184,6 +215,8 @@ var WindowTracker = new Lang.Class({
     const winfo = this.winInfoById.get(winId);
 
     //global.log('disconnecting unmanageId: ' + winfo.unmanageId);
+    win.disconnect(winfo.titleId);
+    winfo.titleId = 0;
     win.disconnect(winfo.unmanageId);
     winfo.unmanageId = 0;
 
