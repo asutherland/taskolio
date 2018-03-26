@@ -68,6 +68,22 @@ class BookmarkManager {
   }
 
   /**
+   * Helper to merge visual settings of an old bookmark into a new bookmark.
+   * This is a stop-gap to make life easier when manually re-establishing
+   * bookmarks that ideally should have been automatically re-established.
+   */
+  maybeMergeBookmarks(newBookmark, oldBookmark) {
+    if (!oldBookmark) {
+      return newBookmark;
+    }
+
+    newBookmark.hue = oldBookmark.hue;
+    newBookmark.sat = oldBookmark.sat;
+
+    return newBookmark;
+  }
+
+  /**
    * Given a collection, find the first Bookmark that corresponds to whatever
    * is the currently focused thing.  You would use this for things like
    * changing the color of the bookmark corresponding to whatever's currently

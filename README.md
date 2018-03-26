@@ -105,8 +105,8 @@ Button pushing:
   if there is a client reporting tabs/editors for the currently focused window,
   the current tab/editor will be bookmarked.  Push "quant" to bookmark just the
   window.  Once, you push the button, you enter "bs" or "bookmark set" mode.
-  The next grid button you push will be assigned a random color and whatever
-  was reported as focused when you pushed "capture" or "quant" will be assigned
+  The next grid button you push will be assigned a color and whatever was
+  reported as focused when you pushed "capture" or "quant" will be assigned
   to the button.  You can switch banks in this mode.  You can also push
   capture/quant a second time to leave the mode without assigning a bookmark
   (but you can't switch between the setting mode right now... future work).
@@ -141,9 +141,10 @@ Other info:
   ctrl-c the node.js server and make changes, you won't lose your work.  But if
   your X11/wayland session ends, that's game over.  You'll still get to see
   the pretty colors with less "value" intensity in an HSV kind of way because
-  of future plans, but it's not useful in any other way.  If you assign a new
-  bookmark to that grid button, the existing color will be rudely clobbered
-  with a new, random one.
+  of future plans, but it's not useful in any other way.  The good news is that
+  when assigning a bookmark to a button that already had a bookmark, your new
+  bookmark will get the color of the previous bookmark automatically, rather
+  than a random color.
 
 # Rambling Follows #
 
