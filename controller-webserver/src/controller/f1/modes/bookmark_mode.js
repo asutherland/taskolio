@@ -63,6 +63,27 @@ class BookmarkMode extends BankMixin {
     this.activity = 'switch'; // switch is our default.
   }
 
+  /**
+   * Mint a window-level bookmark.  This would be favored over the capture
+   * button that mints a most-specific bookmark because when you're switching
+   * apps you don't necessarily want to keep switching to the same tab/document.
+   *
+   */
+  onQuantButton(evt) {
+    // XXX see the TODO on activity.
+    // NB: This is the same as onCaptureButton but we call a different minting
+    // method.
+    if (evt.shift) {
+      this.activity = 'delete';
+    } else {
+      this.activity = 'set-bookmark';
+      this.pickingForBookmark =
+        this.bookmarkManager.mintBookmarkForFocusedWindow();
+    }
+
+    this.dispatcher.pushMode(this, this.setBookmarkSubMode);
+  }
+
   onCaptureButton(evt) {
     // XXX see the TODO on activity.
     if (evt.shift) {
@@ -135,6 +156,15 @@ class SetBookmarkSubMode {
     this.owner = owner;
 
     this.modeShortLabel = "bs"; // Bookmark Set
+  }
+
+  /**
+   * Hitting quant again toggles out of set-bookmark mode.
+   * TODO: Expose what granularity of button is being set and let quant/capture
+   * switch between them.  Or at least consider that.
+   */
+  onQuantButton(evt) {
+    this.owner.dispatcher.popMode(this);
   }
 
   /**

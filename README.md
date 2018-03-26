@@ -13,9 +13,22 @@ click experience.)
 
 ## What Works ##
 
-The gnome-shell extension reports all your windows to the local node.js server
-that talks to your Kontrol F1.  In the future, a Launchpad Pro may work, but
-for now you need a Kontrol F1.
+* Clients:
+  * gnome-shell extension reports all your windows to the local node.js server
+  * vscode extension reports documents/text editors to the local node.js server.
+* Physical Controllers:
+  * Native Instruments Kontrol F1
+
+## What's Coming Next ##
+
+In no particular order:
+
+* Clients:
+  * Firefox WebExtension with Tree Style Tab integration.
+  * gnome-terminal tab-bookmarking via accessibility API.  (May work for other
+    apps that expose an accessibility tree via ATK2.0).
+* Physical Controllers:
+  * Novation Launchpad Pro
 
 ### How to get it to work ###
 
@@ -35,6 +48,27 @@ log out and log in again.
 
 The extension will automatically start and try to talk to the node.js server
 every 5 seconds.
+
+#### Install the vscode extension
+
+Symlink the taskolio-vscode-client into your vscode extensions directory.  It
+seems like this is not the suggested way of doing things, but it does seem to
+work.  In particular, if you run "code" from the taskolio-vscode-client
+directory and run the extension target from there (it doesn't work from top
+level right now for me, I get an npm error), although the resulting vscode
+window will complain about overwriting the extension, the symlink won't be
+clobbered.  (It is possible something foolish like copying a file onto itself
+may happen, which might revert your editors where you haven't saved stuff, so,
+uh, save a lot or be on the lookout for that wackiness.)
+
+```
+cd ~/.vscode/extensions
+ln -s /PATH/TO/taskolio/taskolio-vscode-client
+```
+
+The extension will take effect in new windows or reloaded windows (via some
+combination of accelerator keys and the letter "r" allegedly, but I think my
+emacs keybindings may have clobbered that).
 
 #### Get the server thing working.
 
@@ -67,10 +101,15 @@ Button pushing:
   around in the future.
 - The "stop" buttons along the bottom of the controller always switch "banks"
   of bookmarks (or colors).
-- Push "capture" to switch to bookmark setting mode.  The next grid button you
-  push will be assigned a random color and whatever gnome-shell most recently
-  reported as focused.  You can switch banks in this mode.  You can also push
-  capture a second time to leave the mode without assigning a bookmark.
+- Push "capture" to bookmark the most-specific thing that can be bookmarked;
+  if there is a client reporting tabs/editors for the currently focused window,
+  the current tab/editor will be bookmarked.  Push "quant" to bookmark just the
+  window.  Once, you push the button, you enter "bs" or "bookmark set" mode.
+  The next grid button you push will be assigned a random color and whatever
+  was reported as focused when you pushed "capture" or "quant" will be assigned
+  to the button.  You can switch banks in this mode.  You can also push
+  capture/quant a second time to leave the mode without assigning a bookmark
+  (but you can't switch between the setting mode right now... future work).
   Assigning a bookmark returns you back to "bookmark go" mode.
 - Hold down "shift" and push "capture" to switch to bookmark deleting mode.  You
   can release "shift" once you've released "capture".  The next grid button you
