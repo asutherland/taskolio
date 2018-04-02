@@ -92,6 +92,7 @@ class BookmarkManager {
    */
   findFocusedBookmarkInCollection(coll) {
     const focusedId = this.visTracker.getFocusedContainerId();
+    const focusSlotId = this.visTracker.getFocusedFocusSlotId();
     // It's possible nothing is focused.
     if (!focusedId) {
       return null;
@@ -109,7 +110,8 @@ class BookmarkManager {
           if (found) {
             return found;
           }
-        } else if (obj.containerId === focusedId) {
+        } else if (obj.containerId === focusedId &&
+                   obj.focusSlotId === focusSlotId) {
           return obj;
         }
       }
@@ -127,7 +129,7 @@ class BookmarkManager {
 
   setBookmarkHueSat(bookmark, hue, sat) {
     bookmark.hue = hue;
-    bookmark.set = sat;
+    bookmark.sat = sat;
   }
 
   /**
