@@ -37,7 +37,7 @@ In no particular order:
 Do something like this to teach gnome-shell about your development checkout and
 where the extension lives in there:
 ```
-cd ~/.local/share/gnome-shell
+cd ~/.local/share/gnome-shell/extensions
 ln -s /PATH/TO/taskolio/gnome-shell-taskolio@visophyte.org
 ```
 
