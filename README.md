@@ -146,7 +146,142 @@ Other info:
   bookmark will get the color of the previous bookmark automatically, rather
   than a random color.
 
-# Rambling Follows #
+# Newer Rambling Follows #
+
+## Notes from Paged Bookmarking ##
+
+- The single page of bookmarks with consistent grid locations and coloring works
+  pretty well.
+- The quasi-homogeneous row of vscode instances sharing the same colors works
+  less well.  Since I only keep 3 open at a time, it works out acceptably,
+  especially since the leftmost is my consistent notes repo.
+- In general, it's a huge win for window management versus the gnome shell
+  overview UI.  Especially since I tend to keep a full-screen window on each
+  monitor, the zoomed out the windows are largely homogeneous, and the overview
+  window arrangement effectively feels random, the overview simply doesn't work
+  well for my purposes.  And the animation and its latency doesn't help.  The
+  animation is distracting, increases cognitive burden, and is simply way too
+  long even with an extension speeding things up.
+  - Alt-tab isn't much better given the large number of windows.  Something like
+    the windows taskbar would likely be best.
+  - It does beg the question of whether virtual desktops/multiple workspaces
+    would have been a better approach.  While things like mail and IRC tabs do
+    cross-cut, those arguably could have gone on their own desktops.  The bigger
+    issue is that even within a single desktop I run into scaling problems from
+    too many tabs or buffers.
+
+- Preliminary attempts to use buffer bookmarking haven't worked out all that
+  well.  The main win has been partitioning the left-right 2-column-by-4-row
+  pages for the left/right panes, but that's mainly a win just because the
+  "ctrl-x b" "edt " prefix for vscode tuples the pane/column, so that rarely
+  did what I wanted.
+  - I've tried some color mapping, but without the color mirroring happening in
+    the editor UI with persistent color-tracking or higher-level group
+    switching, it's a chore and ctrl-pgup/ctrl-pgdn buffer switching and its
+    locality works better... at least in the cases where the number of buffers
+    is low or there's good locality.
+
+- A thought exercise of using a Launchpad Pro for creating an "information
+  space" type setup seemed to have some promise.  (The 8x8 grid provides the
+  space to have a sense of geography informed by empty spaces.)  Various
+  approaches sprang to mind:
+  - Flatten the folder hierarchy into a tree.
+  - Let specific sub-trees be mapped into horizontal or vertical lines or
+    automatically arranged trees like in the previous idea.  You right-click and
+    hit send, then click to add to the grid.  Also could be used on a per-file
+    basis to allow more custom layout.
+  - With the recognition ctrl-pgup/ctrl-pgdn was still great when it didn't
+    run into scale problems, using each row of the launchpad as a different set
+    of tabs, with the arrow buttons down the right switching between these
+    banks/sets.
+- A recurring desire was to have an ability to textually label things.  An F1
+  with the scribble strips of the X-Touch extender would be amazing, for
+  example.  The "thing"-space for buffers and browser tabs is just too large and
+  which too much essential churn for colors or even information spaces to work
+  without textual context.
+  - Projector solutions were very briefly considered, but that really doesn't
+    work with the known lighting situation and I still haven't done the
+    implementation necessary for my simple musical needs.
+  - Maschine mk3 decided upon for this scenario once protocol specs were
+    discovered.  Most of the rationale versus using the Push 2 is that the
+    right half of the Maschine mk3 is very similar to the Kontrol F1, whereas
+    the Push 2 (which is wider than the mk3) has useless gunk on the right.
+    There are some other trade-offs:
+    - The Push 2 display soft-buttons above and below are RGB which is more
+      useful than the mk3's boolean white above and non-display rotary encoders
+      below the displays.  WAY more useful.
+    - The mk3 separate screens look dumb.
+    - The separate mk3 A-H RGB group buttons are useful through their physical
+      separation in a way that the Push 2's homogeneous grid can't be, although
+      it can obviously be divvied up.
+
+## Nebulous Gameplan following Paged Bookmarking ##
+
+Hierarchy.
+- Task switching.  At the furthest out level, we switch between high level
+  tasks.  We assume there will be minimal task switching and that at most we'd
+  be jumping between a small set of tasks in any given time interval.  So this
+  can involve a browse phase if we're not working from our small MRU set.
+- Sub-task switching.  Within a task, there's going to be different sub-tasks
+  or "focuses" or something.  For example, different set of text editor buffers.
+- Operating with a sub-task.  The space where ctrl-pgup/ctrl-pgdn and just
+  switching via the mouse or other easy hotkeys does stuff.
+
+(NB: This is not really a change of the original gameplan.  The idea was never
+that single-level bookmarking was the only plan.  It was just a good baby-step.)
+
+This does imply more software integration, likely with some set of:
+- Building on top of virtual desktops where that works (or is the only option).
+- Creating clients to help with the task and sub-task switching, potentially
+  with in-app UI.
+  - For Firefox, we can potentially ignore the tab-bar which means we can
+    ignore the tab hiding APIs and a lot of the corresponding fallout.
+  - For example, chunkier tab UI's that provide a greater sense of place or
+    hierarchy.  Or manual labeling of text editor files with a color/icon
+    mnemonic.
+
+One important side-goal is that client functionality not preclude standalone
+use.  Almost no one is going to buy in to all the hardware stuff.  Useful
+extensions may gain some adoption on their own.
+
+### Workflow Risks
+
+There are a lot of potential upsides to the displays and soft-buttons.  But
+labels only work if:
+- Clustering is automatic or the required interaction doesn't feel laborious.  I
+  worry about needing to manually label everything.  Using shoddy auto-labeling
+  with competent post-facto renaming or re-grouping (use a slider to pick the
+  cut point, etc.) could work.
+- Things aren't ridiculously truncated, too small to read, or too densely packed
+  to process at a glance.  The mk3 screens are 480 x 272 and 3.75" x 2.125"
+  which is not a huge amount of real estate.  The Maschine UI's concept of
+  having four soft-button pads across the top of each screen works for terse
+  verbs or nouns, but is categoryically not going to work for file names/etc.
+  - The Maschine UI's "select" behavior is an example of a sane mapping; the
+    left display shows the 4x2 A-H "group" buttons with embedded, wrapped labels
+    and the right display shows the 4x4 pad grid with embedded, wrapped labels.
+- Some additional pre-attentive mechanism is in place.
+
+### Specific Paths forward
+
+1. Keep the F1 around as a bookmarking-only mechanism, although everything will
+   live in the same process still.  The bookmarking idiom works and the
+   quant/capture distinction provides the necessary control.
+2. This leaves the Machine mk3 able to be a bit more experimental.
+3. Have the mk3 initially be modal to a specific family of clients using the
+   buttons in the upper-left with the "sampling" RGB button conveying the
+   current state.  In other words, the mk3 will not change state based on the
+   focused window changing.  The F1's "active bookmark" changes are already more
+   than a little distracting in peripheral vision; the mk3 with its displays
+   would be WAY too distracting.
+
+#### Text Editor
+
+
+
+
+
+# Older Rambling Follows #
 
 ## Problem Statement ##
 
