@@ -125,7 +125,7 @@ class VisibilityTracker {
     this.windowContainerIdToActiveFocusSlot = new Map();
 
     /**
-     * The window manager client's
+     * The window manager client's focused container.
      */
     this.focusedWindowContainerId = null;
 
@@ -462,7 +462,7 @@ class VisibilityTracker {
     }
 
     return this.windowContainerIdToActiveFocusSlot.get(
-      this.focusedWindowContainerId);
+      this.focusedWindowContainerId) || null;
   }
 
   /**
