@@ -93,8 +93,11 @@ class BookmarkManager {
   findFocusedBookmarkInCollection(coll) {
     const focusedId = this.visTracker.getFocusedContainerId();
     const focusSlotId = this.visTracker.getFocusedFocusSlotId();
+    console.log('findFocusedBookmarkInCollection: looking for',
+                 focusedId, focusSlotId);
     // It's possible nothing is focused.
     if (!focusedId) {
+      console.log('findFocusedBookmarkInCollection: nothing focused?');
       return null;
     }
 
@@ -112,11 +115,13 @@ class BookmarkManager {
           }
         } else if (obj.containerId === focusedId &&
                    obj.focusSlotId === focusSlotId) {
+          console.log('findFocusedBookmarkInCollection: found:', obj);
           return obj;
         }
       }
 
       // not found.
+      console.log('findFocusedBookmarkInCollection: no matching thing');
       return null;
     }
 
