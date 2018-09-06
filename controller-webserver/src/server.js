@@ -74,8 +74,13 @@ const run = async (port) => {
      * to browser behavior) will have an empty origin.
      */
     verifyClient(info) {
-      console.log("client origin:", info.origin);
-      return !info.origin;
+      const noOrigin = !info.origin;
+      const isFileOrigin = info.origin === 'file://';
+      const allowed = noOrigin || isFileOrigin;
+
+      console.log("client origin:", info.origin, "allowed?", allowed);
+
+      return allowed;
     }
   });
 

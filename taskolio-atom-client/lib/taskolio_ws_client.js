@@ -1,3 +1,4 @@
+'use babel';
 //const WebSocket = require('ws');
 
 /**
@@ -23,10 +24,10 @@ export default class TaskolioClient {
     this.state = 'connecting';
 
     this.ws = new WebSocket(this._settings.endpoint);
-    this.ws.on('open', this.onConnected.bind(this));
-    this.ws.on('message', this.onMessage.bind(this));
-    this.ws.on('error', this.onError.bind(this));
-    this.ws.on('close', this.onClosed.bind(this));
+    this.ws.addEventListener('open', this.onConnected.bind(this));
+    this.ws.addEventListener('message', this.onMessage.bind(this));
+    this.ws.addEventListener('error', this.onError.bind(this));
+    this.ws.addEventListener('close', this.onClosed.bind(this));
   }
 
   sendMessage(type, payload) {
@@ -47,7 +48,17 @@ export default class TaskolioClient {
   }
 
   onMessage(rawData) {
-    const data = JSON.parse(rawData);
+    rawData = rawData.data;
+    let data;
+    try {
+      data = JSON.parse(rawData);
+    } catch (ex) {
+      if (ex) {
+        console.error("problem parsing JSON:", ex);
+        console.log("JSON was:", { rawData });
+      }
+      return;
+    }
 
     const handlerName = `onMessage_${data.type}`;
 
@@ -105,5 +116,3 @@ export default class TaskolioClient {
     }
   }
 }
-
-module.exports.TaskolioClient = TaskolioClient;
