@@ -410,6 +410,17 @@ class VisibilityTracker {
    * - missing: We don't think the thing exists anymore.
    */
   checkVisibility(fullContainerId, fullFocusSlotId) {
+    // For window bookmarks, compare against the focused window id.  We don't
+    // need to check to see if the container id is a window client id or not
+    // because it's implicit that it is if it matches.
+    //
+    // Note that we don't need to check the slot id for this for a focus check.
+    // XXX but we're probably failing on the visibility check everywhere for
+    // windows?  I'm not sure we care that much...
+    if (this.focusedWindowContainerId === fullContainerId) {
+      return 'focused';
+    }
+
     if (this.focusedContainerId === fullContainerId &&
         this.getFocusedFocusSlotId() === fullFocusSlotId) {
       return 'focused';

@@ -115,6 +115,14 @@ class BookmarkMode extends BankMixin {
   onReverseButton(evt) {
     this.activity = 'set-color';
     this.pickingForBookmark =
+      this.bookmarkManager.findFocusedBookmarkInCollection(
+        this.banks, 'window');
+    this.dispatcher.pushMode(this, this.pickColorMode);
+  }
+
+  onTypeButton(evt) {
+    this.activity = 'set-color';
+    this.pickingForBookmark =
       this.bookmarkManager.findFocusedBookmarkInCollection(this.banks);
     this.dispatcher.pushMode(this, this.pickColorMode);
   }

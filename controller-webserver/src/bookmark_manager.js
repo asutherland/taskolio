@@ -89,9 +89,15 @@ class BookmarkManager {
    * changing the color of the bookmark corresponding to whatever's currently
    * focused without requiring modes to track this themselves or introduce
    * additional superflouous picker states.
+   *
+   * @param {'thing'|'window'} [granularity='thing']
+   *   Specifies if we should be dealing with window granularity or not.
    */
-  findFocusedBookmarkInCollection(coll) {
-    const focusedId = this.visTracker.getFocusedContainerId();
+  findFocusedBookmarkInCollection(coll, granularity) {
+    const useWindow = (granularity === 'window');
+    const focusedId =
+      useWindow ? this.visTracker.getFocusedWindowContainerId()
+                : this.visTracker.getFocusedContainerId();
     const focusSlotId = this.visTracker.getFocusedFocusSlotId();
     console.log('findFocusedBookmarkInCollection: looking for',
                  focusedId, focusSlotId);
@@ -114,7 +120,7 @@ class BookmarkManager {
             return found;
           }
         } else if (obj.containerId === focusedId &&
-                   obj.focusSlotId === focusSlotId) {
+                   (!obj.focusSlotId || obj.focusSlotId === focusSlotId)) {
           console.log('findFocusedBookmarkInCollection: found:', obj);
           return obj;
         }

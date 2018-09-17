@@ -15,7 +15,9 @@ click experience.)
 
 * Clients:
   * gnome-shell extension reports all your windows to the local node.js server
+  * atom extension reports document/text editors to the local node.js server.
   * vscode extension reports documents/text editors to the local node.js server.
+    * NOTE: This could encounter some bit-rot at some point as I've switched back to atom from vscode.
 * Physical Controllers:
   * Native Instruments Kontrol F1
 
@@ -115,11 +117,13 @@ Button pushing:
   can release "shift" once you've released "capture".  The next grid button you
   push will have its bookmark deleted if it had one.
 - Push "reverse" (which has "color" as its alternate, shifted label, hence the
-  button choice) to enter color picking mode for the currently focused window.
+  button choice) or "type" to enter color picking mode.  These match the
+  respective granularities of the "quant" and "capture" buttons above them.
   This means that if you set a new bookmark using "capture" and then
-  immediately hit "reverse" without messing with your mouse or keyboard, you
-  should now be setting the color of that bookmark.  This breaks if you have
-  foolishly opted to assign a single window multiple bookmarks.
+  immediately hit "type" without messing with your mouse or keyboard, you
+  should now be setting the color of that bookmark.  This works less well if you
+  have assigned a single window multiple bookmarks because only one will be
+  modified.
 
   The grid buttons will switch to displaying the HSV hue colorspace divided
   into 16 colors.  Switch banks to mess with the saturation.  (The bookmark
