@@ -76,7 +76,8 @@ const run = async (port) => {
     verifyClient(info) {
       const noOrigin = !info.origin;
       const isFileOrigin = info.origin === 'file://';
-      const allowed = noOrigin || isFileOrigin;
+      const isWebExtOrigin = info.origin && /^moz-extension:/.test(info.origin);
+      const allowed = noOrigin || isFileOrigin || isWebExtOrigin;
 
       console.log("client origin:", info.origin, "allowed?", allowed);
 

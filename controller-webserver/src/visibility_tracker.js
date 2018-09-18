@@ -187,6 +187,11 @@ class VisibilityTracker {
         track(`pid:${titleMatch[1]}`);
       }
     }
+
+    // UpperLeft rendezvous, the lookup also verifies the title.
+    if (details.frameRect) {
+      track(`upperLeft:${details.frameRect.x},${details.frameRect.y}`);
+    }
   }
 
   _lookupWindowContainerId(parentDescriptors) {
@@ -196,7 +201,11 @@ class VisibilityTracker {
 
     // For now we'll go with logic that the "last" descriptor wins.  If we get
     // fancier we can go with a CSS style longest/most-specific wins.
+
     let match = null;
+    // A match-check where there has to be only one window registered to match.
+    // Necessary for cases like PID mapping where gnome-shell can't do it on
+    // its own.
     const check = (key) => {
       const hitSet = this.windowContainerIdLookup.get(key);
       if (hitSet) {
@@ -211,9 +220,38 @@ class VisibilityTracker {
       }
     }
 
+    // A match check that does initial lookup expecting multiple matches.  The
+    // set is then examined for secondary equivalency checks against the known
+    // meta-info for the window.
+    const checkMulti = (lookupKey, checkKey, checkValue) => {
+      const hitSet = this.windowContainerIdLookup.get(lookupKey);
+      if (hitSet) {
+        console.log('tracker: multi-lookup resolved', lookupKey,
+                    'to hit set of', hitSet.size);
+        for (const containerId of hitSet) {
+          // Look-up the most recent thingExists report for this window.
+          const winMeta = this.containersByFullId.get(containerId);
+          if (winMeta[checkKey] === checkValue) {
+            match = containerId;
+            console.log('  containerId', containerId, 'matched on', checkKey,
+                        '=', checkValue);
+          } else {
+            console.log('  failed containerId match', containerId, 'on',
+                        checkKey, 'had:', winMeta[checkKey], 'wanted:',
+                        checkValue);
+          }
+        }
+      }
+    };
+
     for (const descriptor of parentDescriptors) {
       if (descriptor.pid) {
         check(`pid:${descriptor.pid}`);
+      }
+      if (descriptor.bounds && descriptor.title) {
+        const bounds = descriptor.bounds;
+        checkMulti(`upperLeft:${bounds.left},${bounds.top}`,
+                   'title', descriptor.title);
       }
     }
 

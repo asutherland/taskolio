@@ -102,6 +102,7 @@ class BookmarkMode extends BankMixin {
       this.curBank[index] = null;
       this._saveBookmarks(this.banks);
     } else if (this.pickingForBookmark) {
+      console.log("Setting bookmark", JSON.stringify(this.pickingForBookmark));
       const oldBookmark = this.curBank[index];
       this.curBank[index] =
         this.bookmarkManager.maybeMergeBookmarks(

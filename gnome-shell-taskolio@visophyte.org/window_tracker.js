@@ -50,6 +50,8 @@ function extractWindowDetails(win, id) {
   let tracker = Shell.WindowTracker.get_default();
   let app = tracker.get_window_app(win) || MISSING_APP;
 
+  let bounds = win.get_frame_rect();
+
   return {
     id,
     // raw window manager strings
@@ -78,6 +80,13 @@ function extractWindowDetails(win, id) {
     // cases like "-P profilename" for Firefox.  Or alternately, we could
     // perhaps sniff /proc/PID to locate the directories the app seems to be
     // using for profile storage, etc.
+
+    frameRect: {
+      x: bounds.x,
+      y: bounds.y,
+      width: bounds.width,
+      height: bounds.height
+    }
   };
 }
 

@@ -1,12 +1,9 @@
-'use babel';
-//const WebSocket = require('ws');
-
 /**
- * The gnome-shell TaskolioClient ported over to ES6-supporting node.js and the
- * "ws" module from the weird gjs Lang.Class mechanism and libsoup for
- * WebSockets.  I'm maintaining the same event-handling idiom used there rather
- * than going node.js EventEmitter.
- */
+ * This file is most recently cloned from taskolio-atom-client, which in turn
+ * derived it from taskolio-vscode-client which in turn was derived from the
+ * gnome-shell client.
+ **/
+
 export default class TaskolioClient {
   constructor(settings) {
     this._settings = settings;

@@ -1,0 +1,18 @@
+{
+  "manifest_version": 2,
+  "name": "Taskolio Webextension",
+  "version": "0.1",
+
+  "description": "Taskolio Browser Integration",
+
+  "icons": {
+    "48": "icons/taskolio-48.png"
+  },
+
+  "background": {
+    "page": "background/index.html"
+  },
+  "permissions": [
+    "tabs"
+  ]
+}
