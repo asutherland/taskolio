@@ -3,6 +3,7 @@
     "configstore": "^3.1.1",
     "node-traktor-f1": "github:asutherland/node-traktor-f1#904c2675ccd3c3fbdddea520bd6c40415468078c",
     "tinycolor2": "^1.4.1",
+    "usb": "^1.3.3",
     "web-midi-api": "^1.4.4",
     "ws": "^5.0.0"
   }
