@@ -16,6 +16,10 @@ click experience.)
 * Clients:
   * gnome-shell extension reports all your windows to the local node.js server
   * atom extension reports document/text editors to the local node.js server.
+  * Basic WebExtension, works on Firefox directly using the tabs API.  Doesn't
+    work on Google Chrome because it does not implement the "browser" namespace.
+    I presume I can address this at some point with a polyfill.  (I don't
+    want to deal with the callback-based API...)
   * vscode extension reports documents/text editors to the local node.js server.
     * NOTE: This could encounter some bit-rot at some point as I've switched back to atom from vscode.
 * Physical Controllers:

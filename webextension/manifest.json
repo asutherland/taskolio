@@ -5,6 +5,17 @@
 
   "description": "Taskolio Browser Integration",
 
+  "applications": {
+    "gecko": {
+      "id": "taskolio@visophyte.org"
+    }
+  },
+
+  "developer": {
+    "name": "Andrew Sutherland",
+    "url": "https://github.com/asutherland/taskolio"
+  },
+
   "icons": {
     "48": "icons/taskolio-48.png"
   },
