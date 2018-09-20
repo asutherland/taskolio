@@ -231,6 +231,11 @@ class VisibilityTracker {
         for (const containerId of hitSet) {
           // Look-up the most recent thingExists report for this window.
           const winMeta = this.containersByFullId.get(containerId);
+          if (!winMeta) {
+            // TODO: we absolutely need the container id purging logic now.
+            console.warn("XXX we failed to purge the container lookup info");
+            continue;
+          }
           if (winMeta[checkKey] === checkValue) {
             match = containerId;
             console.log('  containerId', containerId, 'matched on', checkKey,
