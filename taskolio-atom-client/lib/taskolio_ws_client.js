@@ -31,7 +31,7 @@ export default class TaskolioClient {
   }
 
   sendMessage(type, payload) {
-    if (!this.ws) {
+    if (!this.ws || this.state !== 'connected') {
       return;
     }
 

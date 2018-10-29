@@ -29,6 +29,8 @@ const ExtCore = {
 
     const windows = await browser.windows.getAll({ windowTypes: ["normal"] });
 
+    const pxRatio = window.devicePixelRatio;
+
     const focusSlots = windows.map((win, iWin) => {
       return {
         // It might be better to use sessionId if available... it's not clear
@@ -44,11 +46,12 @@ const ExtCore = {
           {
             title: win.title,
             bounds: {
-              left: win.left,
-              top: win.top,
-              width: win.width,
-              height: win.height
-            }
+              left: win.left * pxRatio,
+              top: win.top * pxRatio,
+              width: win.width * pxRatio,
+              height: win.height * pxRatio
+            },
+            devicePixelRatio: pxRatio
           }
         ]
       };

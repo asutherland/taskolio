@@ -17,6 +17,32 @@ function reverseMapLookup(map, findValue) {
 }
 
 /**
+ * Quantize numeric values for pixel coordinates that may have been rounded due
+ * to DPI scaling.
+ */
+function quantizePixels(x) {
+  return x - x%2;
+}
+
+function quantizeBounds(bounds) {
+  return {
+    left: quantizePixels(bounds.left),
+    top: quantizePixels(bounds.top),
+    width: quantizePixels(bounds.width),
+    height: quantizePixels(bounds.height)
+  };
+}
+
+function quantizeFrameRect(bounds) {
+  return {
+    x: quantizePixels(bounds.x),
+    y: quantizePixels(bounds.y),
+    width: quantizePixels(bounds.width),
+    height: quantizePixels(bounds.height)
+  };
+}
+
+/**
  * MRU-List helper.  Ensures that recentThing is at the head of the list and
  * exists at most once in the list.  Reversing the ordering to have the new
  * thing at the tail would be more efficient for a naive Array implementation,
@@ -190,7 +216,8 @@ class VisibilityTracker {
 
     // UpperLeft rendezvous, the lookup also verifies the title.
     if (details.frameRect) {
-      track(`upperLeft:${details.frameRect.x},${details.frameRect.y}`);
+      const frameRect = quantizeFrameRect(details.frameRect);
+      track(`upperLeft:${frameRect.x},${frameRect.y}`);
     }
   }
 
@@ -224,6 +251,7 @@ class VisibilityTracker {
     // set is then examined for secondary equivalency checks against the known
     // meta-info for the window.
     const checkMulti = (lookupKey, checkKey, checkValue) => {
+      console.log("checking", lookupKey);
       const hitSet = this.windowContainerIdLookup.get(lookupKey);
       if (hitSet) {
         console.log('tracker: multi-lookup resolved', lookupKey,
@@ -233,10 +261,10 @@ class VisibilityTracker {
           const winMeta = this.containersByFullId.get(containerId);
           if (!winMeta) {
             // TODO: we absolutely need the container id purging logic now.
-            console.warn("XXX we failed to purge the container lookup info");
+            console.log('no winMeta for containerId', containerId);
             continue;
           }
-          if (winMeta[checkKey] === checkValue) {
+          if (checkKey in winMeta && winMeta[checkKey] === checkValue) {
             match = containerId;
             console.log('  containerId', containerId, 'matched on', checkKey,
                         '=', checkValue);
@@ -250,11 +278,12 @@ class VisibilityTracker {
     };
 
     for (const descriptor of parentDescriptors) {
+      console.log('  investigating descriptor', descriptor);
       if (descriptor.pid) {
         check(`pid:${descriptor.pid}`);
       }
       if (descriptor.bounds && descriptor.title) {
-        const bounds = descriptor.bounds;
+        const bounds = quantizeBounds(descriptor.bounds);
         checkMulti(`upperLeft:${bounds.left},${bounds.top}`,
                    'title', descriptor.title);
       }
