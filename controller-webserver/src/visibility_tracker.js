@@ -259,7 +259,11 @@ class VisibilityTracker {
         for (const containerId of hitSet) {
           // Look-up the most recent thingExists report for this window.
           const winMeta = this.containersByFullId.get(containerId);
-          if (winMeta[checkKey] === checkValue) {
+          if (!winMeta) {
+            console.log('no winMeta for containerId', containerId);
+            continue;
+          }
+          if (checkKey in winMeta && winMeta[checkKey] === checkValue) {
             match = containerId;
             console.log('  containerId', containerId, 'matched on', checkKey,
                         '=', checkValue);
