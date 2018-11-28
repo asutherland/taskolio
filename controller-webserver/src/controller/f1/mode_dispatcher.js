@@ -39,7 +39,7 @@ class ModeDispatcher {
       "computeSizeLED",
       "computeBrowseLED",
       // - event handling methods
-      // things we got multiples off
+      // things we got multiples of
       "onGridButton",
       "onBankButton",
       "onKnobTurned",
@@ -174,7 +174,7 @@ class ModeDispatcher {
       shift: this.computeShiftLED(stt),
       reverse: this.computeReverseLED(stt),
       type: this.computeTypeLED(stt),
-      size: this.computeTypeLED(stt),
+      size: this.computeSizeLED(stt),
     };
   }
 

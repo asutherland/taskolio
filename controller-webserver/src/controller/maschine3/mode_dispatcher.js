@@ -26,22 +26,63 @@ class ModeDispatcher {
     const boundMethods = [
       // the high level display computation methods
       "computeGridColors",
-      "computeBankLEDs",
+      "computeGroupColors",
+      "computeTouchStripColors",
+      "computeDisplayLEDs",
       "computeLabeledLEDs",
+      "computeIndexedLabeledLEDs",
       // Our base_computeLabeledLEDs method is actually based on spreading over
       // all of these:
-      "computeSyncLED",
-      "computeQuantLED",
-      "computeCaptureLED",
+      "computeChannelMidiLED",
+      "computePluginInstanceLED",
+      "computeArrangerLED",
+      "computeBrowserPluginLED",
+      "computeArrowLeftLED",
+      "computeArrowRightLED",
+      "computeFileSaveAsLED",
+      "computeSettingsLED",
+      "computeAutoLED",
+      "computeMacroSetLED",
+      "computeVolumeLED",
+      "computeSwingLED",
+      "computeNoteRepeatArpLED",
+      "computeTempoLED",
+      "computeLockLED",
+      "computePitchLED",
+      "computeModLED",
+      "computePerformFxSelectLED",
+      "computeNotesLED",
+      "computeRestartLoopLED",
+      "computeEraseReplaceLED",
+      "computeTapMetroLED",
+      "computeFollowGridLED",
+      "computePlayLED",
+      "computeRecCountInLED",
+      "computeStopLED",
       "computeShiftLED",
-      "computeReverseLED",
-      "computeTypeLED",
-      "computeSizeLED",
-      "computeBrowseLED",
+      "computeFixedVelLED",
+      "computePadModeLED",
+      "computeKeyboardLED",
+      "computeChordsLED",
+      "computeStepLED",
+      "computeSceneLED",
+      "computePatternLED",
+      "computeEventsLED",
+      "computeVariationNavigateLED",
+      "computeDuplicateDoubleLED",
+      "computeSelectLED",
+      "computeSoloLED",
+      "computeMuteChokeLED",
+      // And then we have base_computeIndexedLabeledLEDs is over these...
+      "computeSamplerLED",
+      "computeNavUpLED",
+      "computeNavLeftLED",
+      "computeNavRightLED",
+      "computeNavDownLED",
       // - event handling methods
-      // things we got multiples off
+      // things we got multiples of
       "onGridButton",
-      "onBankButton",
+      "onDisplayButton",
       "onKnobTurned",
       "onSliderMoved",
       // stepper
@@ -157,24 +198,80 @@ class ModeDispatcher {
   }
 
   base_computeGridColors(stt) {
-    // The driver knows to map this to an all-black grid.
+    // The driver knows to map this to an all-black 4x4 grid.
     return null;
   }
 
-  base_computeBankLEDs(stt) {
+  base_computeGroupColors(stt) {
+    // The driver knows to map this to an all-black 4x2 grid.
+    return null;
+  }
+
+  base_computeTouchStripColors(stt) {
+    // The driver knows to map this to all 25 LEDs being black.
+    return null;
+  }
+
+  base_computeDisplayLEDs(stt) {
     return [0, 0, 0, 0, 0, 0, 0, 0];
   }
 
   base_computeLabeledLEDs(stt) {
     return {
-      browse: this.computeBrowseLED(stt),
-      sync: this.computeSyncLED(stt),
-      quant: this.computeQuantLED(stt),
-      capture: this.computeCaptureLED(stt),
+      channelMidi: this.computeChannelMidiLED(stt),
+      pluginInstance: this.computePluginInstanceLED(stt),
+      arranger: this.computeArrangerLED(stt),
+      browserPlugin: this.computeBrowserPluginLED(stt),
+
+      arrowLeft: this.computeArrowLeftLED(stt),
+      arrowRight: this.computeArrowRightLED(stt),
+      fileSaveAs: this.computeFileSaveAsLED(stt),
+      settings: this.computeSettingsLED(stt),
+      auto: this.computeAutoLED(stt),
+      macroSet: this.computeMacroSetLED(stt),
+      // d1-d8
+      volume: this.computeVolumeLED(stt),
+      swing: this.computeSwingLED(stt),
+      noteRepeatArp: this.computeNoteRepeatArpLED(stt),
+      tempo: this.computeTempoLED(stt),
+      lock: this.computeLockLED(stt),
+      pitch: this.computePitchLED(stt),
+      mod: this.computeModLED(stt),
+      performFxSelect: this.computePerformFxSelectLED(stt),
+      notes: this.computeNotesLED(stt),
+
+      restartLoop: this.computeRestartLoopLED(stt),
+      eraseReplace: this.computeEraseReplaceLED(stt),
+      tapMetro: this.computeTapMetroLED(stt),
+      followGrid: this.computeFollowGridLED(stt),
+      play: this.computePlayLED(stt),
+      recCountIn: this.computeRecCountInLED(stt),
+      stop: this.computeStopLED(stt),
       shift: this.computeShiftLED(stt),
-      reverse: this.computeReverseLED(stt),
-      type: this.computeTypeLED(stt),
-      size: this.computeTypeLED(stt),
+      fixedVel: this.computeFixedVelLED(stt),
+      padMode: this.computePadModeLED(stt),
+      keyboard: this.computeKeyboardLED(stt),
+      chords: this.computeChordsLED(stt),
+      step: this.computeStepLED(stt),
+      scene: this.computeSceneLED(stt),
+      pattern: this.computePatternLED(stt),
+      events: this.computeEventsLED(stt),
+      variationNavigate: this.computeVariationNavigateLED(stt),
+      duplicateDouble: this.computeDuplicateDoubleLED(stt),
+      select: this.computeSelectLED(stt),
+      solo: this.computeSoloLED(stt),
+      muteChoke: this.computeMuteChokeLED(stt),
+    };
+  }
+
+  base_computeIndexedLabeledLEDs(stt) {
+    return {
+      sampler: this.computeSamplerLED(stt),
+
+      navUp: this.computeNavUpLED(stt),
+      navLeft: this.computeNavLeftLED(stt),
+      navRight: this.computeNavRightLED(stt),
+      navDown: this.computeNavDownLED(stt),
     };
   }
 

@@ -1,11 +1,19 @@
 "use strict";
 
-const traktorF1 = require("node-traktor-f1");
+const Mk3 = require("node-traktor-f1/lib/maschine_mk3");
 
-const COLOR_BLACK = [0, 0, 0];
+const COLOR_BLACK = 0;
 const BLANK_ROW = [COLOR_BLACK, COLOR_BLACK, COLOR_BLACK, COLOR_BLACK];
 const BLANK_GRID = [...BLANK_ROW, ...BLANK_ROW, ...BLANK_ROW, ...BLANK_ROW];
+const BLANK_GROUPS = [COLOR_BLACK, COLOR_BLACK, COLOR_BLACK, COLOR_BLACK,
+                      COLOR_BLACK, COLOR_BLACK, COLOR_BLACK, COLOR_BLACK];
 const BLANK_BANKS = [0, 0, 0, 0, 0, 0, 0, 0];
+const BLANK_TOUCHSTRIP = [];
+{
+  for (let i=0; i < 25; i++) {
+    BLANK_TOUCHSTRIP.push(COLOR_BLACK);
+  }
+}
 
 /**
  * Abstracts interaction with the actual Kontrol F1 hardware using the
@@ -19,7 +27,7 @@ const BLANK_BANKS = [0, 0, 0, 0, 0, 0, 0, 0];
  */
 class ControllerDriver {
   constructor({ dispatcher }) {
-    this.controller = new traktorF1.TraktorF1();
+    this.controller = new Mk3();
     this.dispatcher = dispatcher;
 
     this.buttonStates = {};
@@ -44,25 +52,41 @@ class ControllerDriver {
     // -- Grid
     const gridColors = this.dispatcher.computeGridColors(stt) || BLANK_GRID;
     for (let iGrid = 0; iGrid < 16; iGrid++) {
-      const rgb = gridColors[iGrid];
-      ctrl.setRGB(`p${ iGrid + 1}`, rgb[0], rgb[1], rgb[2]);
+      const index = gridColors[iGrid];
+      ctrl.setIndexedColor(`p${ iGrid + 1}`, index);
     }
 
-    // -- Banks
-    const bankLEDs = this.dispatcher.computeBankLEDs(stt) || BLANK_BANKS;
-    for (let iBank = 0; iBank < 4; iBank++) {
-      ctrl.setLED(`l${iBank + 1}_l`, bankLEDs[iBank * 2]);
-      ctrl.setLED(`l${iBank + 1}_r`, bankLEDs[iBank * 2 + 1]);
+    // -- Group
+    const groupColors = this.dispatcher.computeGroupColors(stt) || BLANK_GROUPS;
+    for (let iGroup = 0; iGroup < 8; iGroup++) {
+      const index = groupColors[iGroup];
+      ctrl.setIndexedColor(`g${ iGroup + 1}`, index);
     }
 
-    // -- Labeled LEDs
+    // -- Touch Strip
+    const tsColors = this.dispatcher.computeTouchStripColors(stt) || BLANK_TOUCHSTRIP;
+    for (let iTS = 0; iTS < 8; iTS++) {
+      const index = tsColors[iTS];
+      ctrl.setIndexedColor(`ts${ iTS + 1}`, index);
+    }
+
+    // -- Display Buttons
+    const displayLEDs = this.dispatcher.computeDisplayLEDs(stt) || BLANK_BANKS;
+    for (let iDisplay = 0; iDisplay < 4; iDisplay++) {
+      ctrl.setWhiteBrightness(`d${iDisplay + 1}`, displayLEDs[iDisplay]);
+    }
+
+    // -- Labeled LEDs (monocolor, usually white)
     const labeledLEDs = this.dispatcher.computeLabeledLEDs(stt);
     for (let [key, value] of Object.entries(labeledLEDs)) {
-      ctrl.setLED(key, value ? 1 : 0);
+      ctrl.setWhiteBrightness(key, value);
     }
 
-    // -- LCD display
-    ctrl.setLCDString(this.dispatcher.topModeShortLabel);
+    // -- Indexed Labeled LEDs
+    const indexedLEDs = this.dispatcher.computeIndexedLabeledLEDs(stt);
+    for (let [key, value] of Object.entries(labeledLEDs)) {
+      ctrl.setIndexedColor(key, value);
+    }
   }
 
   /**
@@ -117,8 +141,14 @@ class ControllerDriver {
       if (/^p\d+$/.test(name)) {
         methodName = "onGridButton";
         index = parseInt(name.slice(1), 10) - 1;
+      } else if (/^g\d+$/.test(name)) {
+        methodName = "onGroupButton";
+        index = parseInt(name.slice(1), 10) - 1;
       } else if (/^l\d+$/.test(name)) {
-        methodName = "onBankButton";
+        methodName = "onDisplayButton";
+        index = parseInt(name.slice(1), 10) - 1;
+      } else if (/^knobTouch\d+$/.test(name)) {
+        methodName = "onKnobTouch";
         index = parseInt(name.slice(1), 10) - 1;
       } else {
         methodName = `on${initialCap}Button`;

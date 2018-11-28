@@ -167,7 +167,8 @@ const ExtCore = {
           rootPid: null,
           uniqueId,
           // We're maybe persistent.  Let's see.
-          persistence: true
+          persistence: true,
+          capabilities: ['renderHtml'],
         });
 
         // report our focus slots inventory (synchronously), also sending a

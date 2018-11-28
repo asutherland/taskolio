@@ -9,9 +9,9 @@ const { BrainBoss } = require("./brain/boss");
 const { VisibilityTracker } = require("./visibility_tracker");
 const { BookmarkManager } = require("./bookmark_manager");
 
-const { ControllerDriver } = require("./controller/f1/controller_driver");
-const { ModeDispatcher } = require("./controller/f1/mode_dispatcher");
-const { BookmarkMode } = require("./controller/f1/modes/bookmark_mode");
+const { ControllerDriver } = require("./controller/maschine3/controller_driver");
+const { ModeDispatcher } = require("./controller/maschine3/mode_dispatcher");
+const { BookmarkMode } = require("./controller/maschine3/modes/bookmark_mode");
 
 let gBookmarkManager;
 let gBrainBoss;
@@ -21,7 +21,7 @@ let gDispatcher;
 let gVisibilityTracker;
 
 function makeDefaultConfigController() {
-  const configstore = new Configstore("taskolio");
+  const configstore = new Configstore("taskolio-maschine3");
 
   const brainBoss = new BrainBoss();
 
