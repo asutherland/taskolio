@@ -1,19 +1,13 @@
 "use strict";
 
-const Mk3 = require("node-traktor-f1/lib/maschine_mk3");
+const D2 = require("node-traktor-f1/lib/traktor_d2");
 
-const COLOR_BLACK = 0;
+const COLOR_BLACK = [0, 0, 0];
 const BLANK_ROW = [COLOR_BLACK, COLOR_BLACK, COLOR_BLACK, COLOR_BLACK];
-const BLANK_GRID = [...BLANK_ROW, ...BLANK_ROW, ...BLANK_ROW, ...BLANK_ROW];
-const BLANK_GROUPS = [COLOR_BLACK, COLOR_BLACK, COLOR_BLACK, COLOR_BLACK,
-                      COLOR_BLACK, COLOR_BLACK, COLOR_BLACK, COLOR_BLACK];
+const BLANK_GRID = [...BLANK_ROW, ...BLANK_ROW];
 const BLANK_BANKS = [0, 0, 0, 0, 0, 0, 0, 0];
-const BLANK_TOUCHSTRIP = [];
-{
-  for (let i=0; i < 25; i++) {
-    BLANK_TOUCHSTRIP.push(COLOR_BLACK);
-  }
-}
+
+const BLANK_DISPLAY = [0, 0, 0, 0, 0, 0, 0, 0];
 
 /**
  * Abstracts interaction with the actual Kontrol F1 hardware using the
@@ -27,7 +21,7 @@ const BLANK_TOUCHSTRIP = [];
  */
 class ControllerDriver {
   constructor({ dispatcher }) {
-    this.controller = new Mk3();
+    this.controller = new D2();
     this.dispatcher = dispatcher;
 
     this.buttonStates = {};
@@ -52,40 +46,42 @@ class ControllerDriver {
     // -- Grid
     const gridColors = this.dispatcher.computeGridColors(stt) || BLANK_GRID;
     for (let iGrid = 0; iGrid < 16; iGrid++) {
-      const index = gridColors[iGrid];
-      ctrl.setIndexedColor(`p${ iGrid + 1}`, index);
+      const rgb = gridColors[iGrid];
+      ctrl.setRGB(`p${ iGrid + 1}`, rgb[0], rgb[1], rgb[2]);
     }
 
-    // -- Group
-    const groupColors = this.dispatcher.computeGroupColors(stt) || BLANK_GROUPS;
-    for (let iGroup = 0; iGroup < 8; iGroup++) {
-      const index = groupColors[iGroup];
-      ctrl.setIndexedColor(`g${ iGroup + 1}`, index);
+    // -- Banks
+    const bankLEDs = this.dispatcher.computeBankLEDs(stt) || BLANK_BANKS;
+    ctrl.setLED('shift', bankLEDs[0]);
+    ctrl.setLED('syncGreen', bankLEDs[1]);
+    ctrl.setLED('cue', bankLEDs[2]);
+    ctrl.setLED('play', bankLEDs[3]);
+
+    // -- Display Buttons
+    const displayLEDs = this.dispatcher.computeDisplayLEDs(stt) || BLANK_DISPLAY;
+    for (let iDisplay = 0; iDisplay < 8; iDisplay++) {
+      ctrl.setLED(`d${iDisplay + 1}`, displayLEDs[iDisplay]);
+    }
+    const displaySideLEDs = this.dispatcher.computeDisplaySideLEDs(stt) || BLANK_DISPLAY;
+    for (let iDisplay = 0; iDisplay < 4; iDisplay++) {
+      ctrl.setLED(`dl${iDisplay + 1}`, displaySideLEDs[iDisplay]);
+    }
+    for (let iDisplay = 4; iDisplay < 8; iDisplay++) {
+      ctrl.setLED(`dr${iDisplay + 1}`, displaySideLEDs[iDisplay]);
     }
 
     // -- Touch Strip
     const tsColors = this.dispatcher.computeTouchStripColors(stt) || BLANK_TOUCHSTRIP;
     for (let iTS = 0; iTS < 25; iTS++) {
-      const index = tsColors[iTS];
-      ctrl.setIndexedColor(`ts${ iTS + 1}`, index);
+      const [blue, orange] = tsColors[iTS];
+      ctrl.setLED(`tsb${ iTS + 1}`, blue);
+      ctrl.setLED(`tso${ iTS + 1}`, orange);
     }
 
-    // -- Display Buttons
-    const displayLEDs = this.dispatcher.computeDisplayLEDs(stt) || BLANK_BANKS;
-    for (let iDisplay = 0; iDisplay < 4; iDisplay++) {
-      ctrl.setLED(`d${iDisplay + 1}`, displayLEDs[iDisplay]);
-    }
-
-    // -- Labeled LEDs (monocolor, usually white)
+    // -- Labeled LEDs
     const labeledLEDs = this.dispatcher.computeLabeledLEDs(stt);
     for (let [key, value] of Object.entries(labeledLEDs)) {
-      ctrl.setLED(key, value);
-    }
-
-    // -- Indexed Labeled LEDs
-    const indexedLEDs = this.dispatcher.computeIndexedLabeledLEDs(stt);
-    for (let [key, value] of Object.entries(indexedLEDs)) {
-      ctrl.setIndexedColor(key, value);
+      ctrl.setLED(key, value ? 1 : 0);
     }
   }
 
@@ -141,14 +137,8 @@ class ControllerDriver {
       if (/^p\d+$/.test(name)) {
         methodName = "onGridButton";
         index = parseInt(name.slice(1), 10) - 1;
-      } else if (/^g\d+$/.test(name)) {
-        methodName = "onGroupButton";
-        index = parseInt(name.slice(1), 10) - 1;
       } else if (/^l\d+$/.test(name)) {
-        methodName = "onDisplayButton";
-        index = parseInt(name.slice(1), 10) - 1;
-      } else if (/^knobTouch\d+$/.test(name)) {
-        methodName = "onKnobTouch";
+        methodName = "onBankButton";
         index = parseInt(name.slice(1), 10) - 1;
       } else {
         methodName = `on${initialCap}Button`;

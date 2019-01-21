@@ -33,11 +33,11 @@ class ColorPickerMode extends BankMixin {
    * Bookmark mode uses reverse (shift=color) to get to us, so provide the same
    * button as an escape hatch.
    */
-  onReverseButton(evt) {
+  onLoopButton(evt) {
     this.caller.dispatcher.popMode(this);
   }
 
-  onTypeButton(evt) {
+  onRemixButton(evt) {
     this.caller.dispatcher.popMode(this);
   }
 
