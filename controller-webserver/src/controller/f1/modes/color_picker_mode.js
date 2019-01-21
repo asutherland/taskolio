@@ -1,4 +1,3 @@
-
 const { BankMixin, NUM_BANKS, GRID_ROWS, GRID_COLS, GRID_CELLS } =
   require("./bank_mixin");
 

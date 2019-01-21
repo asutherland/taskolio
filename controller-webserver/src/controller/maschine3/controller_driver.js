@@ -164,6 +164,13 @@ class ControllerDriver {
       this.controller.on(`${name}:released`, () => {
         this.buttonStates[name] = 0;
         const evt = this._makeButtonEvent(name, index);
+
+        console.log('attempting dispatch of', name);
+
+        if (!(methodName in this.dispatcher)) {
+          console.error('no handler for:', methodName);
+          return;
+        }
         this.dispatcher[methodName](evt);
         this.updateLEDs();
       });

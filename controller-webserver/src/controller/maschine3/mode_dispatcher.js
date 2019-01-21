@@ -137,7 +137,7 @@ class ModeDispatcher {
       let fallback;
       if (unboundFallback) {
         fallback = unboundFallback.bind(this);
-      }  else if (/LED$/.test(methodName)) {
+      } else if (/LED$/.test(methodName)) {
         fallback = barelyIlluminateLED;
       } else {
         fallback = nop;
