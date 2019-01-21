@@ -13,6 +13,8 @@ const { ControllerDriver } = require("./controller/maschine3/controller_driver")
 const { ModeDispatcher } = require("./controller/maschine3/mode_dispatcher");
 const { BookmarkMode } = require("./controller/maschine3/modes/bookmark_mode");
 
+const { ColorHelper } = require("./indexed_color_helper");
+
 let gBookmarkManager;
 let gBrainBoss;
 let gConfigstore;
@@ -20,15 +22,23 @@ let gControllerDriver;
 let gDispatcher;
 let gVisibilityTracker;
 
+const CONFIG_VERSION = 1;
+
 function makeDefaultConfigController() {
   const configstore = new Configstore("taskolio-maschine3");
+
+  if (configstore.get('version') !== CONFIG_VERSION) {
+    configstore.clear();
+    configstore.set('version', CONFIG_VERSION);
+  }
 
   const brainBoss = new BrainBoss();
 
   const visibilityTracker = new VisibilityTracker();
   const bookmarkManager = new BookmarkManager({
     brainBoss,
-    visibilityTracker
+    visibilityTracker,
+    colorHelper: ColorHelper
   });
 
   const dispatcher = new ModeDispatcher();

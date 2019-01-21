@@ -9,19 +9,18 @@ const NO_BOOKMARK_RGB = [0, 0, 0];
  * in the `VisibilityTracker`.
  */
 class BookmarkManager {
-  constructor({ visibilityTracker, brainBoss }) {
+  constructor({ visibilityTracker, brainBoss, colorHelper }) {
     this.visTracker = visibilityTracker;
     this.brainBoss = brainBoss;
+    this.colorHelper = colorHelper;
   }
 
   // helper for our bookmark minters
   _makeBookmark(containerId, focusSlotId) {
-
     return {
       containerId,
       focusSlotId,
-      hue: 360 * Math.random(),
-      sat: 1.0,
+      color: this.colorHelper.makeRandomColor()
     };
   }
 
@@ -77,8 +76,7 @@ class BookmarkManager {
       return newBookmark;
     }
 
-    newBookmark.hue = oldBookmark.hue;
-    newBookmark.sat = oldBookmark.sat;
+    newBookmark.color = oldBookmark.color;
 
     return newBookmark;
   }
@@ -138,9 +136,8 @@ class BookmarkManager {
     }
   }
 
-  setBookmarkHueSat(bookmark, hue, sat) {
-    bookmark.hue = hue;
-    bookmark.sat = sat;
+  setBookmarkColor(bookmark, color) {
+    bookmark.color = color;
   }
 
   /**
@@ -196,42 +193,16 @@ class BookmarkManager {
    * If `null` is passed-in, NO_BOOKMARK_RGB will be returned, which is
    * currently black, but I guess could change in the future.
    */
-  computeRGBColorForBookmark(bookmark, brightnessScale) {
+  computeColorForBookmark(bookmark, brightnessScale) {
     if (!bookmark) {
-      return NO_BOOKMARK_RGB;
+      return this.colorHelper.computeEmptyDisplayColor();
     }
 
     const visResult = this.visTracker.checkVisibility(
       bookmark.containerId, bookmark.focusSlotId);
 
-    // uh, we rea
-    let brightness;
-    switch (visResult) {
-      case 'focused':
-        brightness = 1.0;
-        break
-      case 'visible':
-        brightness = 0.8;
-        break;
-      case 'hidden':
-        brightness = 0.5;
-        break;
-      case 'missing':
-        brightness = 0.2;
-        break;
-      default:
-        throw new Error("unknown visibility: " + visResult);
-    }
-
-    brightness *= brightnessScale;
-
-    const color = tinycolor({ h: bookmark.hue, s: bookmark.sat, v: brightness });
-    const { r, g, b } = color.toRgb();
-    return [r, g, b];
-  }
-
-  computeIndexedColorForBookmark(bookmark, brightnessScale) {
-
+    return this.colorHelper.computeBookmarkDisplayColor(
+      bookmark.color, visResult, brightnessScale);
   }
 }
 

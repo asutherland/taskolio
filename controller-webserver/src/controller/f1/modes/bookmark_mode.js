@@ -128,10 +128,10 @@ class BookmarkMode extends BankMixin {
     this.dispatcher.pushMode(this, this.pickColorMode);
   }
 
-  onColorPicked(hue, sat) {
+  onColorPicked(wrappedColor) {
     if (this.pickingForBookmark) {
-      this.bookmarkManager.setBookmarkHueSat(
-        this.pickingForBookmark, hue, sat);
+      this.bookmarkManager.setBookmarkColor(
+        this.pickingForBookmark, wrappedColor);
       this.pickingForBookmark = null;
       this._saveBookmarks(this.banks);
     }
@@ -150,7 +150,7 @@ class BookmarkMode extends BankMixin {
 
   _internalComputeGridColors(scaleLightness) {
     return this.curBank.map((cell) => {
-      return this.bookmarkManager.computeRGBColorForBookmark(
+      return this.bookmarkManager.computeColorForBookmark(
         cell, scaleLightness);
     });
   }

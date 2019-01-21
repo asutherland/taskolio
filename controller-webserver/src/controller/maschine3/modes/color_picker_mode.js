@@ -2,6 +2,8 @@ const tinycolor = require("tinycolor2");
 const { BankMixin, NUM_BANKS, GRID_ROWS, GRID_COLS, GRID_CELLS } =
   require("./bank_mixin");
 
+const { ColorHelper } = require('../../../indexed_color_helper');
+
 /**
  * Banked color picker.  Uses BankMixin to pre-compute the hue/sat/rgb values at
  * creation time, which should make this easier to move to a palette-based
@@ -12,6 +14,9 @@ class ColorPickerMode extends BankMixin {
   constructor({ caller }) {
     super({
       computeCellValue(iBank, iCell, iRow, iCol) {
+
+
+
         const sat = 1 - (iBank / 5);
         const hue = 360 * (iCell / 16);
 
