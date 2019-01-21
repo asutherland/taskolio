@@ -65,7 +65,7 @@ class ControllerDriver {
 
     // -- Touch Strip
     const tsColors = this.dispatcher.computeTouchStripColors(stt) || BLANK_TOUCHSTRIP;
-    for (let iTS = 0; iTS < 8; iTS++) {
+    for (let iTS = 0; iTS < 25; iTS++) {
       const index = tsColors[iTS];
       ctrl.setIndexedColor(`ts${ iTS + 1}`, index);
     }

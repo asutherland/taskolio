@@ -1,11 +1,13 @@
 "use strict";
 
-const traktorF1 = require("node-traktor-f1");
+const D2 = require("node-traktor-f1/lib/traktor_d2");
 
 const COLOR_BLACK = [0, 0, 0];
 const BLANK_ROW = [COLOR_BLACK, COLOR_BLACK, COLOR_BLACK, COLOR_BLACK];
-const BLANK_GRID = [...BLANK_ROW, ...BLANK_ROW, ...BLANK_ROW, ...BLANK_ROW];
+const BLANK_GRID = [...BLANK_ROW, ...BLANK_ROW];
 const BLANK_BANKS = [0, 0, 0, 0, 0, 0, 0, 0];
+
+const BLANK_DISPLAY = [0, 0, 0, 0, 0, 0, 0, 0];
 
 /**
  * Abstracts interaction with the actual Kontrol F1 hardware using the
@@ -19,7 +21,7 @@ const BLANK_BANKS = [0, 0, 0, 0, 0, 0, 0, 0];
  */
 class ControllerDriver {
   constructor({ dispatcher }) {
-    this.controller = new traktorF1.TraktorF1();
+    this.controller = new D2();
     this.dispatcher = dispatcher;
 
     this.buttonStates = {};
@@ -50,9 +52,30 @@ class ControllerDriver {
 
     // -- Banks
     const bankLEDs = this.dispatcher.computeBankLEDs(stt) || BLANK_BANKS;
-    for (let iBank = 0; iBank < 4; iBank++) {
-      ctrl.setLED(`l${iBank + 1}_l`, bankLEDs[iBank * 2]);
-      ctrl.setLED(`l${iBank + 1}_r`, bankLEDs[iBank * 2 + 1]);
+    ctrl.setLED('shift', bankLEDs[0]);
+    ctrl.setLED('syncGreen', bankLEDs[1]);
+    ctrl.setLED('cue', bankLEDs[2]);
+    ctrl.setLED('play', bankLEDs[3]);
+
+    // -- Display Buttons
+    const displayLEDs = this.dispatcher.computeDisplayLEDs(stt) || BLANK_DISPLAY;
+    for (let iDisplay = 0; iDisplay < 8; iDisplay++) {
+      ctrl.setLED(`d${iDisplay + 1}`, displayLEDs[iDisplay]);
+    }
+    const displaySideLEDs = this.dispatcher.computeDisplaySideLEDs(stt) || BLANK_DISPLAY;
+    for (let iDisplay = 0; iDisplay < 4; iDisplay++) {
+      ctrl.setLED(`dl${iDisplay + 1}`, displaySideLEDs[iDisplay]);
+    }
+    for (let iDisplay = 4; iDisplay < 8; iDisplay++) {
+      ctrl.setLED(`dr${iDisplay + 1}`, displaySideLEDs[iDisplay]);
+    }
+
+    // -- Touch Strip
+    const tsColors = this.dispatcher.computeTouchStripColors(stt) || BLANK_TOUCHSTRIP;
+    for (let iTS = 0; iTS < 25; iTS++) {
+      const [blue, orange] = tsColors[iTS];
+      ctrl.setLED(`tsb${ iTS + 1}`, blue);
+      ctrl.setLED(`tso${ iTS + 1}`, orange);
     }
 
     // -- Labeled LEDs
@@ -60,9 +83,6 @@ class ControllerDriver {
     for (let [key, value] of Object.entries(labeledLEDs)) {
       ctrl.setLED(key, value ? 1 : 0);
     }
-
-    // -- LCD display
-    ctrl.setLCDString(this.dispatcher.topModeShortLabel);
   }
 
   /**

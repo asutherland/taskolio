@@ -27,18 +27,28 @@ class ModeDispatcher {
       // the high level display computation methods
       "computeGridColors",
       "computeBankLEDs",
+      "computeTouchStripColors",
+      "computeDisplayLEDs",
+      "computeDisplaySideLEDs",
       "computeLabeledLEDs",
       // Our base_computeLabeledLEDs method is actually based on spreading over
       // all of these:
-      "computeSyncLED",
-      "computeQuantLED",
+      "computeALED",
+      "computeBLED",
+      "computeCLED",
+      "computeDLED",
+      "computeFXSelectLED",
+      "computeBackLED",
       "computeCaptureLED",
-      "computeShiftLED",
-      "computeReverseLED",
-      "computeTypeLED",
-      "computeSizeLED",
-      "computeBrowseLED",
-      // - event handling methods
+      "computeEditLED",
+      "computeHotcueLED",
+      "computeLoopLED",
+      "computeFreezeLED",
+      "computeRemixLED",
+      // shift, sync, cue, play: these are all treated as bank select.
+      "computeFluxLED",
+      "computeDeckLED",
+      // # event handling methods
       // things we got multiples of
       "onGridButton",
       "onBankButton",
@@ -48,14 +58,20 @@ class ModeDispatcher {
       "onStepperButton",
       "onStepperTurned",
       // specific labeled buttons
-      "onSyncButton",
-      "onQuantButton",
+      "onAButton",
+      "onBButton",
+      "onCButton",
+      "onDButton",
+      "onFXSelectButton",
+      "onBackButton",
       "onCaptureButton",
-      "onShiftButton",
-      "onReverseButton",
-      "onTypeButton",
-      "onSizeButton",
-      "onBrowseButton",
+      "onEditButton",
+      "onHotcueButton",
+      "onLoopButton",
+      "onFreezeButton",
+      "onRemixButton",
+      "onFluxButton",
+      "onDeckButton",
     ];
 
     const nop = () => null;
@@ -162,19 +178,32 @@ class ModeDispatcher {
   }
 
   base_computeBankLEDs(stt) {
-    return [0, 0, 0, 0, 0, 0, 0, 0];
+    return [0, 0, 0, 0];
+  }
+
+  base_computeTouchStripColors(stt) {
+    // The driver knows to map this to all 25 LEDs being black.
+    return null;
   }
 
   base_computeLabeledLEDs(stt) {
     return {
-      browse: this.computeBrowseLED(stt),
-      sync: this.computeSyncLED(stt),
-      quant: this.computeQuantLED(stt),
+      A: this.computeALED(stt),
+      B: this.computeBLED(stt),
+      C: this.computeCLED(stt),
+      D: this.computeDLED(stt),
+      fxSelect: this.computeFXSelectLED(stt),
+      back: this.computeBackLED(stt),
       capture: this.computeCaptureLED(stt),
-      shift: this.computeShiftLED(stt),
-      reverse: this.computeReverseLED(stt),
-      type: this.computeTypeLED(stt),
-      size: this.computeSizeLED(stt),
+      edit: this.computeEditLED(stt),
+
+      hotcueWhie: this.computeHotcueLED(stt),
+      loopWhite: this.computeLoopLED(stt),
+      freezeWhite: this.computeFreezeLED(stt),
+      remixWhite: this.computeRemixLED(stt),
+
+      flux: this.computeFluxLED(stt),
+      deckWhite: this.computeDeckLED(stt),
     };
   }
 

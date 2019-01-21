@@ -37,6 +37,10 @@ class ColorPickerMode extends BankMixin {
     this.caller.dispatcher.popMode(this);
   }
 
+  onTypeButton(evt) {
+    this.caller.dispatcher.popMode(this);
+  }
+
   onGridButton(evt) {
     const { hue, sat } = this.curBank[evt.index];
     this.caller.onColorPicked(hue, sat);
