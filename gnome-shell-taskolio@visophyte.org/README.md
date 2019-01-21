@@ -30,7 +30,7 @@ const desktop = Atspi.get_desktop(0);
 // visualize the hierarchy and interfaces.  The interfaces are things like
 // AtspiSelection which can be coerced/retrieved via get_selection().
 
-// The hierarchy for gnoem-terminal looks like:
+// The hierarchy for gnome-terminal looks like:
 // - `application` title="gnome-terminal-server"
 //   - `frame` title={the current tab's title}.  There is one of these nodes for
 //      each window that's currently open).  The area corresponds to the window

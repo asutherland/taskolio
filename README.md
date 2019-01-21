@@ -23,7 +23,12 @@ click experience.)
   * vscode extension reports documents/text editors to the local node.js server.
     * NOTE: This could encounter some bit-rot at some point as I've switched back to atom from vscode.
 * Physical Controllers:
-  * Native Instruments Kontrol F1
+  * Native Instruments Kontrol F1 via `server-f1.js`
+
+## What Sorta Works ##
+
+* Physical Controllers
+  * Native Instruments Maschine Mk3
 
 ## What's Coming Next ##
 

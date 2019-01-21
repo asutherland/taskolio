@@ -85,24 +85,63 @@ class ModeDispatcher {
       "onDisplayButton",
       "onKnobTurned",
       "onSliderMoved",
-      // stepper
-      "onStepperButton",
-      "onStepperTurned",
+      // XXX nav button mapping stuff here?
+
       // specific labeled buttons
-      "onSyncButton",
-      "onQuantButton",
-      "onCaptureButton",
+      "onChannelMidiButton",
+      "onPluginInstanceButton",
+      "onArrangerButton",
+      "onBrowserPluginButton",
+      "onArrowLeftButton",
+      "onArrowRightButton",
+      "onFileSaveAsButton",
+      "onSettingsButton",
+      "onAutoButton",
+      "onMacroSetButton",
+      "onVolumeButton",
+      "onSwingButton",
+      "onNoteRepeatArpButton",
+      "onTempoButton",
+      "onLockButton",
+      "onPitchButton",
+      "onModButton",
+      "onPerformFxSelectButton",
+      "onNotesButton",
+      "onRestartLoopButton",
+      "onEraseReplaceButton",
+      "onTapMetroButton",
+      "onFollowGridButton",
+      "onPlayButton",
+      "onRecCountInButton",
+      "onStopButton",
       "onShiftButton",
-      "onReverseButton",
-      "onTypeButton",
-      "onSizeButton",
-      "onBrowseButton",
+      "onFixedVelButton",
+      "onPadModeButton",
+      "onKeyboardButton",
+      "onChordsButton",
+      "onStepButton",
+      "onSceneButton",
+      "onPatternButton",
+      "onEventsButton",
+      "onVariationNavigateButton",
+      "onDuplicateDoubleButton",
+      "onSelectButton",
+      "onSoloButton",
+      "onMuteChokeButton",
     ];
 
     const nop = () => null;
+    const barelyIlluminateLED = () => { return 2; }
     for (const methodName of boundMethods) {
       const unboundFallback = this[`base_${methodName}`];
-      const fallback = unboundFallback ? unboundFallback.bind(this) : nop;
+      let fallback;
+      if (unboundFallback) {
+        fallback = unboundFallback.bind(this);
+      }  else if (/LED$/.test(methodName)) {
+        fallback = barelyIlluminateLED;
+      } else {
+        fallback = nop;
+      }
       this[methodName] = this._bindMagicModeStackMethodCallingHelper(
         methodName, fallback);
     }

@@ -229,6 +229,10 @@ class BookmarkManager {
     const { r, g, b } = color.toRgb();
     return [r, g, b];
   }
+
+  computeIndexedColorForBookmark(bookmark, brightnessScale) {
+
+  }
 }
 
 module.exports.BookmarkManager = BookmarkManager;

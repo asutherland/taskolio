@@ -69,7 +69,7 @@ class BookmarkMode extends BankMixin {
    * apps you don't necessarily want to keep switching to the same tab/document.
    *
    */
-  onQuantButton(evt) {
+  onChordsButton(evt) {
     // XXX see the TODO on activity.
     // NB: This is the same as onCaptureButton but we call a different minting
     // method.
@@ -84,7 +84,7 @@ class BookmarkMode extends BankMixin {
     this.dispatcher.pushMode(this, this.setBookmarkSubMode);
   }
 
-  onCaptureButton(evt) {
+  onStepButton(evt) {
     // XXX see the TODO on activity.
     if (evt.shift) {
       this.activity = 'delete';
@@ -113,7 +113,7 @@ class BookmarkMode extends BankMixin {
     this.activity = 'switch';
   }
 
-  onReverseButton(evt) {
+  onPadModeButton(evt) {
     this.activity = 'set-color';
     this.pickingForBookmark =
       this.bookmarkManager.findFocusedBookmarkInCollection(
@@ -121,7 +121,7 @@ class BookmarkMode extends BankMixin {
     this.dispatcher.pushMode(this, this.pickColorMode);
   }
 
-  onTypeButton(evt) {
+  onKeyboardButton(evt) {
     this.activity = 'set-color';
     this.pickingForBookmark =
       this.bookmarkManager.findFocusedBookmarkInCollection(this.banks);

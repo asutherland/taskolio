@@ -73,18 +73,18 @@ class ControllerDriver {
     // -- Display Buttons
     const displayLEDs = this.dispatcher.computeDisplayLEDs(stt) || BLANK_BANKS;
     for (let iDisplay = 0; iDisplay < 4; iDisplay++) {
-      ctrl.setWhiteBrightness(`d${iDisplay + 1}`, displayLEDs[iDisplay]);
+      ctrl.setLED(`d${iDisplay + 1}`, displayLEDs[iDisplay]);
     }
 
     // -- Labeled LEDs (monocolor, usually white)
     const labeledLEDs = this.dispatcher.computeLabeledLEDs(stt);
     for (let [key, value] of Object.entries(labeledLEDs)) {
-      ctrl.setWhiteBrightness(key, value);
+      ctrl.setLED(key, value);
     }
 
     // -- Indexed Labeled LEDs
     const indexedLEDs = this.dispatcher.computeIndexedLabeledLEDs(stt);
-    for (let [key, value] of Object.entries(labeledLEDs)) {
+    for (let [key, value] of Object.entries(indexedLEDs)) {
       ctrl.setIndexedColor(key, value);
     }
   }
