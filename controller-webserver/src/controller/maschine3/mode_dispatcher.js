@@ -31,6 +31,7 @@ class ModeDispatcher {
       "computeDisplayLEDs",
       "computeLabeledLEDs",
       "computeIndexedLabeledLEDs",
+      "computeHTML",
       // Our base_computeLabeledLEDs method is actually based on spreading over
       // all of these:
       "computeChannelMidiLED",
@@ -318,6 +319,10 @@ class ModeDispatcher {
   // expected idiom to have shift work.
   base_computeShiftLED(stt) {
     return stt.shift;
+  }
+
+  base_computeHTML(stt, iDisplay) {
+    return `<div xmlns="http://www.w3.org/1999/xhtml" >Hello World #${iDisplay}</div>`;
   }
 }
 

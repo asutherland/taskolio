@@ -197,8 +197,10 @@ class VisibilityTracker {
       }
 
       matchingSet.add(containerId);
+      /*
       console.log('tracker: mapped', key, 'to window', containerId, 'which has',
                   matchingSet.size, 'known windows');
+      */
     };
 
     if (details.appPids) {
@@ -367,7 +369,7 @@ class VisibilityTracker {
   processThingsExist(prefix, items, isWM) {
     for (const item of items) {
       const prefixedContainerId = prefix + item.containerId;
-      console.log('exists:', item.containerId, item.rawDetails);
+      //console.log('exists:', item.containerId, item.rawDetails);
       this.containersByFullId.set(prefixedContainerId, item);
       if (isWM) {
         this._trackWindow(prefixedContainerId, item.rawDetails);

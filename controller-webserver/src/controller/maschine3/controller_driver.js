@@ -26,13 +26,34 @@ const BLANK_TOUCHSTRIP = [];
  * our changes into it would make for an otherwise useless fork.)
  */
 class ControllerDriver {
-  constructor({ dispatcher }) {
-    this.controller = new Mk3();
+  constructor({ dispatcher, asyncRenderHTML }) {
+    const controller = this.controller = new Mk3();
     this.dispatcher = dispatcher;
+    this.asyncRenderHTML = asyncRenderHTML;
 
     this.buttonStates = {};
     this.sliderStates = [];
     this.knobStates = [];
+
+    /**
+     * For each display, the HTML of what is currently displayed.
+     */
+    this.htmlDisplayed = new Array(controller.displays.numDisplays);
+    /**
+     * For each display, the HTML of what we most recently asked to be rendered.
+     * When we get the render back for a display, the value moves to
+     * `htmlDisplayed`.  If there is a value for the display in `htmlDesired`,
+     * we kick off another render and move the value to `htmlPending`.
+     */
+    this.htmlPending = new Array(controller.displays.numDisplays);
+    /**
+     * The most recently desired HTML contents for the given display, and which
+     * has not yet been issued to a html-rendering-capable client.  This can
+     * be clobbered if we are generating new desired HTML state faster than we
+     * can render it or, more likely, if we're simply not connected to such a
+     * client at the current moment.
+     */
+    this.htmlDesired = new Array(controller.displays.numDisplays);
 
     this._bindButtons();
 
@@ -87,6 +108,65 @@ class ControllerDriver {
     for (let [key, value] of Object.entries(indexedLEDs)) {
       ctrl.setIndexedColor(key, value);
     }
+
+    // -- HTML
+    if (ctrl.displays) {
+      for (let iDisplay = 0; iDisplay < ctrl.displays.numDisplays; iDisplay++) {
+        const recentHtml = this.htmlDesired[iDisplay] ||
+                           this.htmlPending[iDisplay] ||
+                           this.htmlDisplayed[iDisplay];
+
+        const desiredHtml = this.dispatcher.computeHTML(stt, iDisplay,
+                                                        ctrl.displays);
+        if (desiredHtml !== recentHtml) {
+          // it's async, but run for side-effect, no need to wait
+          console.log('...want to update display', iDisplay, 'to', desiredHtml);
+          this.updateHTML(iDisplay, desiredHtml);
+        }
+      }
+    }
+  }
+
+  async updateHTML(iDisplay, html) {
+    // If we already have a pending render, then just stash the HTML in desired
+    // and the active instance of ourselves will re-trigger once it's done.
+    if (this.htmlPending[iDisplay]) {
+      console.log('  already pending HTML, saving to desired');
+      this.htmlDesired[iDisplay] = html;
+      return;
+    }
+
+    // Check that this isn't already what we've displayed.  This has some
+    // overlap with the logic in updateLEDs, but we may potentially end up
+    // having this method called directly as we experiment here...
+    if (this.htmlDisplayed[iDisplay] === html) {
+      console.log('  already display desired HTML, bailing');
+      return;
+    }
+
+    console.log('updating display', iDisplay, 'html to', html);
+    // Otherwise do note that this is now the pending HTML...
+    this.htmlPending[iDisplay] = html;
+
+    const { imageArray } = await this.asyncRenderHTML({
+      width: this.controller.displays.width,
+      height: this.controller.displays.height,
+      htmlStr: html
+    });
+
+    console.log('got rendering data, blitting');
+    // we wait for this to fully be sent as a form of flow-control
+    await this.controller.displays.paintDisplayFromArray(iDisplay, imageArray);
+
+    this.htmlDisplayed[iDisplay] = html;
+    this.htmlPending[iDisplay] = null;
+
+    if (this.htmlDesired[iDisplay]) {
+      html = this.htmlDesired[iDisplay];
+      this.htmlDesired[iDisplay] = null;
+      return this.updateHTML(iDisplay, html);
+    }
+    // otherwise, we're done.
   }
 
   /**

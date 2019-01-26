@@ -51,6 +51,8 @@ class BookmarkMode extends BankMixin {
       caller: this
     });
 
+    this.gridPushCount = 0;
+
     // hackish concept of our own sub-state so that we can handle deletion
     // explicitly.
     // TODO: clean up setting/deletion.  Probably want to
@@ -139,6 +141,8 @@ class BookmarkMode extends BankMixin {
   }
 
   onGridButton(evt) {
+    this.gridPushCount++;
+
     console.log('grid button pushed:', evt.index);
     const bookmark = this.curBank[evt.index];
     this.bookmarkManager.focusBookmark(bookmark); // handles nullish bookmarks.
@@ -158,6 +162,18 @@ class BookmarkMode extends BankMixin {
 
   computeGridColors() {
     return this._internalComputeGridColors(1);
+  }
+
+  computeCoreHTML(stt, iDisplay) {
+    const style = "width: 100%; height: 100%; color: white; background-color: #222222; font-size: 48px; padding: 8px";
+    return `<div xmlns="http://www.w3.org/1999/xhtml" style="${style}">
+  <div>Hello World #${iDisplay}: ${this.gridPushCount}</div>
+  <div style="background-color: white; display: inline-block; width: 32px; height: 32px; margin-right: 16px;"></div>
+  <div style="background-color: red; display: inline-block; width: 32px; height: 32px; margin-right: 16px;"></div>
+  <div style="background-color: green; display: inline-block; width: 32px; height: 32px; margin-right: 16px;"></div>
+  <div style="background-color: blue; display: inline-block; width: 32px; height: 32px; margin-right: 16px;"></div>
+  <div style="background-color: black; display: inline-block; width: 32px; height: 32px; margin-right: 16px;"></div>
+</div>`;
   }
 }
 

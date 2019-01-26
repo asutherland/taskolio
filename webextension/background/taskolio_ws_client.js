@@ -27,12 +27,15 @@ export default class TaskolioClient {
     this.ws.addEventListener('close', this.onClosed.bind(this));
   }
 
-  sendMessage(type, payload) {
+  sendMessage(type, payload, id) {
     if (!this.ws) {
       return;
     }
 
     const obj = { type, payload };
+    if (id) {
+      obj.id = id;
+    }
 
     this.ws.send(JSON.stringify(obj));
   }
@@ -59,7 +62,11 @@ export default class TaskolioClient {
 
     const handlerName = `onMessage_${data.type}`;
 
-    this._settings[handlerName](data.payload);
+    const replyFunc = (replyMsg) => {
+      this.sendMessage('reply', replyMsg, data.id);
+    };
+
+    this._settings[handlerName](data.payload, replyFunc);
   }
 
   /**

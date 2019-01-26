@@ -4,6 +4,12 @@ class BrainConnection {
     this.brainBoss = brainBoss;
     this.visibilityTracker = visibilityTracker;
     this.triggerUpdate = triggerUpdate;
+    this.capabilities = [];
+    this.nextMsgId = 1;
+    /**
+     * Maps from message id of expected reply to `resolve` function.
+     */
+    this.awaitingReplies = new Map();
 
     ws.on('message', this.onMessage.bind(this));
     ws.on('close', this.onClose.bind(this));
@@ -23,6 +29,16 @@ class BrainConnection {
     const obj = JSON.parse(data);
     console.log('\n===', this.idPrefix, obj.type);
 
+    if (obj.type === 'reply') {
+      const replyResolve = this.awaitingReplies.get(obj.id);
+      if (!replyResolve) {
+        console.error('got reply we were not waiting for:', obj);
+        return;
+      }
+      replyResolve(obj.payload);
+      return;
+    }
+
     const handlerName = `onMessage_${obj.type}`;
 
     this[handlerName](obj.payload);
@@ -36,6 +52,8 @@ class BrainConnection {
     // for debugging sanity, let's keep things short.
     this.idPrefix = this.brainBoss.registerClient(this, msg);
     this.isWM = msg.type === 'window-manager';
+    this.capabilities = msg.capabilities || [];
+    this.brainBoss.reportClientCapabilities(this, this.capabilities);
   }
 
   onMessage_focusSlotsInventory(msg) {
@@ -76,6 +94,17 @@ class BrainConnection {
 
     const obj = { type, payload };
     this.ws.send(JSON.stringify(obj));
+  }
+
+  async sendMessageAwaitingReply(type, payload) {
+    const id = this.nextMsgId++;
+    const obj = { type, id, payload };
+    this.ws.send(JSON.stringify(obj));
+
+    const reply = await new Promise((resolve) => {
+      this.awaitingReplies.set(id, resolve);
+    });
+    return reply;
   }
 }
 

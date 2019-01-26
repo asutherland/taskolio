@@ -168,7 +168,7 @@ const ExtCore = {
           uniqueId,
           // We're maybe persistent.  Let's see.
           persistence: true,
-          capabilities: ['renderHtml'],
+          capabilities: ['renderHtml-0'],
         });
 
         // report our focus slots inventory (synchronously), also sending a
@@ -230,8 +230,24 @@ const ExtCore = {
       onMessage_focusSlotsLinked: async (msg) => {
       },
 
-      onMessage_renderHtml: (msg) => {
-
+      onMessage_renderHtml: async (msg, reply) => {
+        const sandboxedIframe = document.getElementById('html-render-frame');
+        console.log('received request, rendering image');
+        let imageArray;
+        try {
+          imageArray = await renderHTMLTo16BitArray({
+            sandboxedIframe,
+            width: msg.width,
+            height: msg.height,
+            htmlStr: msg.htmlStr
+          });
+        } catch (ex) {
+          console.error('problem rendering', ex);
+        }
+        console.log('rendered image!');
+        reply({
+          imageArray
+        });
       }
     });
   },

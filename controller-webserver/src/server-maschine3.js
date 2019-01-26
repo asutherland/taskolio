@@ -55,7 +55,12 @@ function makeDefaultConfigController() {
       bookmarkMode
     ],
   });
-  const controllerDriver = new ControllerDriver({ dispatcher });
+  const controllerDriver = new ControllerDriver({
+    dispatcher,
+    asyncRenderHTML: (args) => {
+      return brainBoss.asyncRenderHTML(args);
+    }
+  });
 
   gBookmarkManager = bookmarkManager;
   gBrainBoss = brainBoss;
