@@ -1,3 +1,5 @@
+const { FilteredSubscription } = require('./filtered_subscription');
+
 /**
  * Hacky helper to find the key that maps to a given value in a Map.  For use
  * in the VisibilityTracker where data structures are undergoing evolutionary
@@ -82,7 +84,9 @@ function extractPrefixWithDelim(prefixed) {
  * applying window-manager visibility to non-WM clients.
  */
 class VisibilityTracker {
-  constructor() {
+  constructor({ brainBoss }) {
+    this.brainBoss = brainBoss;
+
     // ### Homogeneous State tracking
     // Everything in this section doesn't care about window manager clients
     // versus other clients.
@@ -159,6 +163,11 @@ class VisibilityTracker {
      * The most specific focused container that we're aware of.
      */
     this.focusedContainerId = null;
+
+    /**
+     * A list of FilteredSubscription instances.
+     */
+    this.filteredSubscriptions = [];
   }
 
   /**
@@ -369,7 +378,11 @@ class VisibilityTracker {
   processThingsExist(prefix, items, isWM) {
     for (const item of items) {
       const prefixedContainerId = prefix + item.containerId;
-      //console.log('exists:', item.containerId, item.rawDetails);
+      item.fullContainerId = prefixedContainerId;
+      // temporary debug specialization as I deal with pinned tabs.
+      if (item.pinned) {
+        console.log('>>> exists:', item.containerId, item);
+      }
       this.containersByFullId.set(prefixedContainerId, item);
       if (isWM) {
         this._trackWindow(prefixedContainerId, item.rawDetails);
@@ -565,7 +578,7 @@ class VisibilityTracker {
    * - The focus slot in its client that it wants to be displayed in.  This may
    *   be explicitly specified because it was persisted in the bookmark, or
    *   because strong AI told us to, or because there's some buttons that say
-   *   to.  If it wasn't,
+   *   to.
    * - The window containerId that holds that focus slot.
    * - Whether that window containerId needs to be focused.
    *
@@ -619,6 +632,63 @@ class VisibilityTracker {
     };
   }
 
+  /**
+   * Given a containerId and optionally a focus slot to force it to be displayed
+   * in, display it.  This builds on top of `figureOutHowToFocusThing`.  This
+   * logic originally lived in BookmarkManager.focusBookmark but was extracted
+   * out.
+   */
+  focusThing(containerId, forceFocusSlotId) {
+    const { focusSlotId, windowContainerId, windowFocused } =
+      this.figureOutHowToFocusThing(containerId, forceFocusSlotId);
+
+    // (If bookmark.containerId is already a window containerId, then
+    // windowContainerId will be null.)
+    if (windowContainerId && !windowFocused) {
+      this.brainBoss.focusContainerId(windowContainerId);
+    }
+    this.brainBoss.focusContainerId(containerId, focusSlotId);
+  }
+
+  /**
+   * Given a window-manager containerId, get some info about the client it
+   * corresponds to.
+   */
+  resolveWindowContainerIdToClientInfo(windowContainerId) {
+    const fullFocusSlotId =
+      this.windowContainerIdToActiveFocusSlot.get(windowContainerId);
+
+    if (!fullFocusSlotId) {
+      return;
+    }
+
+    const prefixWithDelim = extractPrefixWithDelim(fullFocusSlotId);
+    return {
+      prefixWithDelim,
+      fullFocusSlotId,
+      focusSlotId: fullFocusSlotId.slice(prefixWithDelim.length)
+    };
+  }
+
+  /**
+   * Creates a persistent filtered subscription on a set of containers.
+   *
+   * The initial use-case is for "tabs on display buttons" mode to be able to
+   * get a list of pinned tabs in the primary Firefox window.  For this we want
+   * to filter to tabs that are in the focusSlotId that corresponds to the
+   * top-left bookmarked window and are pinned.  And we want them displayed in
+   * index order.
+   *
+   */
+  createFilteredSubscription(callerArgs) {
+    const fs = new FilteredSubscription({
+      visTracker: this,
+      callerArgs
+    });
+    fs.reset();
+    this.filteredSubscriptions.push(fs);
+    return fs;
+  }
 }
 
 module.exports.VisibilityTracker = VisibilityTracker;

@@ -12,6 +12,7 @@ const { BookmarkManager } = require("./bookmark_manager");
 const { ControllerDriver } = require("./controller/maschine3/controller_driver");
 const { ModeDispatcher } = require("./controller/maschine3/mode_dispatcher");
 const { BookmarkMode } = require("./controller/maschine3/modes/bookmark_mode");
+const { TabsOnDisplayButtonsMode } = require("./controller/maschine3/modes/tabs_on_display_buttons_mode");
 
 const { ColorHelper } = require("./indexed_color_helper");
 
@@ -34,7 +35,9 @@ function makeDefaultConfigController() {
 
   const brainBoss = new BrainBoss();
 
-  const visibilityTracker = new VisibilityTracker();
+  const visibilityTracker = new VisibilityTracker({
+    brainBoss
+  });
   const bookmarkManager = new BookmarkManager({
     brainBoss,
     visibilityTracker,
@@ -50,8 +53,15 @@ function makeDefaultConfigController() {
       configstore.set('bookmarks', state);
     }
   });
+  const tabsOnTopMode = new TabsOnDisplayButtonsMode({
+    dispatcher,
+    visibilityTracker,
+    bookmarkMode
+  });
+
   dispatcher.init({
     rootModes: [
+      tabsOnTopMode,
       bookmarkMode
     ],
   });
@@ -111,12 +121,6 @@ const run = async (port) => {
     // Am I allowed to stick random expandos on the ws?  Hope so!
     ws.brainConn = brainConn;
   });
-};
-
-const stop = async () => {
-  await api.stop();
-
-  server.close();
 };
 
 makeDefaultConfigController();

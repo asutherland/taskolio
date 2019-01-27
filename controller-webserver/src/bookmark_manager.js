@@ -157,16 +157,7 @@ class BookmarkManager {
       return;
     }
 
-    const { focusSlotId, windowContainerId, windowFocused } =
-      this.visTracker.figureOutHowToFocusThing(
-        bookmark.containerId, bookmark.focusSlotId);
-
-    // (If bookmark.containerId is already a window containerId, then
-    // windowContainerId will be null.)
-    if (windowContainerId && !windowFocused) {
-      this.brainBoss.focusContainerId(windowContainerId);
-    }
-    this.brainBoss.focusContainerId(bookmark.containerId, focusSlotId);
+    this.visTracker.focusThing(bookmark.containerId, bookmark.focusSlotId);
   }
 
   /**

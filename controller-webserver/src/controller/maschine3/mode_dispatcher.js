@@ -32,11 +32,16 @@ class ModeDispatcher {
       "computeLabeledLEDs",
       "computeIndexedLabeledLEDs",
       "computeHTML",
+      // base_computeHTML spreads over these:
+      "computeTopHTML",
+      "computeCenterHTML",
+      "computeBottomHTML",
       // Our base_computeLabeledLEDs method is actually based on spreading over
       // all of these:
       "computeChannelMidiLED",
       "computePluginInstanceLED",
       "computeArrangerLED",
+      "computeMixerLED",
       "computeBrowserPluginLED",
       "computeArrowLeftLED",
       "computeArrowRightLED",
@@ -92,6 +97,7 @@ class ModeDispatcher {
       "onChannelMidiButton",
       "onPluginInstanceButton",
       "onArrangerButton",
+      "onMixerButton",
       "onBrowserPluginButton",
       "onArrowLeftButton",
       "onArrowRightButton",
@@ -132,7 +138,8 @@ class ModeDispatcher {
     ];
 
     const nop = () => null;
-    const barelyIlluminateLED = () => { return 2; }
+    const barelyIlluminateLED = () => { return 2; };
+    const returnEmptyHTML = () => { return ''; };
     for (const methodName of boundMethods) {
       const unboundFallback = this[`base_${methodName}`];
       let fallback;
@@ -140,6 +147,8 @@ class ModeDispatcher {
         fallback = unboundFallback.bind(this);
       } else if (/LED$/.test(methodName)) {
         fallback = barelyIlluminateLED;
+      } else if (/HTML$/.test(methodName)) {
+          fallback = returnEmptyHTML;
       } else {
         fallback = nop;
       }
@@ -322,7 +331,37 @@ class ModeDispatcher {
   }
 
   base_computeHTML(stt, iDisplay) {
-    return `<div xmlns="http://www.w3.org/1999/xhtml" >Hello World #${iDisplay}</div>`;
+    const outerStyle = `
+width: 100%;
+height: 100%;
+color: white;
+background-color: black;
+font-size: 16px;
+`.replace(/\n/g, ' ');
+    const styleBlock = `<style>
+.mainGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.fullCenter {
+  grid-column-start: 1;
+  grid-column-end: 4;
+}
+</style>`
+
+    const topHtml = this.computeTopHTML(stt, iDisplay);
+    const centerHtml = this.computeCenterHTML(stt, iDisplay);
+    const bottomHtml = this.computeBottomHTML(stt, iDisplay);
+
+    return `<div xmlns="http://www.w3.org/1999/xhtml" style="${outerStyle.replace('"', "''")}">
+  ${styleBlock}
+  <div class="mainGrid">
+    ${topHtml}
+    ${centerHtml}
+    ${bottomHtml}
+  </div>
+</div>`;
   }
 }
 

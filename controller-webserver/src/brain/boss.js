@@ -105,13 +105,13 @@ class BrainBoss {
    * one is not present, asynchronously wait for one to show up.
    */
   async _awaitConnWithCapability(capability) {
-    console.log('looking for connection with capability', capability);
+    //console.log('looking for connection with capability', capability);
     let conn = this._findConnWithCapability(capability);
     if (conn) {
-      console.log('found one, returning it synchronously');
+      //console.log('found one, returning it synchronously');
       return conn;
     }
-    console.log('did not find one, async waiting)');
+    //console.log('did not find one, async waiting)');
 
     let pending = this.awaitingClientsByCapability.get(capability);
     if (!pending) {
@@ -127,9 +127,9 @@ class BrainBoss {
 
   async asyncRenderHTML(args) {
     const conn = await this._awaitConnWithCapability('renderHtml-0');
-    console.log('got connection, sending message and awaiting reply');
+    //console.log('got connection, sending message and awaiting reply');
     const reply = await conn.sendMessageAwaitingReply('renderHtml', args);
-    console.log('received reply');
+    //console.log('received reply');
     return reply;
   }
 }

@@ -93,7 +93,7 @@ class ControllerDriver {
 
     // -- Display Buttons
     const displayLEDs = this.dispatcher.computeDisplayLEDs(stt) || BLANK_BANKS;
-    for (let iDisplay = 0; iDisplay < 4; iDisplay++) {
+    for (let iDisplay = 0; iDisplay < 8; iDisplay++) {
       ctrl.setLED(`d${iDisplay + 1}`, displayLEDs[iDisplay]);
     }
 
@@ -110,6 +110,15 @@ class ControllerDriver {
     }
 
     // -- HTML
+    this.updateHTML();
+  }
+
+  updateHTML(stt) {
+    const ctrl = this.controller;
+    if (!stt) {
+      stt = this._latchState();
+    }
+
     if (ctrl.displays) {
       for (let iDisplay = 0; iDisplay < ctrl.displays.numDisplays; iDisplay++) {
         const recentHtml = this.htmlDesired[iDisplay] ||
@@ -120,18 +129,18 @@ class ControllerDriver {
                                                         ctrl.displays);
         if (desiredHtml !== recentHtml) {
           // it's async, but run for side-effect, no need to wait
-          console.log('...want to update display', iDisplay, 'to', desiredHtml);
-          this.updateHTML(iDisplay, desiredHtml);
+          //console.log('...want to update display', iDisplay, 'to', desiredHtml);
+          this.setDisplayHTML(iDisplay, desiredHtml);
         }
       }
     }
   }
 
-  async updateHTML(iDisplay, html) {
+  async setDisplayHTML(iDisplay, html) {
     // If we already have a pending render, then just stash the HTML in desired
     // and the active instance of ourselves will re-trigger once it's done.
     if (this.htmlPending[iDisplay]) {
-      console.log('  already pending HTML, saving to desired');
+      //console.log('  already pending HTML, saving to desired');
       this.htmlDesired[iDisplay] = html;
       return;
     }
@@ -140,11 +149,11 @@ class ControllerDriver {
     // overlap with the logic in updateLEDs, but we may potentially end up
     // having this method called directly as we experiment here...
     if (this.htmlDisplayed[iDisplay] === html) {
-      console.log('  already display desired HTML, bailing');
+      //console.log('  already display desired HTML, bailing');
       return;
     }
 
-    console.log('updating display', iDisplay, 'html to', html);
+    //console.log('updating display', iDisplay, 'html to', html);
     // Otherwise do note that this is now the pending HTML...
     this.htmlPending[iDisplay] = html;
 
@@ -154,7 +163,7 @@ class ControllerDriver {
       htmlStr: html
     });
 
-    console.log('got rendering data, blitting');
+    //console.log('got rendering data, blitting');
     // we wait for this to fully be sent as a form of flow-control
     await this.controller.displays.paintDisplayFromArray(iDisplay, imageArray);
 
@@ -224,7 +233,7 @@ class ControllerDriver {
       } else if (/^g\d+$/.test(name)) {
         methodName = "onGroupButton";
         index = parseInt(name.slice(1), 10) - 1;
-      } else if (/^l\d+$/.test(name)) {
+      } else if (/^d\d+$/.test(name)) {
         methodName = "onDisplayButton";
         index = parseInt(name.slice(1), 10) - 1;
       } else if (/^knobTouch\d+$/.test(name)) {

@@ -45,6 +45,12 @@ const ExtCore = {
           // confuses gnome-shell.)
           {
             title: win.title,
+            // We now provide the bounds so that we can tie the focusSlotId to
+            // the actual window as gnome-shell understands it without having to
+            // engage in games where we tunnel information through the window
+            // title.  (In the future we can also get better at automatically
+            // restoring bookmarks based on window positions and metadata like
+            // the unique client persistence id.)
             bounds: {
               left: win.left * pxRatio,
               top: win.top * pxRatio,
@@ -95,6 +101,27 @@ const ExtCore = {
     });
   },
 
+  _extractTabInfo(tab) {
+    return {
+      // the tab's id (which unfortunately is not currently stable between
+      // browser restarts) is what we use to identify the tab for now.  We might
+      // also try and hack something up with the sessionId.
+      containerId: tab.id,
+      // right, this is ephemeral too.
+      focusSlotId: tab.windowId,
+      sessionId: tab.sessionId,
+      index: tab.index,
+      cookieStoreId: tab.cookieStoreId,
+      title: tab.title,
+      url: tab.url,
+      pinned: tab.pinned,
+      attention: tab.attention,
+      // TODO: similarly, this could provide useful info, but right now it's
+      // just noise or a privacy issue.
+      rawDetails: {}
+    };
+  },
+
   /**
    * Send a thingExists notification for every current tab.  As with the
    * editors, it's quite possible this deserves a re-think.
@@ -113,14 +140,7 @@ const ExtCore = {
 
     for (const win of windows) {
       for (const tab of win.tabs) {
-        items.push({
-          containerId: tab.id,
-          // TODO: if we keep this mechanism, this is obviously not useful.
-          title: tab.id,
-          // TODO: similarly, this could provide useful info, but right now it's
-          // just noise or a privacy issue.
-          rawDetails: {}
-        });
+        items.push(this._extractTabInfo(tab));
       }
     }
 
@@ -134,10 +154,35 @@ const ExtCore = {
   },
 
   async activate() {
+    // Whenever the active tab changes, send an updated focus slots inventory.
     const sendUpdateHelper = this.sendUpdateHelper = () => {
       this.updateAndSendFocusSlotsInventory();
     }
     browser.tabs.onActivated.addListener(sendUpdateHelper);
+
+    // Send updated things exist entries whenever a tab changes.  This is a new
+    // thing we're doing now that we have screens that care about being able to
+    // display info about the tabs we have.
+    const sendUpdatedThingsExist = this.sendUpdatedThingsExist = (tabId, changeInfo, tab) => {
+      this.client.sendMessage('thingsExist', {
+        items: [
+          this._extractTabInfo(tab)
+        ]
+      });
+    };
+    // Now that we're getting more proactive about exists notifications, we also
+    // need to start generating 'gone' notifications.
+    browser.tabs.onUpdated.addListener(sendUpdatedThingsExist);
+    const sendThingGone = this.sendThingGone = (tabId) => {
+      this.client.sendMessage('thingsGone', {
+        items: [
+          {
+            containerId: tabId
+          }
+        ]
+      });
+    };
+    browser.tabs.onRemoved.addListener(sendThingGone);
 
     // XXX it'd be great to get something more deterministic than this, but it's
     // generally contrary to privacy interests to expose the profile name/etc.
@@ -232,7 +277,6 @@ const ExtCore = {
 
       onMessage_renderHtml: async (msg, reply) => {
         const sandboxedIframe = document.getElementById('html-render-frame');
-        console.log('received request, rendering image');
         let imageArray;
         try {
           imageArray = await renderHTMLTo16BitArray({
@@ -244,7 +288,6 @@ const ExtCore = {
         } catch (ex) {
           console.error('problem rendering', ex);
         }
-        console.log('rendered image!');
         reply({
           imageArray
         });

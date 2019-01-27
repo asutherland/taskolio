@@ -56,7 +56,7 @@ ${htmlStr}
     img.onload = resolve;
   });
   img.src = 'data:image/svg+xml,' + encodeURIComponent(svgStr);
-  console.log('rendering:', img.src);
+  //console.log('rendering:', img.src);
   await loadedPromise;
 
   ctx.drawImage(img, 0, 0);
@@ -72,13 +72,7 @@ ${htmlStr}
     pixels[iPix] = rgb16(rgbaBytes[iRGBA],
                          rgbaBytes[iRGBA + 1],
                          rgbaBytes[iRGBA + 2]);
-    if (iPix < 3) {
-      console.log(pixels[iPix], rgbaBytes[iRGBA],
-                         rgbaBytes[iRGBA + 1],
-                         rgbaBytes[iRGBA + 2]);
-    }
   }
-  console.log('got', pixels, 'from', rgbaBytes);
 
   return pixels;
 }
