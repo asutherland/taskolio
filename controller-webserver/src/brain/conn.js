@@ -19,6 +19,11 @@ class BrainConnection {
     // Is this the window manager client?
     this.isWM = false;
 
+    // Track when we've received our initial focus slots inventory so that we
+    // can let interested modes update in response.  We require that the slots
+    // inventory come after the initial things inventory to simplify our logic.
+    this.receivedInitialSlots = false;
+
     // Have we successfully figured out the windows the connection's focus
     // slots are associated with?  This is meant to be sent only once, so this
     // variable handles suppression of redundant sends.
@@ -57,6 +62,9 @@ class BrainConnection {
   }
 
   onMessage_focusSlotsInventory(msg) {
+    const isInitial = !this.receivedInitialSlots;
+    this.receivedInitialSlots = true;
+
     const mappedAllSlots = this.visibilityTracker.processFocusSlotsInventory(
       this.idPrefix, msg.focusSlots, this.isWM);
 
@@ -66,6 +74,12 @@ class BrainConnection {
     if (mappedAllSlots && !this.focusSlotsLinked) {
       this.focusSlotsLinked = true;
       this.sendMessage('focusSlotsLinked', {});
+    }
+
+    if (isInitial) {
+      // We're defining this event to mean that a client has connected and has
+      // fully told us everything we need to know.
+      this.brainBoss.notifyModes('onClientReady', this);
     }
   }
 

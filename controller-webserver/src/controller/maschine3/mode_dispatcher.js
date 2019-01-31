@@ -1,3 +1,6 @@
+const { html } = require('@popeindustries/lit-html-server');
+const { unsafeHTML } = require('@popeindustries/lit-html-server/directives/unsafe-html.js');
+
 /**
  *
  */
@@ -246,6 +249,20 @@ class ModeDispatcher {
     };
   }
 
+  /**
+   * Helper to invoke a method on all modes currently in the mode stack, a
+   * sort of hacky event bus mechanism that allows for solid-looking method
+   * signatures.
+   */
+  notifyModes(methodName, ...args) {
+    for (let iMode = this.modeStack.length-1; iMode >= 0; iMode--) {
+      const mode = this.modeStack[iMode];
+      if (methodName in mode) {
+        mode[methodName](...args)
+      }
+    }
+  }
+
   base_computeGridColors(stt) {
     // The driver knows to map this to an all-black 4x4 grid.
     return null;
@@ -341,7 +358,12 @@ font-size: 16px;
     const styleBlock = `<style>
 .mainGrid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, 22%);
+  grid-gap: 4%;
+}
+
+.mainGrid > div {
+  overflow: hidden;
 }
 
 .fullCenter {
@@ -354,8 +376,8 @@ font-size: 16px;
     const centerHtml = this.computeCenterHTML(stt, iDisplay);
     const bottomHtml = this.computeBottomHTML(stt, iDisplay);
 
-    return `<div xmlns="http://www.w3.org/1999/xhtml" style="${outerStyle.replace('"', "''")}">
-  ${styleBlock}
+    return html`<div xmlns="http://www.w3.org/1999/xhtml" style="${outerStyle.replace('"', "''")}">
+  ${unsafeHTML(styleBlock)}
   <div class="mainGrid">
     ${topHtml}
     ${centerHtml}

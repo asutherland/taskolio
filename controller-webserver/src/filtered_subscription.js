@@ -10,7 +10,18 @@ class FilteredSubscription {
     this.compare = compare;
     this.onUpdate = onUpdate;
 
+    /**
+     * Map whose keys are full container id's and values are the most recently
+     * seen state of the thing in question.
+     */
+    this.itemsById = new Map();
     this.items = [];
+  }
+
+  _rebuildItemsAndUpdate() {
+    this.items = Array.from(this.itemsById.values());
+    this.items.sort(this.compare);
+    this.onUpdate(this.items);
   }
 
   /**
@@ -19,33 +30,35 @@ class FilteredSubscription {
    * changes.
    */
   reset() {
-    const items = this.items = [];
+    this.itemsById.clear();
 
     for (const item of this.visTracker.containersByFullId.values()) {
       if (this.filterPred(item)) {
-        items.push(item);
+        this.itemsById.set(item.fullContainerId, item);
       }
     }
-
-    this.onUpdate(items);
+    this._rebuildItemsAndUpdate();
   }
 
   /**
    * Invokes by the VisibilityTracker when a new/updated item is heard about.
    * If the item matches the filter predicate onUpdate will be called even if
-   *
+   * the item is already in items.
    */
   considerItem(item) {
-    if (!this.filterPred(item)) {
+    const present = this.itemsById.has(item.fullContainerId);
+    const shouldBe = this.filterPred(item);
+
+    if (shouldBe) {
+      this.itemsById.set(item.fullContainerId, item);
+      this._rebuildItemsAndUpdate();
+    } else if (present) {
+      this.itemsById.delete(item.fullContainerId);
+      this._rebuildItemsAndUpdate();
+    } else {
+      // Nothing to do if not previously present and shouldn't be now.
       return;
     }
-
-    if (this.items.indexOf(item) !== -1) {
-      this.items.push(item);
-    }
-    this.items.sort(this.compare);
-
-    this.onUpdate(this.items);
   }
 
   destroy() {

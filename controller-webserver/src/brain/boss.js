@@ -19,6 +19,10 @@ class BrainBoss {
      * a conn when it shows up.
      */
     this.awaitingClientsByCapability = new Map();
+
+    // This is a method that gets clobbered in shortly after we're creating.
+    // See ModeDispatcher.notifyModes.
+    this.notifyModes = null;
   }
 
   registerClient(brainConn, msg) {

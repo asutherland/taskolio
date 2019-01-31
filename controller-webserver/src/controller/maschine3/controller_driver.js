@@ -2,6 +2,8 @@
 
 const Mk3 = require("node-traktor-f1/lib/maschine_mk3");
 
+const { renderToString } = require('@popeindustries/lit-html-server');
+
 const COLOR_BLACK = 0;
 const BLANK_ROW = [COLOR_BLACK, COLOR_BLACK, COLOR_BLACK, COLOR_BLACK];
 const BLANK_GRID = [...BLANK_ROW, ...BLANK_ROW, ...BLANK_ROW, ...BLANK_ROW];
@@ -54,6 +56,8 @@ class ControllerDriver {
      * client at the current moment.
      */
     this.htmlDesired = new Array(controller.displays.numDisplays);
+    // See updateHTML().
+    this._htmlUpdatePending = false;
 
     this._bindButtons();
 
@@ -110,10 +114,27 @@ class ControllerDriver {
     }
 
     // -- HTML
-    this.updateHTML();
+    this.updateHTML(stt);
   }
 
-  updateHTML(stt) {
+  /**
+   * Recomputes HTML displays for the modes and issues rendering requests if
+   * needed.  This uses a very dumb/simple Promise-based debouncing to minimize
+   * same-event-loop-dispatch churn.  There's slightly more complicated flow
+   * control going on beyond that state, but we're assuming the calls to
+   * computeHTML aren't free, hence the Promise debouncing.  A setTimeout(0)
+   * approach might also be appropriate, although I need to understand how
+   * node.js handles differentiating tasks/micro-tasks as to whether that
+   * actually changes things.
+   */
+  async updateHTML(stt) {
+    if (this._htmlUpdatePending) {
+      return;
+    }
+    this._htmlUpdatePending = true;
+    await Promise.resolve();
+    this._htmlUpdatePending = false;
+
     const ctrl = this.controller;
     if (!stt) {
       stt = this._latchState();
@@ -125,8 +146,8 @@ class ControllerDriver {
                            this.htmlPending[iDisplay] ||
                            this.htmlDisplayed[iDisplay];
 
-        const desiredHtml = this.dispatcher.computeHTML(stt, iDisplay,
-                                                        ctrl.displays);
+        const desiredHtml = await renderToString(
+          this.dispatcher.computeHTML(stt, iDisplay, ctrl.displays));
         if (desiredHtml !== recentHtml) {
           // it's async, but run for side-effect, no need to wait
           //console.log('...want to update display', iDisplay, 'to', desiredHtml);
@@ -140,20 +161,22 @@ class ControllerDriver {
     // If we already have a pending render, then just stash the HTML in desired
     // and the active instance of ourselves will re-trigger once it's done.
     if (this.htmlPending[iDisplay]) {
-      //console.log('  already pending HTML, saving to desired');
+      console.log('  already pending HTML, saving to desired');
       this.htmlDesired[iDisplay] = html;
       return;
     }
 
     // Check that this isn't already what we've displayed.  This has some
-    // overlap with the logic in updateLEDs, but we may potentially end up
+    // overlap with the logic in updateHTML, but we may potentially end up
     // having this method called directly as we experiment here...
     if (this.htmlDisplayed[iDisplay] === html) {
-      //console.log('  already display desired HTML, bailing');
+      console.log('  already displaying desired HTML, bailing');
       return;
     }
 
-    //console.log('updating display', iDisplay, 'html to', html);
+    console.log('updating display', iDisplay,
+    // 'to', html
+    );
     // Otherwise do note that this is now the pending HTML...
     this.htmlPending[iDisplay] = html;
 
@@ -173,7 +196,7 @@ class ControllerDriver {
     if (this.htmlDesired[iDisplay]) {
       html = this.htmlDesired[iDisplay];
       this.htmlDesired[iDisplay] = null;
-      return this.updateHTML(iDisplay, html);
+      return this.setDisplayHTML(iDisplay, html);
     }
     // otherwise, we're done.
   }

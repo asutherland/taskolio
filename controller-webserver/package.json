@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@popeindustries/lit-html-server": "^1.0.0-rc.4",
     "configstore": "^3.1.1",
     "node-traktor-f1": "github:asutherland/node-traktor-f1#2f6ae66fb67be242ef5d672140ea70ee9d32f4ac",
     "tinycolor2": "^1.4.1",

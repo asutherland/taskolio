@@ -1,5 +1,7 @@
 "use strict";
 
+const { html } = require('@popeindustries/lit-html-server');
+
 /**
  * Handles displaying auto-bookmarked pinned browser tabs across the top of the
  * 2 mk3 tabs with the buttons above them indicating notifications and allowing
@@ -11,10 +13,11 @@
  * - Map that to a client prefix and a
  */
 class TabsOnDisplayButtonsMode {
-  constructor({ dispatcher, visibilityTracker, bookmarkMode }) {
+  constructor({ dispatcher, visibilityTracker, bookmarkMode, updateHTML }) {
     this.dispatcher = dispatcher;
     this.visTracker = visibilityTracker;
     this.bookmarkMode = bookmarkMode;
+    this.updateHTML = updateHTML;
 
     // The window containerId we pull out of the bookmark.
     this.usingWindowContainerId = null;
@@ -35,13 +38,17 @@ class TabsOnDisplayButtonsMode {
       },
 
       compare: (a, b) => {
-        return b.index - a.index;
+        return a.index - b.index;
       },
 
       onUpdate: (items) => {
         this.onItemsUpdated(items);
       }
     });
+  }
+
+  onClientReady() {
+    this.rederiveFilter();
   }
 
   onMixerButton() {
@@ -72,8 +79,11 @@ class TabsOnDisplayButtonsMode {
   }
 
   onItemsUpdated(items) {
-    // XXX we may need to explicitly trigger an HTML rebuild if whatever induced
-    // this update doesn't update the LEDs itself.  (It probably should?)
+    console.log('trying to update HTML...');
+    // Any change in our items means that it's time to re-render our HTML.  The
+    // visibility tracker won't do this on its own.  (But any button press
+    // will.)
+    this.updateHTML();
   }
 
   computeDisplayLEDs(stt) {
@@ -110,22 +120,21 @@ class TabsOnDisplayButtonsMode {
   computeTopHTML(stt, iDisplay) {
     const base = iDisplay * 4;
     const top = base + 4;
-    let s = '';
+    const pieces = [];
     for (let i = base; i < top; i++) {
       const tab = this.view.items[i];
       // tab may be undefined if we found less than 8 pinned tabs (or no pinned)
       // tabs.
       let tstr;
       if (tab) {
-        tstr = `<div>
+        pieces.push(html`<div>
   ${tab.title}
-</div>`;
+</div>`);
       } else { // the case where the tab didn't exist...
-        tstr = `<div></div>`;
+        pieces.push(html`<div></div>`);
       }
-      s += tstr;
     }
-    return s;
+    return pieces;
   }
 }
 

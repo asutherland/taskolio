@@ -126,7 +126,7 @@ const ExtCore = {
    * Send a thingExists notification for every current tab.  As with the
    * editors, it's quite possible this deserves a re-think.
    */
-  async sendThingsExistForWorkspace() {
+  async sendThingsExist() {
     if (!this.client) {
       return;
     }
@@ -216,26 +216,8 @@ const ExtCore = {
           capabilities: ['renderHtml-0'],
         });
 
-        // report our focus slots inventory (synchronously), also sending a
-        // visibility inventory that will be useless to the server until it gets
-        // info on the containerId's, which happens in the next step.
-        this.updateAndSendFocusSlotsInventory();
-        // asynchronously enumerate the files in the workspace and report them as
-        // containerId's, triggering a visibility inventory automatically at the
-        // tail end of this.
-        this.sendThingsExistForWorkspace();
-
-        // TODO: better handle tracking changes to the workspace.  Specifically:
-        // - It seems like we want to use a FileSystemWatcher to know when things
-        //   are changing, but I want to ensure that this won't cost system
-        //   resources.  We really just want to piggy-back on whatever the folder
-        //   tree is doing.
-        // - For now we just make sure we send thingsExist notifications for the
-        //   visible text editors at all time, and this handles the creation of
-        //   new files as they happen.  It doesn't cover deletion of files, but
-        //   that's arguably not the biggest deal unless it starts resulting in
-        //   empty files being created as selecting a bookmark does the wrong
-        //   thing.
+        // This will also send a visibility inventory as its last step.
+        this.sendThingsExist();
       },
 
       onDisconnect() {

@@ -45,6 +45,8 @@ function makeDefaultConfigController() {
   });
 
   const dispatcher = new ModeDispatcher();
+  brainBoss.notifyModes = dispatcher.notifyModes.bind(dispatcher);
+
   const bookmarkMode = new BookmarkMode({
     bookmarkManager,
     dispatcher,
@@ -56,7 +58,13 @@ function makeDefaultConfigController() {
   const tabsOnTopMode = new TabsOnDisplayButtonsMode({
     dispatcher,
     visibilityTracker,
-    bookmarkMode
+    bookmarkMode,
+    updateHTML: () => {
+      // The controller driver may not exist yet.
+      if (gControllerDriver) {
+        return gControllerDriver.updateHTML();
+      }
+    }
   });
 
   dispatcher.init({

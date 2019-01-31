@@ -387,6 +387,10 @@ class VisibilityTracker {
       if (isWM) {
         this._trackWindow(prefixedContainerId, item.rawDetails);
       }
+
+      for (const filteredSub of this.filteredSubscriptions) {
+        filteredSub.considerItem(item);
+      }
     }
   }
 

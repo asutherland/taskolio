@@ -4,6 +4,7 @@ const { BankMixin, NUM_BANKS, GRID_ROWS, GRID_COLS, GRID_CELLS } =
   require("./bank_mixin");
 const { ColorPickerMode } = require("./color_picker_mode");
 
+const { html } = require('@popeindustries/lit-html-server');
 
 /**
  * UI for 4 "stop" button banks of 4x4 container-bookmark grids.
@@ -165,8 +166,7 @@ class BookmarkMode extends BankMixin {
   }
 
   computeCenterHTML(stt, iDisplay) {
-    const style = "width: 100%; height: 100%; color: white; background-color: #222222; font-size: 48px; padding: 8px";
-    return `<div class=".fullCenter">
+    return html`<div class=".fullCenter">
   <div>Hello World #${iDisplay}: ${this.gridPushCount}</div>
   <div style="background-color: white; display: inline-block; width: 32px; height: 32px; margin-right: 16px;"></div>
   <div style="background-color: red; display: inline-block; width: 32px; height: 32px; margin-right: 16px;"></div>
