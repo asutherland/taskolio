@@ -105,7 +105,7 @@ class BookmarkMode extends BankMixin {
       this.curBank[index] = null;
       this._saveBookmarks(this.banks);
     } else if (this.pickingForBookmark) {
-      console.log("Setting bookmark", JSON.stringify(this.pickingForBookmark));
+      //console.log("Setting bookmark", JSON.stringify(this.pickingForBookmark));
       const oldBookmark = this.curBank[index];
       this.curBank[index] =
         this.bookmarkManager.maybeMergeBookmarks(
@@ -144,7 +144,7 @@ class BookmarkMode extends BankMixin {
   onGridButton(evt) {
     this.gridPushCount++;
 
-    console.log('grid button pushed:', evt.index);
+    //console.log('grid button pushed:', evt.index);
     const bookmark = this.curBank[evt.index];
     this.bookmarkManager.focusBookmark(bookmark); // handles nullish bookmarks.
   }

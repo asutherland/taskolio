@@ -247,13 +247,15 @@ class VisibilityTracker {
     const check = (key) => {
       const hitSet = this.windowContainerIdLookup.get(key);
       if (hitSet) {
+        /*
         console.log('tracker: lookup resolved', key, 'to hit set of',
                     hitSet.size);
+        */
         if (hitSet.size === 1) {
           match = hitSet.values().next().value;
-          console.log('  using match:', match);
+          //console.log('  using match:', match);
         } else {
-          console.log('  ignoring match because there was more than 1');
+          //console.log('  ignoring match because there was more than 1');
         }
       }
     }
@@ -262,34 +264,40 @@ class VisibilityTracker {
     // set is then examined for secondary equivalency checks against the known
     // meta-info for the window.
     const checkMulti = (lookupKey, checkKey, checkValue) => {
-      console.log("checking", lookupKey);
+      //console.log("checking", lookupKey);
       const hitSet = this.windowContainerIdLookup.get(lookupKey);
       if (hitSet) {
+        /*
         console.log('tracker: multi-lookup resolved', lookupKey,
                     'to hit set of', hitSet.size);
+        */
         for (const containerId of hitSet) {
           // Look-up the most recent thingExists report for this window.
           const winMeta = this.containersByFullId.get(containerId);
           if (!winMeta) {
             // TODO: we absolutely need the container id purging logic now.
-            console.log('no winMeta for containerId', containerId);
+            //console.log('no winMeta for containerId', containerId);
             continue;
           }
           if (checkKey in winMeta && winMeta[checkKey] === checkValue) {
             match = containerId;
+            /*
             console.log('  containerId', containerId, 'matched on', checkKey,
                         '=', checkValue);
+            */
           } else {
+            /*
             console.log('  failed containerId match', containerId, 'on',
                         checkKey, 'had:', winMeta[checkKey], 'wanted:',
                         checkValue);
+            */
           }
         }
       }
     };
 
     for (const descriptor of parentDescriptors) {
-      console.log('  investigating descriptor', descriptor);
+      //console.log('  investigating descriptor', descriptor);
       if (descriptor.pid) {
         check(`pid:${descriptor.pid}`);
       }
@@ -331,7 +339,7 @@ class VisibilityTracker {
     }
   }
 
-  processFocusSlotsInventory(prefix, focusSlots, isWM) {
+  processFocusSlotsInventory(prefix, focusSlots, isWM, brainConn) {
     // Purge the old focus slots; the delta is more work than is needed.
     for (const prefixedSlotId of this.focusSlotContentsById.keys()) {
       if (prefixedSlotId.startsWith(prefix)) {
@@ -339,14 +347,16 @@ class VisibilityTracker {
       }
     }
 
+    const debugInfo = brainConn.debugSlotsInventory = [];
+
     // Create the (empty) slots.
     let windowMappedCount = 0;
     for (const info of focusSlots) {
-      console.log('processing focus slot:', info);
+      //console.log('processing focus slot:', info);
       const fullSlotId = prefix + info.focusSlotId;
       const windowContainerId = !isWM ?
         this._lookupWindowContainerId(info.parentDescriptors) : null;
-      console.log('  setting slot', fullSlotId, 'win', windowContainerId);
+      //console.log('  setting slot', fullSlotId, 'win', windowContainerId);
       if (windowContainerId) {
         windowMappedCount++;
       }
@@ -362,6 +372,11 @@ class VisibilityTracker {
       this.focusSlotContentsById.set(fullSlotId, null);
       this.windowContainerIdToActiveFocusSlot.set(
         windowContainerId, fullSlotId);
+
+      debugInfo.push([
+        info.focusSlotId,
+        windowContainerId,
+      ]);
     }
 
     // re-derive visible container id's even though this will cause the
@@ -381,7 +396,7 @@ class VisibilityTracker {
       item.fullContainerId = prefixedContainerId;
       // temporary debug specialization as I deal with pinned tabs.
       if (item.pinned) {
-        console.log('>>> exists:', item.containerId, item);
+        //console.log('>>> exists:', item.containerId, item);
       }
       this.containersByFullId.set(prefixedContainerId, item);
       if (isWM) {
@@ -394,8 +409,10 @@ class VisibilityTracker {
     }
   }
 
-  processThingsVisibilityInventory(prefix, inventory, isWM) {
-    console.log('visibility inventory:', inventory);
+  processThingsVisibilityInventory(prefix, inventory, isWM, brainConn) {
+    const debugInfo = brainConn.debugVisibilityInventory = [];
+
+    //console.log('visibility inventory:', inventory);
     for (const item of inventory) {
       if (!item) {
         continue;
@@ -406,6 +423,12 @@ class VisibilityTracker {
         item.containerId ? (prefix + item.containerId) : null;
       const fullSlotId = prefix + item.focusSlotId;
       this.focusSlotContentsById.set(fullSlotId, prefixedContainerId);
+
+      debugInfo.push([
+        item.state,
+        item.focusSlotId,
+        item.containerId,
+      ]);
 
       // state is one of focused/visible/empty, with focused also counting as
       // visible, which is why we put everything reported in the visible bucket.
@@ -425,15 +448,19 @@ class VisibilityTracker {
             // have a more specific client for this window.  So just report the
             // window as the focused thing.
             this.focusedContainerId = prefixedContainerId;
+            /*
             console.log('could not find active slot for window',
                         this.focusedWindowContainerId, 'sticking with window.');
+            */
           } else {
             // There was a client, so now see what containerId is displayed in
             // that slot and report it as the focused thing.
             this.focusedContainerId = this.focusSlotContentsById.get(mruSlot);
+            /*
             console.log('found active focus slot, focused window is',
                         this.focusedWindowContainerId, 'focused child:',
                         this.focusedContainerId);
+            */
           }
         } else {
           const winContainerId =
@@ -443,7 +470,7 @@ class VisibilityTracker {
           // focused up-to-date.  This is necessary for the WM branch of the
           // focused case to get things right.
           if (winContainerId) {
-            console.log('updating window focused slot id', fullSlotId);
+            //console.log('updating window focused slot id', fullSlotId);
             this.windowContainerIdToActiveFocusSlot.set(
               winContainerId, fullSlotId);
           }
@@ -454,8 +481,10 @@ class VisibilityTracker {
             this.focusedContainerId = prefixedContainerId;
           }
         }
+        /*
         console.log('set focused:', this.focusedContainerId, 'slot',
                     this.getFocusedFocusSlotId());
+        */
       }
     }
 
@@ -468,7 +497,7 @@ class VisibilityTracker {
 
     for (const item of items) {
       const prefixedContainerId = prefix + item.containerId;
-      console.log('gone:', item.containerId);
+      //console.log('gone:', item.containerId);
       this.containersByFullId.delete(prefixedContainerId);
       mootedFullIds.add(prefixedContainerId);
       if (this.focusedContainerId === prefixedContainerId) {
@@ -488,6 +517,35 @@ class VisibilityTracker {
       // re-derive visible container id's.
       this.visibleContainerIds = new Set(this.focusSlotContentsById.values());
     }
+  }
+
+  /**
+   * Variant of `checkVisibility` for window-scoped bookmarks that resolved to
+   * a client's focus slot.  We want to know if the focus slot exists and
+   * whether it's visible.
+   */
+  checkFocusSlotVisibility(fullFocusSlotId) {
+    // If the focus slot is focused, then it's focused!
+    if (this.getFocusedFocusSlotId() === fullFocusSlotId) {
+      return 'focused';
+    }
+
+    // It's visible if the window container that holds the focus slot is
+    // visible.
+    const windowContainerId =
+      this.focusSlotToWindowContainerId.get(fullFocusSlotId);
+    if (this.visibleContainerIds.has(windowContainerId)) {
+      return 'visible';
+    }
+
+    // It exists but is hidden if we know about the focus slot at all.  And
+    // we know about it if the above lookup was not undefined.
+    if (windowContainerId) {
+      return 'hidden';
+    }
+
+    // And so it's missing if we don't know about the focus slot id.
+    return 'missing';
   }
 
   /**
@@ -634,6 +692,34 @@ class VisibilityTracker {
       windowContainerId,
       windowFocused
     };
+  }
+
+  focusWindow(containerId, focusSlotId) {
+    // If we have a focus slot, map that to the window that owns it.
+    if (focusSlotId) {
+      const windowContainerId =
+        this.focusSlotToWindowContainerId.get(focusSlotId);
+      // No window means the bookmarked thing isn't present right now, so
+      // there's nothing to do.
+      if (!windowContainerId) {
+        //console.log('unable to map focus slot back to a container id');
+        return;
+      }
+
+      const windowFocused = windowContainerId === this.focusedWindowContainerId;
+
+      /*
+      console.log('mapped focus slot to', windowContainerId, 'focused?',
+                  windowFocused);
+      */
+      if (!windowFocused) {
+        this.brainBoss.focusContainerId(windowContainerId);
+      }
+      return;
+    }
+
+    // Fall back to the general focusWindow call.
+    return this.focusThing(containerId);
   }
 
   /**

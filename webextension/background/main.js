@@ -13,6 +13,117 @@ const ExtCore = {
   subscriptions: null,
   // The TaskolioClient
   client: null,
+  /**
+   * This maps tab id's to the persistent id we created for them and set with
+   * `browser.sessions.setTabValue`.
+   */
+  rawTabIdToPersistentId: new Map(),
+  /**
+   * This maps persistent id's to the underlying tab id.
+   */
+  persistentIdToRawTabId: new Map(),
+
+  // Same as for tabs, but now for windows!
+  rawWindowIdToPersistentId: new Map(),
+  persistentIdToRawWindowId: new Map(),
+
+  PERSISTENT_TAB_ID_KEY: 'taskolio-id',
+  PERSISTENT_WINDOW_ID_KEY: 'taskolio-win-id',
+  persistentIdEpoch: Date.now(),
+
+  /**
+   * Generate a persistent tab id.  For now we just generate a prefix derived
+   * from the client's start time and the rawTabId we're given.  If we cared
+   * about id size we could do a persistent numeric value using localStorage
+   * (performing a safety 'jump' on load in case previous increments didn't hit
+   * disk).
+   */
+  makePersistentId(rawTabId) {
+    const persId = `0-${this.persistentIdEpoch}-${rawTabId}`;
+    return persId;
+  },
+
+  /**
+   * Helper to do the asynchronous session lookup for the tab and to assign the
+   * id if it didn't exist.  This is simple logic, but because there's
+   * inherently a potential race as other events arrive in parallel and
+   * multiple redundant lookups could occur and step on each other, it pays to
+   * have a helper.
+   *
+   * NB: ensurePersistentWindowId is a mutated clone of this; update that if
+   * updating this, etc.
+   */
+  async ensurePersistentTabId(rawTabId) {
+    let persId = this.rawTabIdToPersistentId.get(rawTabId);
+    // Note, this might be a promise!
+    if (persId) {
+      return persId;
+    }
+    let resolve;
+    const pendingPromise = new Promise((_resolve) => { resolve = _resolve; });
+    this.rawTabIdToPersistentId.set(rawTabId, pendingPromise);
+
+    persId = await browser.sessions.getTabValue(rawTabId, this.PERSISTENT_TAB_ID_KEY);
+    if (!persId) {
+      persId = this.makePersistentId(rawTabId);
+      browser.sessions.setTabValue(rawTabId, this.PERSISTENT_TAB_ID_KEY, persId);
+    }
+    // resolve the promise any equivalent calls to us made during our async time
+    // are now waiting on...
+    resolve(persId);
+    // And update the true value to no longer involve a promise.
+    this.rawTabIdToPersistentId.set(rawTabId, persId);
+    this.persistentIdToRawTabId.set(persId, rawTabId);
+    return persId;
+  },
+
+  forgetTab(rawTabId) {
+    const persId = this.rawTabIdToPersistentId.get(rawTabId);
+    if (!persId) {
+      return;
+    }
+
+    this.rawTabIdToPersistentId.delete(rawTabId);
+    this.persistentIdToRawTabId.delete(persId);
+    return persId;
+  },
+
+  // This is just ensurePersistentTabId copy-paste-modified
+  async ensurePersistentWindowId(rawWindowId) {
+    let persId = this.rawWindowIdToPersistentId.get(rawWindowId);
+    // Note, this might be a promise!
+    if (persId) {
+      return persId;
+    }
+    let resolve;
+    const pendingPromise = new Promise((_resolve) => { resolve = _resolve; });
+    this.rawWindowIdToPersistentId.set(rawWindowId, pendingPromise);
+
+    persId = await browser.sessions.getWindowValue(rawWindowId, this.PERSISTENT_WINDOW_ID_KEY);
+    if (!persId) {
+      persId = this.makePersistentId(rawWindowId);
+      browser.sessions.setWindowValue(rawWindowId, this.PERSISTENT_WINDOW_ID_KEY, persId);
+    }
+    // resolve the promise any equivalent calls to us made during our async time
+    // are now waiting on...
+    resolve(persId);
+    // And update the true value to no longer involve a promise.
+    this.rawWindowIdToPersistentId.set(rawWindowId, persId);
+    this.persistentIdToRawWindowId.set(persId, rawWindowId);
+    return persId;
+  },
+
+  // This is just forgetWindow copy-paste-modified
+  forgetWindow(rawWindowId) {
+    const persId = this.rawWindowIdToPersistentId.get(rawWindowId);
+    if (!persId) {
+      return;
+    }
+
+    this.rawWindowIdToPersistentId.delete(rawWindowId);
+    this.persistentIdToRawWindowId.delete(persId);
+    return persId;
+  },
 
   /**
    * Send an updated focusSlotsInventory to the server.
@@ -85,31 +196,34 @@ const ExtCore = {
       windowTypes: ["normal"]
     });
 
-    const inventory = windows.map((win, iWin) => {
+    const inventory = [];
+    for (const win of windows) {
+      const persWinId = await this.ensurePersistentWindowId(win.id);
       const activeTab = win.tabs.find(tab => tab.active);
 
-      return {
+      const activePersId = activeTab &&
+                           await this.ensurePersistentTabId(activeTab.id);
+      inventory.push({
         // Again, like for windows, it's possible the sessionId is more useful.
-        containerId: activeTab && activeTab.id,
-        focusSlotId: win.id,
+        containerId: activePersId,
+        focusSlotId: persWinId,
         state: win.focused ? 'focused' : 'visible'
-      };
-    });
+      });
+    }
 
     this.client.sendMessage('thingsVisibilityInventory', {
       inventory
     });
   },
 
-  _extractTabInfo(tab) {
+  _extractTabInfo(tab, persId) {
     return {
       // the tab's id (which unfortunately is not currently stable between
       // browser restarts) is what we use to identify the tab for now.  We might
       // also try and hack something up with the sessionId.
-      containerId: tab.id,
+      containerId: persId,
       // right, this is ephemeral too.
       focusSlotId: tab.windowId,
-      sessionId: tab.sessionId,
       index: tab.index,
       cookieStoreId: tab.cookieStoreId,
       title: tab.title,
@@ -140,17 +254,19 @@ const ExtCore = {
 
     for (const win of windows) {
       for (const tab of win.tabs) {
-        items.push(this._extractTabInfo(tab));
+        // NB: we could issue the requests in parallel, but this at least avoids
+        // having an insane number of requests outstanding at once.
+        const persId = await this.ensurePersistentTabId(tab.id);
+        items.push(this._extractTabInfo(tab, persId));
       }
     }
 
     this.client.sendMessage('thingsExist', {
       items
     });
-    // Since we are an async process, it's very possible the visibility inventory
-    // already happened, so just send a fresh one now that we've run.
-    // Alternately, we could have our caller wait for us and call.
-    this.updateAndSendThingsVisibilityInventory();
+    // Now send the focus slots inventory which will in turn send the visibility
+    // inventory.
+    this.updateAndSendFocusSlotsInventory();
   },
 
   async activate() {
@@ -163,10 +279,11 @@ const ExtCore = {
     // Send updated things exist entries whenever a tab changes.  This is a new
     // thing we're doing now that we have screens that care about being able to
     // display info about the tabs we have.
-    const sendUpdatedThingsExist = this.sendUpdatedThingsExist = (tabId, changeInfo, tab) => {
+    const sendUpdatedThingsExist = this.sendUpdatedThingsExist = async (tabId, changeInfo, tab) => {
+      let persId = await this.ensurePersistentTabId(tabId);
       this.client.sendMessage('thingsExist', {
         items: [
-          this._extractTabInfo(tab)
+          this._extractTabInfo(tab, persId)
         ]
       });
     };
@@ -174,10 +291,16 @@ const ExtCore = {
     // need to start generating 'gone' notifications.
     browser.tabs.onUpdated.addListener(sendUpdatedThingsExist);
     const sendThingGone = this.sendThingGone = (tabId) => {
+      // Lookup the persistent id and also remove the entry.  If we didn't have
+      // a persistent id for the tab, there's nothing to do.
+      const persId = this.forgetTab(tabId);
+      if (!persId) {
+        return;
+      }
       this.client.sendMessage('thingsGone', {
         items: [
           {
-            containerId: tabId
+            containerId: persId
           }
         ]
       });
@@ -236,7 +359,11 @@ const ExtCore = {
        */
       onMessage_selectThings: async (msg) => {
         const thing = msg.items[0];
-        const tabId = parseInt(thing.containerId, 10);
+        const persId = thing.containerId;
+        const tabId = this.persistentIdToRawTabId.get(persId);
+        if (!tabId) {
+          return;
+        }
         const winId = parseInt(thing.focusSlotId, 10);
 
         console.log("trying to activate tab:", tabId, "in window", winId);

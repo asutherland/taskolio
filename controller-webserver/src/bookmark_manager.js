@@ -15,9 +15,19 @@ class BookmarkManager {
     this.colorHelper = colorHelper;
   }
 
-  // helper for our bookmark minters
-  _makeBookmark(containerId, focusSlotId) {
+  /**
+   * Helper for our bookmark minters.
+   *
+   * @param {'window'|'container'} scope
+   *   What were we trying to bookmark.  If 'window', then the focusSlotId, if
+   *   non-null, is the client focus slot we were able to resolve and should be
+   *   the basis for resolving the bookmark, falling back to the window
+   *   containerId otherwise.
+   *
+   */
+  _makeBookmark(scope, containerId, focusSlotId) {
     return {
+      scope,
       containerId,
       focusSlotId,
       color: this.colorHelper.makeRandomColor()
@@ -25,22 +35,30 @@ class BookmarkManager {
   }
 
   /**
-   * Create a bookmark at window-level granularity.  If you want the bookmark to
-   * be more specific and refer to containerId's inside an app/its windows, then
-   * use `mintBookmarkForFocusedThing`.
+   * Create a bookmark at window-level granularity.  If we have client info and
+   * are able to map to the client's focus slot, we persist that instead.
+   * Otherwise we fall back to the window container id.
+   *
+   * In the future, the fallback would ideally include descriptor-ish info so
+   * that we can auto re-establish the bookmark.  (That is, if we know it's
+   * the only console window on the left monitor, and later a console window is
+   * created on that monitor and it's the only one, that seems reasonable to
+   * hook back up.)
    */
   mintBookmarkForFocusedWindow() {
-    const containerId = this.visTracker.getFocusedWindowContainerId();
+    const windowContainerId = this.visTracker.getFocusedWindowContainerId();
     // It's possible nothing is focused.
-    if (!containerId) {
+    if (!windowContainerId) {
       console.warn('asked to mint window bookmark with nothing focused');
       return null;
     }
 
-    // XXX for now, let's not track the focus slot since that's the monitor and
-    // we're not yet proposing to move windows between monitors.
-    const focusSlotId = null;
-    return this._makeBookmark(containerId, focusSlotId);
+    const focusSlotId = this.visTracker.getFocusedFocusSlotId();
+    if (focusSlotId) {
+      return this._makeBookmark('window', null, focusSlotId);
+    } else {
+      return this._makeBookmark('window', windowContainerId, null);
+    }
   }
 
   /**
@@ -63,7 +81,7 @@ class BookmarkManager {
     }
 
     const focusSlotId = this.visTracker.getFocusedFocusSlotId();
-    return this._makeBookmark(containerId, focusSlotId);
+    return this._makeBookmark('container', containerId, focusSlotId);
   }
 
   /**
@@ -97,11 +115,13 @@ class BookmarkManager {
       useWindow ? this.visTracker.getFocusedWindowContainerId()
                 : this.visTracker.getFocusedContainerId();
     const focusSlotId = this.visTracker.getFocusedFocusSlotId();
+    /*
     console.log('findFocusedBookmarkInCollection: looking for',
                  focusedId, focusSlotId);
+    */
     // It's possible nothing is focused.
     if (!focusedId) {
-      console.log('findFocusedBookmarkInCollection: nothing focused?');
+      //console.log('findFocusedBookmarkInCollection: nothing focused?');
       return null;
     }
 
@@ -119,13 +139,13 @@ class BookmarkManager {
           }
         } else if (obj.containerId === focusedId &&
                    (!obj.focusSlotId || obj.focusSlotId === focusSlotId)) {
-          console.log('findFocusedBookmarkInCollection: found:', obj);
+          //console.log('findFocusedBookmarkInCollection: found:', obj);
           return obj;
         }
       }
 
       // not found.
-      console.log('findFocusedBookmarkInCollection: no matching thing');
+      //console.log('findFocusedBookmarkInCollection: no matching thing');
       return null;
     }
 
@@ -157,7 +177,11 @@ class BookmarkManager {
       return;
     }
 
-    this.visTracker.focusThing(bookmark.containerId, bookmark.focusSlotId);
+    if (bookmark.scope === 'window') {
+      this.visTracker.focusWindow(bookmark.containerId, bookmark.focusSlotId);
+    } else {
+      this.visTracker.focusThing(bookmark.containerId, bookmark.focusSlotId);
+    }
   }
 
   /**
@@ -189,8 +213,16 @@ class BookmarkManager {
       return this.colorHelper.computeEmptyDisplayColor();
     }
 
-    const visResult = this.visTracker.checkVisibility(
-      bookmark.containerId, bookmark.focusSlotId);
+    let visResult;
+    if (bookmark.scope === 'window') {
+      visResult = this.visTracker.checkFocusSlotVisibility(bookmark.focusSlotId);
+    } else {
+      // This covers both scope === 'container' and scope === undefined (which
+      // doesn't actually need to be supported going forward but is nice to
+      // have for the next few minutes...)
+      visResult = this.visTracker.checkVisibility(
+        bookmark.containerId, bookmark.focusSlotId);
+    }
 
     return this.colorHelper.computeBookmarkDisplayColor(
       bookmark.color, visResult, brightnessScale);

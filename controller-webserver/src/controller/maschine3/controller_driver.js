@@ -161,7 +161,7 @@ class ControllerDriver {
     // If we already have a pending render, then just stash the HTML in desired
     // and the active instance of ourselves will re-trigger once it's done.
     if (this.htmlPending[iDisplay]) {
-      console.log('  already pending HTML, saving to desired');
+      //console.log('  already pending HTML, saving to desired');
       this.htmlDesired[iDisplay] = html;
       return;
     }
@@ -170,13 +170,15 @@ class ControllerDriver {
     // overlap with the logic in updateHTML, but we may potentially end up
     // having this method called directly as we experiment here...
     if (this.htmlDisplayed[iDisplay] === html) {
-      console.log('  already displaying desired HTML, bailing');
+      //console.log('  already displaying desired HTML, bailing');
       return;
     }
 
+    /*
     console.log('updating display', iDisplay,
-    // 'to', html
+     'to', html
     );
+    */
     // Otherwise do note that this is now the pending HTML...
     this.htmlPending[iDisplay] = html;
 
@@ -277,7 +279,7 @@ class ControllerDriver {
         this.buttonStates[name] = 0;
         const evt = this._makeButtonEvent(name, index);
 
-        console.log('attempting dispatch of', name);
+        //console.log('attempting dispatch of', name);
 
         if (!(methodName in this.dispatcher)) {
           console.error('no handler for:', methodName);

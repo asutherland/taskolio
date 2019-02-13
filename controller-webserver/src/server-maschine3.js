@@ -2,6 +2,8 @@
 
 const WebSocket = require("ws");
 const Configstore = require("configstore");
+const blessed = require('blessed');
+const bcontrib = require('blessed-contrib');
 
 const { BrainConnection } = require("./brain/conn");
 const { BrainBoss } = require("./brain/boss");
@@ -23,7 +25,97 @@ let gControllerDriver;
 let gDispatcher;
 let gVisibilityTracker;
 
+let guiScreen;
+let guiClients;
+let guiVisibilityReport;
+
 const CONFIG_VERSION = 1;
+
+///// EXPERIMENTAL ncurses-style blessed UI to aid understanding of server state
+// Our general strategy here is react-ish based.  We just schedule a complete
+// redraw anytime anything happens.
+function setupBlessed() {
+  guiScreen = blessed.screen({
+    debug: true,
+    bg: 'blue'
+  });
+  guiScreen.key(['escape', 'q', 'C-c'], function(ch, key) {
+    return process.exit(0);
+  });
+
+  guiClients = bcontrib.table({
+    parent: guiScreen,
+    height: 16,
+    label: 'Clients',
+    border: {
+      type: 'line',
+      fg: 'gray'
+    },
+    align: 'left',
+    columnWidth: [16, 16, 64],
+    data: {
+      headers: ['Type', 'Name', 'UniqueId'],
+      data: []
+    },
+    interactive: true,
+    keys: true,
+    mouse: true,
+  });
+
+  guiVisibilityReport = bcontrib.table({
+    parent: guiScreen,
+    label: 'Client Focus Slots Inventory',
+    top: 17,
+    border: {
+      type: 'line',
+      fg: 'gray'
+    },
+    align: 'left',
+    columnWidth: [8, 32, 64],
+    data: {
+      headers: ['State', 'Focus Slot Id', 'Container Id'],
+      data: []
+    }
+  })
+
+  guiClients.rows.on('select item', () => { blessedDirtied(); });
+
+  // Start out with the clients list focused.
+  guiClients.focus();
+}
+
+// Track if there's an outstanding setTimeout for a render, and also if we're
+// actively inside a render.  ('select item' will be synthetically generated
+// when we mutate our state, so it's important to avoid recursively triggering
+// our naive/dumb render function.)
+let pendingBlessedRender = false;
+let activeBlessedRender = false;
+function blessedDirtied() {
+  if (pendingBlessedRender || activeBlessedRender) {
+    return;
+  }
+
+  pendingBlessedRender = true;
+  setTimeout(renderBlessed, 0);
+}
+function renderBlessed() {
+  pendingBlessedRender = false;
+
+  guiClients.setData(gBrainBoss.renderDebugState());
+
+  // Maps are stable, use the index.
+  const selectedConn = Array.from(gBrainBoss.clientsByPrefix.values())[guiClients.rows.selected];
+  guiVisibilityReport.setData({
+    headers: ['State', 'Focus Slot Id', 'Container Id'],
+    data: selectedConn ? selectedConn.debugVisibilityInventory : []
+  });
+
+  activeBlessedRender = true;
+  guiScreen.render();
+  activeBlessedRender = false;
+}
+
+setupBlessed();
 
 function makeDefaultConfigController() {
   const configstore = new Configstore("taskolio-maschine3");
@@ -33,7 +125,9 @@ function makeDefaultConfigController() {
     configstore.set('version', CONFIG_VERSION);
   }
 
-  const brainBoss = new BrainBoss();
+  const brainBoss = new BrainBoss({
+    debugStateUpdated: blessedDirtied
+  });
 
   const visibilityTracker = new VisibilityTracker({
     brainBoss
@@ -112,7 +206,7 @@ const run = async (port) => {
       const isWebExtOrigin = info.origin && /^moz-extension:/.test(info.origin);
       const allowed = noOrigin || isFileOrigin || isWebExtOrigin;
 
-      console.log("client origin:", info.origin, "allowed?", allowed);
+      //console.log("client origin:", info.origin, "allowed?", allowed);
 
       return allowed;
     }

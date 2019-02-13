@@ -161,6 +161,72 @@ Other info:
 
 # Newer Rambling Follows #
 
+## Current mk3 Plan ##
+- Group buttons get associated with taskwarrior tasks except for "H" which stays
+  as a global scratchpad for now.
+- Pressing group buttons switches the active task/group button.  This will be
+  sent to interested clients so that if they have some type of 'focus' mechanism
+  they can get in on that.
+  - Some type of group 'peek' could also be handy.  Specifically, pressing on a
+    group button without releasing it, but then pressing a bookmark should cause
+    the group button press to restore the previous group on release.  (But it
+    would remain displayed until released, so that all of its bookmarks could
+    be cycled through.  This makes the operation consistent and arguably sane.)
+- Pressing the "Arranger" button enters task picking mode, to pick a new task
+  for the currently active group.  The button is currently chosen because it's
+  faw away from the current active areas so is less likely to get hit
+  accidentally.
+  - Task picking mode is a paged grid picker.  The pad buttons allow picking
+    one of 16 choices, where those choices are displayed in a 4x4 grid spread
+    over the 2 displays, with arbitrary colors being used to help provide
+    confirmation that the right button is being pressed.  The display buttons
+    along the top provide access to task pages.  The general idea would be to
+    perhaps have the first (and default) page be MRU displays, with the other
+    7 corresponding to (persistent) project prefix filters/bins.
+- In normal task display mode:
+  - The top 8 display buttons are global-ish, currently being the 8 pinned tabs
+    of the primary browser window.  The goal is that these may also have some
+    ability to extract and display notifications
+  - The grid contains bookmarks specific to the current task, with a grid-picker
+    type representation with string/favicon representations of what the
+    bookmarks are.
+- Ribbon strip ideas:
+  1. Pressing the strip causes the displays to show grid labels for the group
+     buttons.  (This could also be another closer button, like "Notes")
+  2. The strip could be used as a mechanism to scroll across multiple pages for
+     the task.  Like an information space.  Implementation would want to bias
+     towards low-precision/high movement.  Thankfully the LED strip can help
+     express the bookmark space.  It might make sense to just have fully paged.
+     At four LEDs per page, that's still 6 pages which is way more than enough.
+
+### Related Firefox tab plan (taskolio and tabdrome):
+- Use the session API to stash unique id associations on the tabs like they're
+  going out of style.  The firefox tab id's are not persistent on their own and
+  it seems like this is the mechanism required.
+  - Move entirely away from storing Firefox-issued containerIds.  Exclusively
+    use the extension's new id-space.
+  - Double-check we're doing the right persistent id for per-profile.
+  - For the time being, do not store the tabs or their URLs as taskwarrior
+    annotations, but do mark the tab as explicitly associated with the task's
+    UUID inside of Firefox via the sessionstore.  This gets us:
+    - The visual presentation inside Firefox with tabdrome can work out.
+    - Naive bookmarking works out.
+  - Do also propagate colors from the bookmark into Firefox and the session.
+- Have a very basic categorization function that just uses domains and simple
+  hardcoded path regexps to help to suggest the type of a page/tab and provide a
+  default color mapping for the tab when bookmarked.  Ex: bug, splinter review,
+  phabricator review, MDN page, searchfox page.  Also have this have a basic
+  "suggested task name" mechanism too, so a task can easily be created from a
+  review.
+
+For tabdrome:
+- Have it learn to watch/recognize the taskolio annotations and use that as a
+  top-level grouping.
+- Have it learn to watch/recognize the taskolio bookmark color assignments and
+  show those.
+- Have it surface a "rename task" UI so it's easy to give name to a task after
+  it's been created.  (The workflow would be )
+
 ## Notes from Paged Bookmarking ##
 
 - The single page of bookmarks with consistent grid locations and coloring works

@@ -18,6 +18,10 @@ class BrainConnection {
     this.idPrefix = '';
     // Is this the window manager client?
     this.isWM = false;
+    this.clientType = '';
+    this.clientName = '';
+    this.clientUniqudId = '';
+    this.capabilities = [];
 
     // Track when we've received our initial focus slots inventory so that we
     // can let interested modes update in response.  We require that the slots
@@ -28,16 +32,22 @@ class BrainConnection {
     // slots are associated with?  This is meant to be sent only once, so this
     // variable handles suppression of redundant sends.
     this.focusSlotsLinked = false;
+
+    // ## Centrally tracked debug overviews for the client
+    // updated by VisibilityTracker.processFocusSlotsInventory
+    this.debugSlotsInventory = [];
+    // updated by VisibilityTracker.processThingsVisibilityInventory
+    this.debugVisibilityInventory = [];
   }
 
   onMessage(data) {
     const obj = JSON.parse(data);
-    console.log('\n===', this.idPrefix, obj.type);
+    //console.log('\n===', this.idPrefix, obj.type);
 
     if (obj.type === 'reply') {
       const replyResolve = this.awaitingReplies.get(obj.id);
       if (!replyResolve) {
-        console.error('got reply we were not waiting for:', obj);
+        //console.error('got reply we were not waiting for:', obj);
         return;
       }
       replyResolve(obj.payload);
@@ -57,6 +67,11 @@ class BrainConnection {
     // for debugging sanity, let's keep things short.
     this.idPrefix = this.brainBoss.registerClient(this, msg);
     this.isWM = msg.type === 'window-manager';
+
+    this.clientType = msg.type;
+    this.clientName = msg.name;
+    this.clientUniqueId = msg.uniqueId;
+
     this.capabilities = msg.capabilities || [];
     this.brainBoss.reportClientCapabilities(this, this.capabilities);
   }
@@ -66,7 +81,7 @@ class BrainConnection {
     this.receivedInitialSlots = true;
 
     const mappedAllSlots = this.visibilityTracker.processFocusSlotsInventory(
-      this.idPrefix, msg.focusSlots, this.isWM);
+      this.idPrefix, msg.focusSlots, this.isWM, this);
 
     // If all the slots were mapped to windows, then we tell the client so that
     // it can stop doing hacky things like tunneling process id's through
@@ -81,6 +96,8 @@ class BrainConnection {
       // fully told us everything we need to know.
       this.brainBoss.notifyModes('onClientReady', this);
     }
+
+    this.brainBoss.debugStateUpdated();
   }
 
   onMessage_thingsExist(msg) {
@@ -95,7 +112,9 @@ class BrainConnection {
 
   onMessage_thingsVisibilityInventory(msg) {
     this.visibilityTracker.processThingsVisibilityInventory(
-      this.idPrefix, msg.inventory, this.isWM);
+      this.idPrefix, msg.inventory, this.isWM, this);
+
+    this.brainBoss.debugStateUpdated();
   }
 
   onClose(code, reason) {
@@ -104,7 +123,7 @@ class BrainConnection {
   }
 
   sendMessage(type, payload) {
-    console.log('sending', type, payload);
+    //console.log('sending', type, payload);
 
     const obj = { type, payload };
     this.ws.send(JSON.stringify(obj));

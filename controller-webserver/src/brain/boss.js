@@ -12,7 +12,7 @@ function extractUnprefixedContainerId(prefixed) {
 }
 
 class BrainBoss {
-  constructor() {
+  constructor({ debugStateUpdated }) {
     this.clientsByPrefix = new Map();
     /**
      * Map from capability string to a list of resolve functions to invoke with
@@ -23,12 +23,30 @@ class BrainBoss {
     // This is a method that gets clobbered in shortly after we're creating.
     // See ModeDispatcher.notifyModes.
     this.notifyModes = null;
+
+    this.debugStateUpdated = debugStateUpdated;
+  }
+
+  renderDebugState() {
+    const rows = [];
+    for (const brainConn of this.clientsByPrefix.values()) {
+      rows.push([
+        brainConn.clientType,
+        brainConn.clientName,
+        brainConn.clientUniqueId
+      ]);
+    }
+    return {
+      headers: ['Type', 'Name', 'UniqueId'],
+      data: rows
+    };
   }
 
   registerClient(brainConn, msg) {
     const idPrefix = `${msg.type}_-_${msg.name}_-_${msg.uniqueId}:`;
     const barePrefix = idPrefix.slice(0, -1);
     this.clientsByPrefix.set(barePrefix, brainConn);
+    this.debugStateUpdated();
     return idPrefix;
   }
 
@@ -39,20 +57,24 @@ class BrainBoss {
    */
   reportClientCapabilities(brainConn, capabilities) {
     for (const capability of capabilities) {
-      console.log('processing client capability:', capability);
+      //console.log('processing client capability:', capability);
       if (this.awaitingClientsByCapability.has(capability)) {
         for (const resolve of this.awaitingClientsByCapability.get(capability)) {
-          console.log('  resolving awaiting client...');
+          //console.log('  resolving awaiting client...');
           resolve(brainConn);
         }
         this.awaitingClientsByCapability.delete(capability);
       }
     }
+
+    this.debugStateUpdated();
   }
 
   unregisterClient(brainConn, idPrefix) {
     const barePrefix = idPrefix.slice(0, -1);
     this.clientsByPrefix.delete(barePrefix);
+
+    this.debugStateUpdated();
   }
 
   _messageContainerId(prefixedContainerId, messageType, extraProps) {
@@ -60,7 +82,7 @@ class BrainBoss {
     const conn = this.clientsByPrefix.get(clientId);
 
     if (!conn) {
-      console.warn('Got', messageType, 'request for missing client:', clientId);
+      //console.warn('Got', messageType, 'request for missing client:', clientId);
       return;
     }
 
