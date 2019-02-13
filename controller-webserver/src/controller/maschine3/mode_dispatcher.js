@@ -358,8 +358,22 @@ font-size: 16px;
     const styleBlock = `<style>
 .mainGrid {
   display: grid;
-  grid-template-columns: repeat(4, 22%);
-  grid-gap: 4%;
+  grid-template-columns: repeat(4, 1fr);
+  grid-column-gap: 8px;
+}
+
+.displayButton {
+  grid-column: span 2;
+  padding: 0 2px;
+}
+.displayButton:nth-child(odd) {
+  border-left: 2px solid #ccc;
+  border-right: 2px solid #666;
+}
+.displayButton:nth-child(even) {
+  grid-row: 2;
+  border-right: 2px solid #ccc;
+  text-align: right;
 }
 
 .mainGrid > div {

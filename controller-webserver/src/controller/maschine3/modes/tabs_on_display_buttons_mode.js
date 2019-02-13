@@ -1,6 +1,7 @@
 "use strict";
 
 const { html } = require('@popeindustries/lit-html-server');
+const { URL } = require('url');
 
 /**
  * Handles displaying auto-bookmarked pinned browser tabs across the top of the
@@ -134,11 +135,14 @@ class TabsOnDisplayButtonsMode {
       // tabs.
       let tstr;
       if (tab) {
-        pieces.push(html`<div>
-  ${tab.title}
+        // For now, let's use the hostname since the titles end up being really
+        // long.
+        const url = new URL(tab.url);
+        pieces.push(html`<div class="displayButton">
+  ${url.hostname}
 </div>`);
       } else { // the case where the tab didn't exist...
-        pieces.push(html`<div></div>`);
+        pieces.push(html`<div class="displayButton"></div>`);
       }
     }
     return pieces;
