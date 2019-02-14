@@ -39,7 +39,7 @@ export class ElementBookmarker {
           return elem.id;
         }
         // things that think they are buttons are okay.
-        if ((elem.getAttribute('role').toLowerCase() === 'button') && elem.id) {
+        if (((elem.getAttribute('role') || '').toLowerCase() === 'button') && elem.id) {
           return elem.id;
         }
         elem = elem.parentElement;
