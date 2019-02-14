@@ -214,12 +214,12 @@ class BookmarkManager {
     }
 
     let visResult;
-    if (bookmark.scope === 'window') {
+    // If it's a window-scoped bookmark and it's using the focus slot for
+    // identification, use that helper.
+    if (bookmark.scope === 'window' && bookmark.focusSlotId) {
       visResult = this.visTracker.checkFocusSlotVisibility(bookmark.focusSlotId);
     } else {
-      // This covers both scope === 'container' and scope === undefined (which
-      // doesn't actually need to be supported going forward but is nice to
-      // have for the next few minutes...)
+      // Otherwise the dominant factor is the containerId.
       visResult = this.visTracker.checkVisibility(
         bookmark.containerId, bookmark.focusSlotId);
     }
