@@ -117,7 +117,10 @@ class BookmarkMode extends BankMixin {
   }
 
   onPadModeButton(evt) {
-    this.activity = 'set-color';
+    this.activity = 'set-color';this.bookmarkActions[capitalName];
+    if (!actionInfo) {
+      return;
+    }
     this.pickingForBookmark =
       this.bookmarkManager.findFocusedBookmarkInCollection(
         this.banks, 'window');
@@ -159,6 +162,20 @@ class BookmarkMode extends BankMixin {
       return this.bookmarkManager.computeColorForBookmark(
         cell, scaleLightness);
     });
+  }
+
+  // Turn on the LEDs that we do stuff for.
+  computePadModeLED() {
+    return 1;
+  }
+  computeKeyboardLED() {
+    return 1;
+  }
+  computeChordsLED() {
+    return 1;
+  }
+  computeStepLED() {
+    return 1;
   }
 
   computeGridColors() {

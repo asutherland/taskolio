@@ -12,7 +12,7 @@ function extractUnprefixedContainerId(prefixed) {
 }
 
 class BrainBoss {
-  constructor({ debugStateUpdated }) {
+  constructor({ debugStateUpdated, log }) {
     this.clientsByPrefix = new Map();
     /**
      * Map from capability string to a list of resolve functions to invoke with
@@ -25,6 +25,7 @@ class BrainBoss {
     this.notifyModes = null;
 
     this.debugStateUpdated = debugStateUpdated;
+    this.log = log;
   }
 
   renderDebugState() {
@@ -101,6 +102,15 @@ class BrainBoss {
       prefixedContainerId, 'selectThings',
       {
         focusSlotId
+      });
+  }
+
+  triggerContainerAction(prefixedContainerId, actionId) {
+    this.log(`triggerContainerAction ${prefixedContainerId} ${actionId}`)
+    return this._messageContainerId(
+      prefixedContainerId, 'triggerActionBookmark',
+      {
+        actionId
       });
   }
 

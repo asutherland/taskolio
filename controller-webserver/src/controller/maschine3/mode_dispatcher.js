@@ -88,6 +88,8 @@ class ModeDispatcher {
       "computeNavLeftLED",
       "computeNavRightLED",
       "computeNavDownLED",
+      //
+      "computeUnhandledLED",
       // - event handling methods
       // things we got multiples of
       "onGridButton",
@@ -102,6 +104,7 @@ class ModeDispatcher {
       "onArrangerButton",
       "onMixerButton",
       "onBrowserPluginButton",
+      "onSamplingButton",
       "onArrowLeftButton",
       "onArrowRightButton",
       "onFileSaveAsButton",
@@ -138,20 +141,39 @@ class ModeDispatcher {
       "onSelectButton",
       "onSoloButton",
       "onMuteChokeButton",
+      "onUnhandledButton",
     ];
 
     const nop = () => null;
-    const barelyIlluminateLED = () => { return 2; };
+    const barelyIlluminateLED = () => { return 0; };
     const returnEmptyHTML = () => { return ''; };
     for (const methodName of boundMethods) {
+      // Look-up whether we implement a handler to be an explicit fallback if
+      // the method isn't implemented by a mode.  (Usually these methods are
+      // used to spread high-level requests out amongst specific per-button
+      // methods, allowing the modes to be very explicit about what's going on.)
       const unboundFallback = this[`base_${methodName}`];
-      let fallback;
+      let fallback, match;
       if (unboundFallback) {
         fallback = unboundFallback.bind(this);
+      } else if (methodName !== 'onUnhandledButton' &&
+                 (match = /^on(.+)Button$/.exec(methodName))) {
+        const capitalName = match[1];
+        // In order to make it possible for a mode to reuse buttons that aren't
+        // used by any modes, we implement `onUnhandledButton` as a fallback.
+        fallback = (evt) => {
+          return this.onUnhandledButton(capitalName, evt);
+        };
+      } else if (methodName !== 'computeUnhandledLED' &&
+                 (match = /^compute(.+)LED$/.exec(methodName))) {
+        const capitalName = match[1];
+        fallback = (evt) => {
+          return this.computeUnhandledLED(capitalName);
+        };
       } else if (/LED$/.test(methodName)) {
         fallback = barelyIlluminateLED;
       } else if (/HTML$/.test(methodName)) {
-          fallback = returnEmptyHTML;
+        fallback = returnEmptyHTML;
       } else {
         fallback = nop;
       }

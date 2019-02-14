@@ -16,6 +16,8 @@ const { ModeDispatcher } = require("./controller/maschine3/mode_dispatcher");
 const { BookmarkMode } = require("./controller/maschine3/modes/bookmark_mode");
 const { TabsOnDisplayButtonsMode } = require("./controller/maschine3/modes/tabs_on_display_buttons_mode");
 
+const { ActionBookmarkMode } = require("./controller/maschine3/modes/action_bookmark_mode");
+
 const { ColorHelper } = require("./indexed_color_helper");
 
 let gBookmarkManager;
@@ -28,6 +30,7 @@ let gVisibilityTracker;
 let guiScreen;
 let guiClients;
 let guiVisibilityReport;
+let guiLog;
 
 const CONFIG_VERSION = 1;
 
@@ -66,6 +69,7 @@ function setupBlessed() {
     parent: guiScreen,
     label: 'Client Focus Slots Inventory',
     top: 17,
+    height: 10,
     border: {
       type: 'line',
       fg: 'gray'
@@ -76,12 +80,32 @@ function setupBlessed() {
       headers: ['State', 'Focus Slot Id', 'Container Id'],
       data: []
     }
-  })
+  });
+
+  guiLog = blessed.log({
+    parent: guiScreen,
+    label: 'Log',
+    top: 28,
+    tags: true,
+    border: {
+      type: 'line',
+      fg: 'gray'
+    }
+  });
 
   guiClients.rows.on('select item', () => { blessedDirtied(); });
 
   // Start out with the clients list focused.
   guiClients.focus();
+}
+
+function makeLogFunc(label, color) {
+  const prefix = `{${color}-fg}${label}{gray-fg} `;
+
+  return function(str) {
+    guiLog.log(prefix + str);
+    blessedDirtied(true);
+  };
 }
 
 // Track if there's an outstanding setTimeout for a render, and also if we're
@@ -90,7 +114,17 @@ function setupBlessed() {
 // our naive/dumb render function.)
 let pendingBlessedRender = false;
 let activeBlessedRender = false;
-function blessedDirtied() {
+// In some cases like guiLog blessed is maintaining the state and we don't need
+// to rebuild our concept of state.
+let blessedContentStillValid = false;
+
+function blessedDirtied(contentStillValid) {
+  // Make sure we invalidate the blessed contents before checking whether we
+  // have a render in flight.
+  if (!contentStillValid) {
+    blessedContentStillValid = false;
+  }
+
   if (pendingBlessedRender || activeBlessedRender) {
     return;
   }
@@ -101,18 +135,21 @@ function blessedDirtied() {
 function renderBlessed() {
   pendingBlessedRender = false;
 
-  guiClients.setData(gBrainBoss.renderDebugState());
+  if (!blessedContentStillValid) {
+    guiClients.setData(gBrainBoss.renderDebugState());
 
-  // Maps are stable, use the index.
-  const selectedConn = Array.from(gBrainBoss.clientsByPrefix.values())[guiClients.rows.selected];
-  guiVisibilityReport.setData({
-    headers: ['State', 'Focus Slot Id', 'Container Id'],
-    data: selectedConn ? selectedConn.debugVisibilityInventory : []
-  });
+    // Maps are stable, use the index.
+    const selectedConn = Array.from(gBrainBoss.clientsByPrefix.values())[guiClients.rows.selected];
+    guiVisibilityReport.setData({
+      headers: ['State', 'Focus Slot Id', 'Container Id'],
+      data: selectedConn ? selectedConn.debugVisibilityInventory : []
+    });
+  }
 
   activeBlessedRender = true;
   guiScreen.render();
   activeBlessedRender = false;
+  blessedContentStillValid = true;
 }
 
 setupBlessed();
@@ -126,7 +163,8 @@ function makeDefaultConfigController() {
   }
 
   const brainBoss = new BrainBoss({
-    debugStateUpdated: blessedDirtied
+    debugStateUpdated: blessedDirtied,
+    log: makeLogFunc('brainBoss', 'blue')
   });
 
   const visibilityTracker = new VisibilityTracker({
@@ -161,8 +199,18 @@ function makeDefaultConfigController() {
     }
   });
 
+  const actionBookmarkMode = new ActionBookmarkMode({
+    brainBoss,
+    persistedState: configstore.get('actionBookmarks'),
+    saveState(state) {
+      configstore.set('actionBookmarks', state);
+    },
+    log: makeLogFunc('actionBookmark', 'green')
+  });
+
   dispatcher.init({
     rootModes: [
+      actionBookmarkMode,
       tabsOnTopMode,
       bookmarkMode
     ],

@@ -117,6 +117,18 @@ class BrainConnection {
     this.brainBoss.debugStateUpdated();
   }
 
+  onMessage_actionBookmarkRequest(msg) {
+    const fullContainerId = this.idPrefix + msg.containerId;
+    const actionId = msg.actionId;
+
+    const info = {
+      containerId: fullContainerId,
+      actionId
+    };
+
+    this.brainBoss.notifyModes('onActionBookmarkRequest', info, this);
+  }
+
   onClose(code, reason) {
     this.visibilityTracker.evictMootPrefix(this.idPrefix);
     this.brainBoss.unregisterClient(this, this.idPrefix);

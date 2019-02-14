@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Taskolio Webextension",
-  "version": "0.3",
+  "version": "0.4",
 
   "description": "Taskolio Browser Integration",
 
@@ -24,7 +24,9 @@
     "page": "background/index.html"
   },
   "permissions": [
+    "menus",
     "sessions",
-    "tabs"
+    "tabs",
+    "<all_urls>"
   ]
 }

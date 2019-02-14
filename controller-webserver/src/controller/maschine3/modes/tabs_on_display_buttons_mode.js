@@ -53,6 +53,10 @@ class TabsOnDisplayButtonsMode {
     this.rederiveFilter();
   }
 
+  // show that we process this button.
+  computeMixerLED() {
+    return 1;
+  }
   onMixerButton() {
     this.rederiveFilter();
   }

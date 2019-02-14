@@ -1,5 +1,6 @@
 import TaskolioClient from "./taskolio_ws_client.js";
 import { renderHTMLTo16BitArray } from "../html_renderer/render_html.js";
+import { ElementBookmarker } from "./element_bookmarker.js";
 
 /**
  * This implementation is derived from taskolio-atom-client which was somewhat
@@ -13,6 +14,13 @@ const ExtCore = {
   subscriptions: null,
   // The TaskolioClient
   client: null,
+
+  /**
+   * The ElementBookmarker that handles generating element bookmarks and
+   * processes requests to trigger them.
+   */
+  elementBookmarker: null,
+
   /**
    * This maps tab id's to the persistent id we created for them and set with
    * `browser.sessions.setTabValue`.
@@ -270,6 +278,17 @@ const ExtCore = {
   },
 
   async activate() {
+    this.elementBookmarker = new ElementBookmarker({
+      sendBookmarkRequest: async (tab, elemId) => {
+        const persId = await this.ensurePersistentTabId(tab.id);
+        this.client.sendMessage('actionBookmarkRequest', {
+          containerId: persId,
+          actionId: elemId
+        });
+      }
+    });
+    this.elementBookmarker.hookupMenus();
+
     // Whenever the active tab changes, send an updated focus slots inventory.
     const sendUpdateHelper = this.sendUpdateHelper = () => {
       this.updateAndSendFocusSlotsInventory();
@@ -368,6 +387,21 @@ const ExtCore = {
 
         console.log("trying to activate tab:", tabId, "in window", winId);
         browser.tabs.update(tabId, { active: true });
+      },
+
+      onMessage_triggerActionBookmark: async (msg) => {
+        const thing = msg.items[0];
+        const persId = thing.containerId;
+        const tabId = this.persistentIdToRawTabId.get(persId);
+        if (!tabId) {
+          return;
+        }
+        const tab = await browser.tabs.get(tabId);
+
+        const elemId = thing.actionId;
+
+        console.log('   actually triggering');
+        this.elementBookmarker.triggerBookmarkedAction(tab, elemId);
       },
 
       onMessage_fadeThings: (msg) => {
