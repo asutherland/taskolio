@@ -15,11 +15,12 @@ const { URL } = require('url');
  *   plus the focusSlotId that corresponds to the browser's window.
  */
 class TabsOnDisplayButtonsMode {
-  constructor({ dispatcher, visibilityTracker, bookmarkMode, updateHTML }) {
+  constructor({ dispatcher, visibilityTracker, bookmarkMode, updateHTML, log }) {
     this.dispatcher = dispatcher;
     this.visTracker = visibilityTracker;
     this.bookmarkMode = bookmarkMode;
     this.updateHTML = updateHTML;
+    this.log = log;
 
     // The window containerId we pull out of the bookmark.
     this.usingWindowContainerId = null;
@@ -64,6 +65,7 @@ class TabsOnDisplayButtonsMode {
   rederiveFilter() {
     const bookmark = this.bookmarkMode.banks[0][0];
     if (!bookmark) {
+      this.log(`no bookmark`);
       this.usingWindowContainerId = null;
       this.usingPrefix = null;
       this.usingFocusSlotId = null;
@@ -72,6 +74,7 @@ class TabsOnDisplayButtonsMode {
 
     // For now we're requiring this is a modern window-scoped bookmark.
     if (bookmark.scope !== 'window') {
+      this.log(`unsupported bookmark scope: ${bookmark.scope}`);
       return;
     }
     // This is the fully prefixed containerId.
@@ -81,7 +84,7 @@ class TabsOnDisplayButtonsMode {
     const info =
       this.visTracker.resolveWindowContainerIdToClientInfo(this.usingWindowContainerId);
     if (!info) {
-      //console.error('unable to find focus info for', this.usingWindowContainerId);
+      this.log(`unable to find focus info for windowContainerId ${this.usingWindowContainerId} given focus slot ${bookmark.focusSlotId}`);
       return;
     }
     this.usingPrefix = info.prefixWithDelim;

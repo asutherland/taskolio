@@ -38,6 +38,11 @@ class BrainConnection {
     this.debugSlotsInventory = [];
     // updated by VisibilityTracker.processThingsVisibilityInventory
     this.debugVisibilityInventory = [];
+    this._mostRecentMessage = null;
+  }
+
+  renderDebugDump() {
+    return JSON.stringify(this._mostRecentMessage, null, 2);
   }
 
   onMessage(data) {
@@ -52,6 +57,11 @@ class BrainConnection {
       }
       replyResolve(obj.payload);
       return;
+    } else {
+      // If this is anything but a reply, then save it off parsed so that we can
+      // re-format it for display.  The reply thing is because the HTML image
+      // data is obviously not something useful to dump.
+      this._mostRecentMessage = obj;
     }
 
     const handlerName = `onMessage_${obj.type}`;

@@ -30,6 +30,8 @@ let gVisibilityTracker;
 let guiScreen;
 let guiClients;
 let guiVisibilityReport;
+let guiVisDump;
+let guiClientDump;
 let guiLog;
 
 const CONFIG_VERSION = 1;
@@ -68,24 +70,50 @@ function setupBlessed() {
   guiVisibilityReport = bcontrib.table({
     parent: guiScreen,
     label: 'Client Focus Slots Inventory',
-    top: 17,
+    top: 16,
     height: 10,
     border: {
       type: 'line',
       fg: 'gray'
     },
     align: 'left',
-    columnWidth: [8, 32, 64],
+    columnWidth: [8, 24, 40, 64],
     data: {
-      headers: ['State', 'Focus Slot Id', 'Container Id'],
+      headers: ['State', 'Focus Slot Id', 'Container Id', 'Window Container Id'],
       data: []
     }
+  });
+
+  guiVisDump = blessed.box({
+    parent: guiScreen,
+    label: 'Visibility Tracker Info',
+    top: 26,
+    height: 8,
+    border: {
+      type: 'line',
+      fg: 'gray'
+    },
+    align: 'left',
+    content: ''
+  });
+
+  guiClientDump = blessed.box({
+    parent: guiScreen,
+    label: 'Client Most Recent Message',
+    top: 34,
+    height: 30,
+    border: {
+      type: 'line',
+      fg: 'gray'
+    },
+    align: 'left',
+    content: ''
   });
 
   guiLog = blessed.log({
     parent: guiScreen,
     label: 'Log',
-    top: 28,
+    top: 64,
     tags: true,
     border: {
       type: 'line',
@@ -141,9 +169,13 @@ function renderBlessed() {
     // Maps are stable, use the index.
     const selectedConn = Array.from(gBrainBoss.clientsByPrefix.values())[guiClients.rows.selected];
     guiVisibilityReport.setData({
-      headers: ['State', 'Focus Slot Id', 'Container Id'],
+      headers: ['State', 'Focus Slot Id', 'Container Id', 'Window Container Id'],
       data: selectedConn ? selectedConn.debugVisibilityInventory : []
     });
+
+    guiClientDump.setContent(selectedConn.renderDebugDump());
+
+    guiVisDump.setContent(gVisibilityTracker.renderDebugDump());
   }
 
   activeBlessedRender = true;
@@ -168,7 +200,8 @@ function makeDefaultConfigController() {
   });
 
   const visibilityTracker = new VisibilityTracker({
-    brainBoss
+    brainBoss,
+    log: makeLogFunc('visTracker', 'magenta')
   });
   const bookmarkManager = new BookmarkManager({
     brainBoss,
@@ -196,7 +229,8 @@ function makeDefaultConfigController() {
       if (gControllerDriver) {
         return gControllerDriver.updateHTML();
       }
-    }
+    },
+    log: makeLogFunc('tabsOnTop', 'cyan')
   });
 
   const actionBookmarkMode = new ActionBookmarkMode({

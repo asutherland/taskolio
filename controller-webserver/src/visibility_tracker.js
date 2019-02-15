@@ -84,8 +84,9 @@ function extractPrefixWithDelim(prefixed) {
  * applying window-manager visibility to non-WM clients.
  */
 class VisibilityTracker {
-  constructor({ brainBoss }) {
+  constructor({ brainBoss, log }) {
     this.brainBoss = brainBoss;
+    this.log = log;
 
     // ### Homogeneous State tracking
     // Everything in this section doesn't care about window manager clients
@@ -168,6 +169,13 @@ class VisibilityTracker {
      * A list of FilteredSubscription instances.
      */
     this.filteredSubscriptions = [];
+  }
+
+  renderDebugDump() {
+    return `focusedWindowContainerId: ${this.focusedWindowContainerId}
+focusedContainerId: ${this.focusedContainerId}
+focusedFocusSlotId: ${this.getFocusedFocusSlotId()}
+`;
   }
 
   /**
@@ -357,11 +365,19 @@ class VisibilityTracker {
       const windowContainerId = !isWM ?
         this._lookupWindowContainerId(info.parentDescriptors) : null;
       //console.log('  setting slot', fullSlotId, 'win', windowContainerId);
+
+      const prevWinId = this.focusSlotToWindowContainerId.get(fullSlotId);
+
       if (windowContainerId) {
         windowMappedCount++;
+      } else if (prevWinId) {
+        this.log(`failed to map already valid ${fullSlotId}???`);
       }
 
       // Mappings that must be established here because nowhere else will:
+      if (!prevWinId && windowContainerId) {
+        this.log(`successfully mapped ${fullSlotId} to window ${windowContainerId}`);
+      }
       this.focusSlotToWindowContainerId.set(fullSlotId, windowContainerId);
 
       // Mappings that are established here for invariant purposes, mainly,
@@ -369,7 +385,9 @@ class VisibilityTracker {
       // without being gibberish.
       // (Actually, this one might matter if the client has an empty focus slot
       // and doesn't bother reporting the slot.)
-      this.focusSlotContentsById.set(fullSlotId, null);
+      if (!this.focusSlotContentsById.has(fullSlotId)) {
+        this.focusSlotContentsById.set(fullSlotId, null);
+      }
       this.windowContainerIdToActiveFocusSlot.set(
         windowContainerId, fullSlotId);
 
@@ -428,6 +446,7 @@ class VisibilityTracker {
         item.state,
         item.focusSlotId,
         item.containerId,
+        this.focusSlotToWindowContainerId.get(fullSlotId) || `<unmapped:${fullSlotId}>`
       ]);
 
       // state is one of focused/visible/empty, with focused also counting as
@@ -749,7 +768,7 @@ class VisibilityTracker {
       this.windowContainerIdToActiveFocusSlot.get(windowContainerId);
 
     if (!fullFocusSlotId) {
-      return;
+      return null;
     }
 
     const prefixWithDelim = extractPrefixWithDelim(fullFocusSlotId);
