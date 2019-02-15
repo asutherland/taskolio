@@ -117,10 +117,7 @@ class BookmarkMode extends BankMixin {
   }
 
   onPadModeButton(evt) {
-    this.activity = 'set-color';this.bookmarkActions[capitalName];
-    if (!actionInfo) {
-      return;
-    }
+    this.activity = 'set-color';
     this.pickingForBookmark =
       this.bookmarkManager.findFocusedBookmarkInCollection(
         this.banks, 'window');
