@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Taskolio Webextension",
-  "version": "0.4.2",
+  "version": "0.4.3",
 
   "description": "Taskolio Browser Integration",
 

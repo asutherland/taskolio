@@ -150,12 +150,11 @@ const ExtCore = {
 
     const pxRatio = window.devicePixelRatio;
 
-    const focusSlots = windows.map((win, iWin) => {
-      return {
-        // It might be better to use sessionId if available... it's not clear
-        // whether the browser persists these id's through SessionStore restores
-        // otherwise.  This is fine for now, however.
-        focusSlotId: win.id,
+    const focusSlots = [];
+    for (const win of windows) {
+      const persWinId = await this.ensurePersistentWindowId(win.id);
+      focusSlots.push({
+        focusSlotId: persWinId,
         parentDescriptors: [
           // I don't think we know the PID to provide it here, but thankfully
           // the Firefox process model means that gnome-shell should be able to
@@ -179,8 +178,8 @@ const ExtCore = {
             devicePixelRatio: pxRatio
           }
         ]
-      };
-    });
+      });
+    }
 
     this.client.sendMessage('focusSlotsInventory', {
       focusSlots
@@ -224,14 +223,14 @@ const ExtCore = {
     });
   },
 
-  _extractTabInfo(tab, persId) {
+  _extractTabInfo(tab, persTabId, persWinId) {
     return {
       // the tab's id (which unfortunately is not currently stable between
       // browser restarts) is what we use to identify the tab for now.  We might
       // also try and hack something up with the sessionId.
-      containerId: persId,
+      containerId: persTabId,
       // right, this is ephemeral too.
-      focusSlotId: tab.windowId,
+      focusSlotId: persWinId,
       index: tab.index,
       cookieStoreId: tab.cookieStoreId,
       title: tab.title,
@@ -264,8 +263,9 @@ const ExtCore = {
       for (const tab of win.tabs) {
         // NB: we could issue the requests in parallel, but this at least avoids
         // having an insane number of requests outstanding at once.
-        const persId = await this.ensurePersistentTabId(tab.id);
-        items.push(this._extractTabInfo(tab, persId));
+        const persTabId = await this.ensurePersistentTabId(tab.id);
+        const persWinId = await this.ensurePersistentWindowId(tab.windowId);
+        items.push(this._extractTabInfo(tab, persTabId, persWinId));
       }
     }
 
@@ -299,10 +299,11 @@ const ExtCore = {
     // thing we're doing now that we have screens that care about being able to
     // display info about the tabs we have.
     const sendUpdatedThingsExist = this.sendUpdatedThingsExist = async (tabId, changeInfo, tab) => {
-      let persId = await this.ensurePersistentTabId(tabId);
+      let persTabId = await this.ensurePersistentTabId(tabId);
+      let persWinId = await this.ensurePersistentWindowId(tab.windowId);
       this.client.sendMessage('thingsExist', {
         items: [
-          this._extractTabInfo(tab, persId)
+          this._extractTabInfo(tab, persTabId, persWinId)
         ]
       });
     };
@@ -378,14 +379,15 @@ const ExtCore = {
        */
       onMessage_selectThings: async (msg) => {
         const thing = msg.items[0];
-        const persId = thing.containerId;
-        const tabId = this.persistentIdToRawTabId.get(persId);
+        const persTabId = thing.containerId;
+        const tabId = this.persistentIdToRawTabId.get(persTabId);
         if (!tabId) {
           return;
         }
-        const winId = parseInt(thing.focusSlotId, 10);
+        const persWinId = parseInt(thing.focusSlotId, 10);
+        const winId = this.persistentIdToRawWindowId.get(persWinId);
 
-        console.log("trying to activate tab:", tabId, "in window", winId);
+        //console.log("trying to activate tab:", tabId, "in window", winId);
         browser.tabs.update(tabId, { active: true });
       },
 
