@@ -251,6 +251,7 @@ function makeDefaultConfigController() {
   });
   const controllerDriver = new ControllerDriver({
     dispatcher,
+    log: makeLogFunc('controllerDriver', 'red'),
     asyncRenderHTML: (args) => {
       return brainBoss.asyncRenderHTML(args);
     }

@@ -412,6 +412,9 @@ focusedFocusSlotId: ${this.getFocusedFocusSlotId()}
     for (const item of items) {
       const prefixedContainerId = prefix + item.containerId;
       item.fullContainerId = prefixedContainerId;
+      const prefixedFocusSlotId = prefix + item.focusSlotId;
+      item.fullFocusSlotId = prefixedFocusSlotId;
+      
       // temporary debug specialization as I deal with pinned tabs.
       if (item.pinned) {
         //console.log('>>> exists:', item.containerId, item);
@@ -754,8 +757,14 @@ focusedFocusSlotId: ${this.getFocusedFocusSlotId()}
     // (If bookmark.containerId is already a window containerId, then
     // windowContainerId will be null.)
     if (windowContainerId && !windowFocused) {
+      this.log(`focusing window containerId ${windowContainerId}`);
       this.brainBoss.focusContainerId(windowContainerId);
+    } else if (windowFocused) {
+      this.log(`window was already focused: ${windowContainerId}`);
+    } else {
+      this.log(`unable to find window from focus slot: ${forceFocusSlotId}`);
     }
+    this.log(`focusing containerId: ${containerId} focusSlotId: ${focusSlotId}`)
     this.brainBoss.focusContainerId(containerId, focusSlotId);
   }
 

@@ -28,9 +28,10 @@ const BLANK_TOUCHSTRIP = [];
  * our changes into it would make for an otherwise useless fork.)
  */
 class ControllerDriver {
-  constructor({ dispatcher, asyncRenderHTML }) {
+  constructor({ dispatcher, log, asyncRenderHTML }) {
     const controller = this.controller = new Mk3();
     this.dispatcher = dispatcher;
+    this.log = log;
     this.asyncRenderHTML = asyncRenderHTML;
 
     this.buttonStates = {};
@@ -282,7 +283,7 @@ class ControllerDriver {
         //console.log('attempting dispatch of', name);
 
         if (!(methodName in this.dispatcher)) {
-          console.error('no handler for:', methodName);
+          this.log(`no handler for: ${methodName}`);
           return;
         }
         this.dispatcher[methodName](evt);

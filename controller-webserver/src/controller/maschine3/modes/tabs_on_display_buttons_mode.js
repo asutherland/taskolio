@@ -77,8 +77,8 @@ class TabsOnDisplayButtonsMode {
       this.log(`unsupported bookmark scope: ${bookmark.scope}`);
       return;
     }
-    // This is the fully prefixed containerId.
-
+    // This is the fully prefixed containerId, and we're retrieving it using the
+    // fully prefixed focus slot id.
     this.usingWindowContainerId =
       this.visTracker.focusSlotToWindowContainerId.get(bookmark.focusSlotId);
     const info =
@@ -129,7 +129,7 @@ class TabsOnDisplayButtonsMode {
       return;
     }
 
-    this.visTracker.focusThing(tab.fullContainerId);
+    this.visTracker.focusThing(tab.fullContainerId, tab.fullFocusSlotId);
   }
 
   computeTopHTML(stt, iDisplay) {
