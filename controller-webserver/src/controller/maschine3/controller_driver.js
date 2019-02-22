@@ -37,6 +37,7 @@ class ControllerDriver {
     this.buttonStates = {};
     this.sliderStates = [];
     this.knobStates = [];
+    this.touchStripStates = [];
 
     /**
      * For each display, the HTML of what is currently displayed.
@@ -66,6 +67,8 @@ class ControllerDriver {
                           "slider", "onSliderMoved");
     this._bindEventFamily("k", "changed", 4, this.knobStates,
                           "knob", "onKnobTurned");
+    this._bindEventFamily("touchStrip", "changed", 2, this.touchStripStates,
+                          "touchStrip", "onTouchStripMovement");
     // TODO: expose the stepper's onStepperTurned event.  I'm not doing it yet
     // because it looks like node-traktor-f1 likely has a wraparound bug.
   }
@@ -215,6 +218,7 @@ class ControllerDriver {
     const stt = Object.assign({}, this.buttonStates);
     stt.sliders = this.sliderStates.concat();
     stt.knobs = this.knobStates.concat();
+    this.touchStrips = this.touchStripStates.concat();
     return stt;
   }
 
@@ -235,6 +239,24 @@ class ControllerDriver {
     return evt;
   }
 
+  /**
+   * Event binding helper for sliders/knobs/touchstrips.
+   *
+   * @param baseName
+   *   The prefix for instances of the control that will be suffixed with an
+   *   index.  For example "s" for sliders named "s1", "s2", etc.
+   * @param eventSuffix
+   *   The event type that suffixes the control name, so for a slider "s1" that
+   *   emits event "s1:changed" when moved, this would be "changed".
+   * @param count
+   *   How many instances of this control are there?  Indices are assumed to
+   *   start at 1 in name-space, but we'll map this to a 0-based index.
+   * @param stateArray
+   *   Reference to the array where the state for these controls should be
+   *   stored, and that `_latchState` will capture when generating an event.
+   * @param type
+   *   The type to report on the event object.
+   */
   _bindEventFamily(baseName, eventSuffix, count, stateArray, type, methodName) {
     for (let i = 0; i < count; i++) {
       const eventName = `${baseName}${i+1}:${eventSuffix}`;
@@ -253,6 +275,7 @@ class ControllerDriver {
       const initialCap = name.slice(0, 1).toUpperCase() + name.slice(1);
       let methodName;
       let index;
+      let match;
       if (/^p\d+$/.test(name)) {
         methodName = "onGridButton";
         index = parseInt(name.slice(1), 10) - 1;
@@ -262,9 +285,9 @@ class ControllerDriver {
       } else if (/^d\d+$/.test(name)) {
         methodName = "onDisplayButton";
         index = parseInt(name.slice(1), 10) - 1;
-      } else if (/^knobTouch\d+$/.test(name)) {
+      } else if ((match = /^knobTouch(\d+)$/.exec(name))) {
         methodName = "onKnobTouch";
-        index = parseInt(name.slice(1), 10) - 1;
+        index = parseInt(match[1], 10) - 1;
       } else {
         methodName = `on${initialCap}Button`;
         index = null;

@@ -27,6 +27,7 @@
     "menus",
     "sessions",
     "tabs",
+    "tabHide",
     "<all_urls>"
   ]
 }
