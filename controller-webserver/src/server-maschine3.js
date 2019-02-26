@@ -10,11 +10,13 @@ const { BrainBoss } = require("./brain/boss");
 
 const { VisibilityTracker } = require("./visibility_tracker");
 const { BookmarkManager } = require("./bookmark_manager");
+const { TaskManager } = require("./task_manager");
 
 const { ControllerDriver } = require("./controller/maschine3/controller_driver");
 const { ModeDispatcher } = require("./controller/maschine3/mode_dispatcher");
 const { BookmarkMode } = require("./controller/maschine3/modes/bookmark_mode");
 const { TabsOnDisplayButtonsMode } = require("./controller/maschine3/modes/tabs_on_display_buttons_mode");
+const { TaskDisplayMode } = require("./controller/maschine3/modes/task_display_mode");
 
 const { ActionBookmarkMode } = require("./controller/maschine3/modes/action_bookmark_mode");
 
@@ -26,6 +28,7 @@ let gConfigstore;
 let gControllerDriver;
 let gDispatcher;
 let gVisibilityTracker;
+let gTaskManager;
 
 let guiScreen;
 let guiClients;
@@ -209,6 +212,8 @@ function makeDefaultConfigController() {
     colorHelper: ColorHelper
   });
 
+  const taskManager = new TaskManager ();
+
   const dispatcher = new ModeDispatcher();
   brainBoss.notifyModes = dispatcher.notifyModes.bind(dispatcher);
 
@@ -232,6 +237,9 @@ function makeDefaultConfigController() {
     },
     log: makeLogFunc('tabsOnTop', 'cyan')
   });
+  const taskDisplayMode = new TaskDisplayMode({
+    taskManager
+  });
 
   const actionBookmarkMode = new ActionBookmarkMode({
     brainBoss,
@@ -246,6 +254,7 @@ function makeDefaultConfigController() {
     rootModes: [
       actionBookmarkMode,
       tabsOnTopMode,
+      taskDisplayMode,
       bookmarkMode
     ],
   });
@@ -264,6 +273,7 @@ function makeDefaultConfigController() {
   gControllerDriver = controllerDriver;
   gDispatcher = dispatcher;
   gVisibilityTracker = visibilityTracker;
+  gTaskManager = taskManager;
 
   gControllerDriver.updateLEDs();
 }

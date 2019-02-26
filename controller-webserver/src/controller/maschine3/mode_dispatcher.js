@@ -408,10 +408,16 @@ font-size: 16px;
   min-height: 2.2em;
   max-height: 2.2em;
   line-height: 1.1em;
+  border: 2px solid #222;
 }
 
 .mainGrid > div {
   overflow: hidden;
+}
+
+.taskDescription {
+  margin-top: 8px;
+  grid-column: span 4;
 }
 
 .fullCenter {

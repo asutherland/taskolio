@@ -110,3 +110,5 @@ class TaskManager {
     return tasks;
   }
 }
+
+module.exports.TaskManager = TaskManager;
