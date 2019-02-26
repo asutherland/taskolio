@@ -13,6 +13,9 @@ function extractUnprefixedContainerId(prefixed) {
 
 class BrainBoss {
   constructor({ debugStateUpdated, log }) {
+    /**
+     * Clients by "bare" prefix (no ':' delimiter suffix.)
+     */
     this.clientsByPrefix = new Map();
     /**
      * Map from capability string to a list of resolve functions to invoke with

@@ -179,14 +179,28 @@ class BookmarkMode extends BankMixin {
     return this._internalComputeGridColors(1);
   }
 
-  computeCenterHTML(stt, iDisplay) {
-    return html`<div class=".fullCenter">
-  <div>Hello World #${iDisplay}: ${this.gridPushCount}</div>
-  <div style="background-color: white; display: inline-block; width: 32px; height: 32px; margin-right: 16px;"></div>
-  <div style="background-color: red; display: inline-block; width: 32px; height: 32px; margin-right: 16px;"></div>
-  <div style="background-color: green; display: inline-block; width: 32px; height: 32px; margin-right: 16px;"></div>
-  <div style="background-color: blue; display: inline-block; width: 32px; height: 32px; margin-right: 16px;"></div>
-  <div style="background-color: black; display: inline-block; width: 32px; height: 32px; margin-right: 16px;"></div>
+  computeCellHTML(iCell, iRow/*, iCol*/) {
+    const bookmark = this.curBank[iCell];
+    let useClass = 'gridButton';
+    if (iRow === 0) {
+      useClass += ' topGridRow';
+    }
+
+    // No bookmark means an empty cell.
+    if (!bookmark) {
+      return html`<div class="${useClass}"></div>`;
+    }
+
+    const desc = this.bookmarkManager.describeBookmark(bookmark);
+    // A bookmark that doesn't usefully resolve gets left blank, but perhaps
+    // this wants to be styled in subtle gray?
+    if (!desc || !desc.app) {
+      return html`<div class="${useClass}"></div>`;
+    }
+
+    return html`<div class="${useClass}" style="border: 2px solid ${desc.colors.border}; background-color: ${desc.colors.background};">
+  <div>${desc.app.name}: ${desc.app.shortInstance}</div>
+  <div>${ desc.container ? desc.container.title : ''}</div>
 </div>`;
   }
 }

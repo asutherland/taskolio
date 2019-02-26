@@ -28,11 +28,13 @@ const BLANK_TOUCHSTRIP = [];
  * our changes into it would make for an otherwise useless fork.)
  */
 class ControllerDriver {
-  constructor({ dispatcher, log, asyncRenderHTML }) {
+  constructor({ dispatcher, log, asyncRenderHTML, colorHelper }) {
     const controller = this.controller = new Mk3();
     this.dispatcher = dispatcher;
     this.log = log;
     this.asyncRenderHTML = asyncRenderHTML;
+    this.colorHelper = colorHelper;
+    this.colorHelper.indexed_led_mapping = controller.indexed_led_mapping;
 
     this.buttonStates = {};
     this.sliderStates = [];

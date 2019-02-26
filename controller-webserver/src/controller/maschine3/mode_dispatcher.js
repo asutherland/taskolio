@@ -399,6 +399,17 @@ font-size: 16px;
   text-align: right;
 }
 
+/* Separate the display button top tabs from the grid area. */
+.topGridRow {
+  margin-top: 8px;
+}
+.gridButton {
+  grid-column: span 2;
+  min-height: 2.2em;
+  max-height: 2.2em;
+  line-height: 1.1em;
+}
+
 .mainGrid > div {
   overflow: hidden;
 }

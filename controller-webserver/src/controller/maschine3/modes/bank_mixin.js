@@ -1,13 +1,31 @@
+"use strict";
+
 const NUM_BANKS = 4;
-const GRID_ROWS = 4;
-const GRID_COLS = 4;
-const GRID_CELLS = GRID_ROWS * GRID_COLS;
+
+const { GRID_ROWS, GRID_COLS, GRID_CELLS, GridPickerMixin } =
+  require('./grid_picker_mixin');
 
 /**
+ * Supports multiple grid banks.
  *
+ * @param {Function(iBank, iCell, iRow, iCol)} [computeCellValue]
+ *   Optional function to help initialize the state of the cells in the banks.
+ *   This is intended for use by modes like the `ColorPickerMode` where the bank
+ *   contents are effectively static.  Modes like `BookmarkMode` use
+ *   `initialState` to restore a persisted state.  And the actual button colors
+ *   are left to the mode to implement via `computeGridColors`, etc.
+ * @param {Object} [defaultCellValue]
+ *   The default value to use for each cell's contents.  Will be ignored if
+ *   `computeCellValue` is provided.
+ * @param initialState
+ *   Value to assign directly to `banks`.  This should be an array of arrays.
+ *   Each entry in the outer array is a bank.  Each entry in the inner array is
+ *   a cell in that bank's grid.
  */
-class BankMixin {
+class BankMixin extends GridPickerMixin {
   constructor({ computeCellValue, defaultCellValue, initialState }) {
+    super();
+
     /** The bank to display. */
     this.bankSelected = 0;
 

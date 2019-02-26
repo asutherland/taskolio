@@ -254,7 +254,8 @@ function makeDefaultConfigController() {
     log: makeLogFunc('controllerDriver', 'red'),
     asyncRenderHTML: (args) => {
       return brainBoss.asyncRenderHTML(args);
-    }
+    },
+    colorHelper: ColorHelper
   });
 
   gBookmarkManager = bookmarkManager;

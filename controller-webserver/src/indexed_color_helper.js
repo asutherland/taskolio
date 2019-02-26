@@ -59,18 +59,31 @@ const DIM_FLASH_OFFSET = 1;
 const BRIGHT_OFFSET = 2;
 const BRIGHT_FLASH_OFFSET = 3;
 
+/// Convert a number to a 0-padded 2-digit hexadecimal number.
+function hexTwo(num) {
+  return num.toString(16).padStart(2, '0');
+}
+/// Given a {red,green,blue} object, return CSS hex-color representation.
+function hexifyRGB({ red, green, blue }) {
+  return `#${hexTwo(red)}${hexTwo(green)}${hexTwo(blue)}`;
+}
+
 /**
  * Mk3-style indexed color helper.  We store the color as { colorIndex } where
  * colorIndex is a value in the inclusive range [0, 15].
  */
 class ColorHelper {
+  constructor() {
+    this.indexed_led_mapping = null;
+  }
+
   makeRandomColor() {
     return { colorIndex: Math.min(Math.floor(Math.random() * 16), 15) };
   }
 
   /**
    * Generate a color-bank color.  For the mk3, we only support 16 colors for
-   * now since.
+   * now since the mk3 only has 16 base colors (in 3 variations).
    */
   computeColorBankColor(iBank, nBanks, iCell, nCells) {
     return { colorIndex: iCell };
@@ -78,6 +91,26 @@ class ColorHelper {
 
   computeEmptyDisplayColor() {
     return EMPTY_INDEX;
+  }
+
+  /**
+   * Given a color, produce a #RRGGBB representation of the color for border
+   * and background purposes.  This is intended to be displayed on the device's
+   * LCD/whatever display, so may be biased and not what makes mose sense on a
+   * high quality monitor, etc.
+   */
+  computeBookmarkRGBHexColors(wrapped) {
+    if (!this.indexed_led_mapping) {
+      throw new Error('indexed_led_mapping not initialized!');
+    }
+
+    const idxBorder = this.computeBookmarkDisplayColor(wrapped, 'visible');
+    const idxBackground = this.computeBookmarkDisplayColor(wrapped, 'hidden');
+
+    return {
+      border: hexifyRGB(this.indexed_led_mapping[idxBorder]),
+      background: hexifyRGB(this.indexed_led_mapping[idxBackground]),
+    };
   }
 
   /**

@@ -99,6 +99,110 @@ class BookmarkManager {
     return newBookmark;
   }
 
+  _describeAppGivenPrefix(prefixWithDelim) {
+    // The map is by bare prefix, so lose the delim.
+    const brainConn =
+        this.brainBoss.clientsByPrefix.get(prefixWithDelim.slice(0, -1));
+
+    // It's possible there's no client currently present with the given prefix.
+    if (!brainConn) {
+      return null;
+    }
+
+    // ### appInstance: Distinguish between instances of the same app.
+    let appInstance;
+    // Find the last slash, but don't consider the last character.  Currently
+    // for atom, we expect that the last character will never be a '/', but
+    // it's conceivable that could change or might vary for other clients.
+    const lastSlash = brainConn.clientUniqueId.lastIndexOf(
+                        '/', brainConn.clientUniqueId.length - 1);
+    if (lastSlash !== -1) {
+      appInstance = brainConn.clientUniqueId.substring(lastSlash + 1);
+    } else {
+      appInstance = brainConn.clientUniqueId;
+    }
+
+    return {
+      name: brainConn.clientName,
+      shortInstance: appInstance
+    };
+  }
+
+  /**
+   * Map the bookmark to info useful for describing what's bookmarked on a
+   * compact display.
+   *
+   * For window bookmarks, this means the app name (ex: "Firefox", "atom"), any
+   * disambiguating factors extracted from the unique id (ex: the firefox
+   * profile name after lookup, the most-specific path component of the
+   * directory atom is running in), and any window placement info (future).
+   *
+   * For container bookmarks, this includes both the window info for brief
+   * presentation (ex: "FF Tab:" as a prefix) plus a detailed name like the
+   * page title.
+   */
+  describeBookmark(bookmark) {
+    if (!bookmark) {
+      return null;
+    }
+
+    const colors = this.colorHelper.computeBookmarkRGBHexColors(bookmark.color);
+    if (bookmark.scope === 'window') {
+      let windowContainerId;
+      let appInfo;
+      if (bookmark.focusSlotId) {
+        windowContainerId =
+          this.visTracker.focusSlotToWindowContainerId.get(bookmark.focusSlotId);
+        const clientInfo =
+          this.visTracker.resolveWindowContainerIdToClientInfo(windowContainerId);
+        if (!clientInfo) {
+          return null;
+        }
+        appInfo = this._describeAppGivenPrefix(clientInfo.prefixWithDelim);
+      } else {
+        windowContainerId = bookmark.containerId;
+        const containerInfo =
+          this.visTracker.containersByFullId.get(windowContainerId);
+        if (!containerInfo) {
+          return;
+        }
+        appInfo = {
+          name: containerInfo.rawDetails.appName,
+          shortInstance: containerInfo.title,
+        };
+      }
+      return {
+        scope: 'window',
+        app: appInfo,
+        container: null,
+        colors
+      };
+    } else if (bookmark.scope === 'container') {
+      const containerId = bookmark.containerId;
+      const containerInfo = this.visTracker.containersByFullId.get(containerId);
+      const clientInfo =
+        this.visTracker.resolveContainerIdToClientInfo(containerId);
+
+      // To usefully explain what the bookmark means, we need info on the
+      // container.  We may need to wait until the client (re)connects and tells
+      // us stuff.
+      if (!clientInfo || !containerInfo) {
+        return null;
+      }
+
+      return {
+        scope: 'container',
+        app: this._describeAppGivenPrefix(clientInfo.prefixWithDelim),
+        container: {
+          title: containerInfo.title
+        },
+        colors
+      }
+    } else {
+      return null;
+    }
+  }
+
   /**
    * Given a collection, find the first Bookmark that corresponds to whatever
    * is the currently focused thing.  You would use this for things like

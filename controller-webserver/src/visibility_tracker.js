@@ -414,7 +414,7 @@ focusedFocusSlotId: ${this.getFocusedFocusSlotId()}
       item.fullContainerId = prefixedContainerId;
       const prefixedFocusSlotId = prefix + item.focusSlotId;
       item.fullFocusSlotId = prefixedFocusSlotId;
-      
+
       // temporary debug specialization as I deal with pinned tabs.
       if (item.pinned) {
         //console.log('>>> exists:', item.containerId, item);
@@ -771,6 +771,19 @@ focusedFocusSlotId: ${this.getFocusedFocusSlotId()}
   /**
    * Given a window-manager containerId, get some info about the client it
    * corresponds to.
+   *
+   * This is currently used by:
+   * - TabsOnDisplayButtonsMode: Helps figure out the prefix for its filter.
+   *   This method was originally created for its use, but given that 'window'
+   *   bookmarks are now characterized by focus slots and the caller maps from
+   *   that to the container id, the use-case is a little bit silly and probably
+   *   could be collapsed.
+   * - BookmarkManager.describeBookmark: Basically cribs the prior caller's
+   *   logic to get the prefix in order to get the BrainConn and its metadata.
+   *   This really suggests this method or the BookmarkManager want to be able
+   *   to go from the 'window' scope bookmark to a DOM-ish rep without
+   *   constantly having to pierce the weird bouncy data structures this class
+   *   uses.
    */
   resolveWindowContainerIdToClientInfo(windowContainerId) {
     const fullFocusSlotId =
@@ -785,6 +798,17 @@ focusedFocusSlotId: ${this.getFocusedFocusSlotId()}
       prefixWithDelim,
       fullFocusSlotId,
       focusSlotId: fullFocusSlotId.slice(prefixWithDelim.length)
+    };
+  }
+
+  /**
+   * Hacky variant of resolveWindowContainerIdToClientInfo for use by
+   * BookmarkManager.describeBookmark until we clean up the abstraction.
+   */
+  resolveContainerIdToClientInfo(containerId) {
+    const prefixWithDelim = extractPrefixWithDelim(containerId);
+    return {
+      prefixWithDelim
     };
   }
 
