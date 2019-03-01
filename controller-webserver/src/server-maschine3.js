@@ -36,6 +36,7 @@ let guiVisibilityReport;
 let guiVisDump;
 let guiClientDump;
 let guiLog;
+let guiFocusRendered = false;
 
 const CONFIG_VERSION = 1;
 
@@ -47,8 +48,34 @@ function setupBlessed() {
     debug: true,
     bg: 'blue'
   });
+  // Hook up keys to quit.
   guiScreen.key(['escape', 'q', 'C-c'], function(ch, key) {
     return process.exit(0);
+  });
+
+  // Hook up tab to move focus between widgets.
+  guiScreen.key(['tab'], function(ch, key) {
+    return key.shift
+      ? guiScreen.focusPrevious()
+      : guiScreen.focusNext();
+  });
+
+  // When cycling focus, update borders.
+  guiScreen.on('element focus', function(cur, old) {
+    if (old.border) {
+      old.style.border.fg = 'gray';
+    } else if (old.parent.border) {
+      old.parent.style.border.fg = 'gray';
+    }
+    if (cur.border) {
+      cur.style.border.fg = 'green';
+    } else if (cur.parent.border) {
+      cur.parent.style.border.fg = 'green';
+    }
+    if (guiFocusRendered) {
+      guiFocusRendered = false;
+      blessedDirtied();
+    }
   });
 
   guiClients = bcontrib.table({
@@ -68,7 +95,9 @@ function setupBlessed() {
     interactive: true,
     keys: true,
     mouse: true,
+    clickable: true,
   });
+  guiClients.rows.mouse = true;
 
   guiVisibilityReport = bcontrib.table({
     parent: guiScreen,
@@ -84,8 +113,13 @@ function setupBlessed() {
     data: {
       headers: ['State', 'Focus Slot Id', 'Container Id', 'Window Container Id'],
       data: []
-    }
+    },
+    interactive: true,
+    keys: true,
+    mouse: true,
+    clickable: true,
   });
+  guiVisibilityReport.rows.mouse = true;
 
   guiVisDump = blessed.box({
     parent: guiScreen,
@@ -97,7 +131,11 @@ function setupBlessed() {
       fg: 'gray'
     },
     align: 'left',
-    content: ''
+    content: '',
+    interactive: true,
+    keys: true,
+    mouse: true,
+    clickable: true,
   });
 
   guiClientDump = blessed.box({
@@ -110,7 +148,11 @@ function setupBlessed() {
       fg: 'gray'
     },
     align: 'left',
-    content: ''
+    content: '',
+    interactive: true,
+    keys: true,
+    mouse: true,
+    clickable: true,
   });
 
   guiLog = blessed.log({
@@ -121,7 +163,11 @@ function setupBlessed() {
     border: {
       type: 'line',
       fg: 'gray'
-    }
+    },
+    interactive: true,
+    keys: true,
+    mouse: true,
+    clickable: true,
   });
 
   guiClients.rows.on('select item', () => { blessedDirtied(); });
@@ -176,7 +222,9 @@ function renderBlessed() {
       data: selectedConn ? selectedConn.debugVisibilityInventory : []
     });
 
-    guiClientDump.setContent(selectedConn.renderDebugDump());
+    if (selectedConn) {
+      guiClientDump.setContent(selectedConn.renderDebugDump());
+    }
 
     guiVisDump.setContent(gVisibilityTracker.renderDebugDump());
   }
@@ -185,6 +233,7 @@ function renderBlessed() {
   guiScreen.render();
   activeBlessedRender = false;
   blessedContentStillValid = true;
+  guiFocusRendered = true;
 }
 
 setupBlessed();
@@ -321,3 +370,4 @@ const run = async (port) => {
 
 makeDefaultConfigController();
 run(8008);
+blessedDirtied();
