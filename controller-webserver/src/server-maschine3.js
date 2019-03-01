@@ -31,6 +31,7 @@ let gVisibilityTracker;
 let gTaskManager;
 
 let guiScreen;
+let guiLayout;
 let guiClients;
 let guiVisibilityReport;
 let guiVisDump;
@@ -46,8 +47,18 @@ const CONFIG_VERSION = 1;
 function setupBlessed() {
   guiScreen = blessed.screen({
     debug: true,
-    bg: 'blue'
+    autoPadding: true,
+    ignoreLocked: ['C-c'],
   });
+
+  guiLayout = blessed.layout({
+    parent: guiScreen,
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+  });
+
   // Hook up keys to quit.
   guiScreen.key(['escape', 'q', 'C-c'], function(ch, key) {
     return process.exit(0);
@@ -79,8 +90,9 @@ function setupBlessed() {
   });
 
   guiClients = bcontrib.table({
-    parent: guiScreen,
+    parent: guiLayout,
     height: 16,
+    width: '100%',
     label: 'Clients',
     border: {
       type: 'line',
@@ -100,10 +112,10 @@ function setupBlessed() {
   guiClients.rows.mouse = true;
 
   guiVisibilityReport = bcontrib.table({
-    parent: guiScreen,
+    parent: guiLayout,
     label: 'Client Focus Slots Inventory',
-    top: 16,
     height: 10,
+    width: '100%',
     border: {
       type: 'line',
       fg: 'gray'
@@ -122,10 +134,10 @@ function setupBlessed() {
   guiVisibilityReport.rows.mouse = true;
 
   guiVisDump = blessed.box({
-    parent: guiScreen,
+    parent: guiLayout,
     label: 'Visibility Tracker Info',
-    top: 26,
     height: 8,
+    width: '100%',
     border: {
       type: 'line',
       fg: 'gray'
@@ -139,10 +151,10 @@ function setupBlessed() {
   });
 
   guiClientDump = blessed.box({
-    parent: guiScreen,
+    parent: guiLayout,
     label: 'Client Most Recent Message',
-    top: 34,
     height: 30,
+    width: '100%',
     border: {
       type: 'line',
       fg: 'gray'
@@ -156,9 +168,10 @@ function setupBlessed() {
   });
 
   guiLog = blessed.log({
-    parent: guiScreen,
+    parent: guiLayout,
     label: 'Log',
-    top: 64,
+    // height will be auto-calculated since we omitted it.
+    width: '100%',
     tags: true,
     border: {
       type: 'line',
