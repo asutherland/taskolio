@@ -119,10 +119,9 @@ class TaskManager {
 
   /**
    * Get the list of all known unfinished tasks and organizes them into named
-   * pages.  For now, tasks are ordered by recency and pages are just pages
-   * rather than groups sharing a common trait.
+   * pages.  This is the original, naive implementation.
    */
-  async getPagedRecentPending() {
+  async getNaivePagedRecentPending() {
     const tasks = await this.getRecentPending();
 
     const pages = [];
@@ -146,6 +145,61 @@ class TaskManager {
     }
 
     return pages;
+  }
+
+  /**
+   * Get the list of all known unfinished tasks and organizes them into named
+   * pages.  This is a slightly fancier approach that groups tasks by the first
+   * segment of their hierarchical project id.
+   */
+  async getProjectPagedRecentPending() {
+    const tasks = await this.getRecentPending();
+
+    const pageMap = new Map();
+    const allPages = [];
+    let curPage = null;
+
+    function placeTaskInPage(task, pageName) {
+      let page = pageMap.get(pageName);
+      if (!page) {
+        page = {
+          name: pageName,
+          tasks: []
+        };
+        pageMap.set(pageName, page);
+        allPages.push(page);
+      }
+      page.tasks.push(task);
+    }
+
+    function mergePages(pages) {
+      let tasks = [];
+      for (let page of pages) {
+        tasks = tasks.concat(page.tasks);
+      }
+
+      return {
+        name: '(catch-all)',
+        tasks
+      };
+    }
+
+    for (const task of tasks) {
+      const project = (task.project && task.project.split('.')[0]) || '(none)';
+      placeTaskInPage(task, project);
+    }
+
+    // ## Merge pages that have too few tasks into a super-page.
+    if (allPages.length > 8) {
+      // sort pages by task count.
+      allPages.sort((a, b) => b.length - a.length);
+      allPages.push(mergePages(allPages.splice(7)));
+    }
+
+    // ## Sort pages alphabetically.
+    allPages.sort((a, b) => a.name.localeCompare(b.name));
+
+    return allPages;
   }
 
   /**

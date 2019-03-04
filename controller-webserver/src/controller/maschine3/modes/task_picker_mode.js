@@ -30,8 +30,13 @@ class TaskPickerMode extends GridPickerMixin {
   }
 
   async update() {
-    const pages = this.pages = await this.taskManager.getPagedRecentPending();
+    const pages = this.pages =
+      await this.taskManager.getProjectPagedRecentPending();
     this.updateHTML();
+  }
+
+  onDisplayButton(evt) {
+    this.iPage = evt.index;
   }
 
   async onGridButton(evt) {
