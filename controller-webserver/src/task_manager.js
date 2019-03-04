@@ -13,6 +13,14 @@ function parseTaskDate(iso) {
 }
 
 /**
+ * Number of tasks that should be on a page when providing paged results.  For
+ * now this is 16 because the standard grid picker is assumed, but it's likely
+ * that this will want to be reduced to 8 in order to provide more screen real
+ * estate.
+ */
+const TASKS_PER_PAGE = 16;
+
+/**
  * Track and switch between TaskWarrior tasks and associate / lookup metadata
  * stored in the tasks.
  *
@@ -63,14 +71,37 @@ class TaskManager {
     });
   }
 
-  async getRecentPending() {
+  /**
+   * Run a command for side-effect where we don't care about the output, just
+   * the error code.  Currently goes through a shell.
+   */
+  _runCommand(argStr) {
+    return new Promise((resolve, reject) => {
+      const cmdStr = 'task ' + argStr;
+      exec(cmdStr, (err, stdout, stderr) => {
+        if (err) {
+          console.error('Error while running:', cmdstr);
+          console.error(stderr);
+          reject(err);
+        }
+
+        resolve(undefined);
+      });
+    });
+  }
+
+  /**
+   * Asynchronously gets the list of all known unfinished tasks.  (That's what
+   * pending means.)
+   */
+  async getRecentPending(force) {
     if (this._activePendingRequest) {
       await this._activePendingRequest;
     }
 
     // We want new data if we don't have any recent data and it's over 1 second
-    // old.
-    if (!this.recentPending ||
+    // old.  (Or we're forcing it.)
+    if (force || !this.recentPending ||
         (this._lastExported - Date.now()) > 1000) {
       this._activePendingRequest = this._runExport('export status:pending');
       this._recentPending = await this._activePendingRequest;
@@ -84,6 +115,37 @@ class TaskManager {
     }
 
     return this._recentPending;
+  }
+
+  /**
+   * Get the list of all known unfinished tasks and organizes them into named
+   * pages.  For now, tasks are ordered by recency and pages are just pages
+   * rather than groups sharing a common trait.
+   */
+  async getPagedRecentPending() {
+    const tasks = await this.getRecentPending();
+
+    const pages = [];
+    let curPage = null;
+
+    function makeNewPage() {
+      let pageNum = pages.length + 1;
+      const pageName = `${pageNum}`;
+      curPage = {
+        name: pageName,
+        tasks: []
+      };
+      pages.push(curPage);
+    }
+
+    for (const task of tasks) {
+      if (!curPage) {
+        makeNewPage();
+      }
+      curPage.tasks.push(task);
+    }
+
+    return pages;
   }
 
   /**
@@ -108,6 +170,22 @@ class TaskManager {
   async getPendingTasks() {
     const tasks = await this.getRecentPending();
     return tasks;
+  }
+
+  async setActiveTask(task) {
+    if (!task) {
+      throw new Error('Pass a task!');
+    }
+
+    const activeTask = await this.getActiveTask();
+    if (activeTask) {
+      await this._runCommand(`uuid:${activeTask.uuid} stop`);
+    }
+
+    await this._runCommand(`uuid:${task.uuid} start`);
+
+    // Force an update of our task status.
+    await this.getRecentPending(true);
   }
 }
 

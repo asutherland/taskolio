@@ -3,14 +3,20 @@
 const { html } = require('@popeindustries/lit-html-server');
 
 class TaskDisplayMode {
-  constructor({ taskManager }) {
+  constructor({ dispatcher, taskManager, taskPickerMode }) {
+    this.dispatcher = dispatcher;
     this.taskManager = taskManager;
+    this.taskPickerMode = taskPickerMode;
 
     this.curTask = null;
   }
 
   async update() {
     this.curTask = await this.taskManager.getActiveTask();
+  }
+
+  onNavPushButton() {
+    this.dispatcher.pushMode(this, this.taskPickerMode);
   }
 
   computeBottomHTML(stt, iDisplay) {
@@ -23,13 +29,16 @@ class TaskDisplayMode {
 
     let useClass = 'taskDescription';
 
+    let project = '';
     let text = '';
     if (this.curTask) {
+      project = this.curTask.project || '';
       text = this.curTask.description || '';
     }
 
     return html`<div class="${useClass}">
-${text}
+<div>${project}</div>
+<div>${text}</div>
 </div>`;
   }
 }

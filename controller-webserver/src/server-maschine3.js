@@ -17,6 +17,7 @@ const { ModeDispatcher } = require("./controller/maschine3/mode_dispatcher");
 const { BookmarkMode } = require("./controller/maschine3/modes/bookmark_mode");
 const { TabsOnDisplayButtonsMode } = require("./controller/maschine3/modes/tabs_on_display_buttons_mode");
 const { TaskDisplayMode } = require("./controller/maschine3/modes/task_display_mode");
+const { TaskPickerMode } = require("./controller/maschine3/modes/task_picker_mode");
 
 const { ActionBookmarkMode } = require("./controller/maschine3/modes/action_bookmark_mode");
 
@@ -253,6 +254,7 @@ setupBlessed();
 
 function makeDefaultConfigController() {
   const configstore = new Configstore("taskolio-maschine3");
+  const colorHelper = ColorHelper;
 
   if (configstore.get('version') !== CONFIG_VERSION) {
     configstore.clear();
@@ -271,13 +273,20 @@ function makeDefaultConfigController() {
   const bookmarkManager = new BookmarkManager({
     brainBoss,
     visibilityTracker,
-    colorHelper: ColorHelper
+    colorHelper,
   });
 
   const taskManager = new TaskManager ();
 
   const dispatcher = new ModeDispatcher();
   brainBoss.notifyModes = dispatcher.notifyModes.bind(dispatcher);
+
+  const updateHTML = () => {
+    // The controller driver may not exist yet.
+    if (gControllerDriver) {
+      return gControllerDriver.updateHTML();
+    }
+  };
 
   const bookmarkMode = new BookmarkMode({
     bookmarkManager,
@@ -291,16 +300,20 @@ function makeDefaultConfigController() {
     dispatcher,
     visibilityTracker,
     bookmarkMode,
-    updateHTML: () => {
-      // The controller driver may not exist yet.
-      if (gControllerDriver) {
-        return gControllerDriver.updateHTML();
-      }
-    },
+    updateHTML,
     log: makeLogFunc('tabsOnTop', 'cyan')
   });
+
+  const taskPickerMode = new TaskPickerMode({
+    dispatcher,
+    colorHelper,
+    taskManager,
+    updateHTML
+  });
   const taskDisplayMode = new TaskDisplayMode({
-    taskManager
+    dispatcher,
+    taskManager,
+    taskPickerMode,
   });
 
   const actionBookmarkMode = new ActionBookmarkMode({

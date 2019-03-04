@@ -1,16 +1,27 @@
 const EMPTY_INDEX = 0;
 
-/*
+/**
  * Indexed color helper built around how the Maschine mk3 indexed color
- * implementation notes.
- */
-
-// Here's a bunch of stuff I wrote up for my node-traktor-f1 fork about how the
-// colors work.  It's useful to leave there, but I think also useful to have
-// here since I don't really want to tie us to whatever happens in
-// led_indexed.js too tightly/at all.
-
-/* The Maschine mk3 supports a finite indexed set of LED colors.  (Presumably
+ * implementation works.
+ *
+ * There are 3 types used here:
+ * - "Wrapped" colors.  The internal high level representation of the color.
+ *   Methods should end in `Color`.
+ * - "Display" colors.  The wrapped color rendered into the actual information
+ *   used by the hardware device in question.  Methods should end in
+ *   `DisplayColor`.
+ * - "RGBHexColors".  HTML/CSS style #RRGGBB hex color representations
+ *   in a { border, background } object representation for use in HTML
+ *   rendering.  Methods should end in "RGBHexColors".
+ *
+ * ## Low-Level Color Notes
+ *
+ * Here's a bunch of stuff I wrote up for my node-traktor-f1 fork about how the
+ * colors work.  It's useful to leave there, but I think also useful to have
+ * here since I don't really want to tie us to whatever happens in
+ * led_indexed.js too tightly/at all.
+ *
+ * The Maschine mk3 supports a finite indexed set of LED colors.  (Presumably
  * this simplifies things for the drivers, especially on USB bus power.)
  *
  * The NI Controller Editor PDF provides a table that's pretty accurate, noting
@@ -89,6 +100,14 @@ class ColorHelper {
     return { colorIndex: iCell };
   }
 
+  computeColorBank(numColors) {
+    const colors = new Array(numColors);
+    for (let i = 0; i < numColors; i++) {
+      colors[i] = { colorIndex: i };
+    }
+    return colors;
+  }
+
   computeEmptyDisplayColor() {
     return EMPTY_INDEX;
   }
@@ -141,6 +160,10 @@ class ColorHelper {
 
   computeDisplayColor(wrapped) {
     return COLORS_START_OFFSET + wrapped.colorIndex * 4 + BRIGHT_OFFSET;
+  }
+
+  computeRGBHexColors(wrapped) {
+    return this.computeBookmarkRGBHexColors(wrapped);
   }
 }
 

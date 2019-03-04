@@ -98,6 +98,11 @@ class ModeDispatcher {
       "onSliderMoved",
       "onTouchStripMovement",
       // XXX nav button mapping stuff here?
+      "onNavPushButton",
+      "onNavUpButton",
+      "onNavRightButton",
+      "onNavDownButton",
+      "onNavLeftButton",
 
       // specific labeled buttons
       "onChannelMidiButton",
