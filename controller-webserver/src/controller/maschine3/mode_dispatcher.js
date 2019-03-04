@@ -93,6 +93,7 @@ class ModeDispatcher {
       // - event handling methods
       // things we got multiples of
       "onGridButton",
+      "onGroupButton",
       "onDisplayButton",
       "onKnobTurned",
       "onSliderMoved",

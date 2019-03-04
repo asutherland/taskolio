@@ -53,6 +53,9 @@ class TabsOnDisplayButtonsMode {
   onClientReady() {
     this.rederiveFilter();
   }
+  onFocusSlotMapped() {
+    this.rederiveFilter();
+  }
 
   // show that we process this button.
   computeMixerLED() {

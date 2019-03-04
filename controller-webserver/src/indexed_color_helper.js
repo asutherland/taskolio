@@ -65,6 +65,9 @@ const colorTable = [
 ];
 const COLORS_START_OFFSET = 4;
 const WHITE_START_OFFSET = 68;
+// the white colors come after the actual color, so we can treat it like color
+// index 16.
+const WHITE_COLOR_INDEX = 16;
 const DIM_OFFSET = 0;
 const DIM_FLASH_OFFSET = 1;
 const BRIGHT_OFFSET = 2;
@@ -90,6 +93,10 @@ class ColorHelper {
 
   makeRandomColor() {
     return { colorIndex: Math.min(Math.floor(Math.random() * 16), 15) };
+  }
+
+  makeWhiteColor() {
+    return { colorIndex: WHITE_COLOR_INDEX };
   }
 
   /**

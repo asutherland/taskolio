@@ -2,6 +2,7 @@ const { BankMixin, NUM_BANKS, GRID_ROWS, GRID_COLS, GRID_CELLS } =
   require("./bank_mixin");
 
 const { ColorHelper } = require('../../../indexed_color_helper');
+const { html } = require('@popeindustries/lit-html-server');
 
 /**
  * Banked color picker.  Uses BankMixin to pre-compute the hue/sat/rgb values at
@@ -40,6 +41,11 @@ class ColorPickerMode extends BankMixin {
 
   computeGridColors() {
     return this.curBank.map(ColorHelper.computeDisplayColor);
+  }
+
+  // XXX do something better than this.
+  computeCenterHTML() {
+    return html`<div>Pick a color!</div>`;
   }
 }
 

@@ -377,6 +377,7 @@ focusedFocusSlotId: ${this.getFocusedFocusSlotId()}
       // Mappings that must be established here because nowhere else will:
       if (!prevWinId && windowContainerId) {
         this.log(`successfully mapped ${fullSlotId} to window ${windowContainerId}`);
+        this.brainBoss.notifyModes('onFocusSlotMapped');
       }
       this.focusSlotToWindowContainerId.set(fullSlotId, windowContainerId);
 

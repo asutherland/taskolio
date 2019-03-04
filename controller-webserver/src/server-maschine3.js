@@ -16,8 +16,10 @@ const { ControllerDriver } = require("./controller/maschine3/controller_driver")
 const { ModeDispatcher } = require("./controller/maschine3/mode_dispatcher");
 const { BookmarkMode } = require("./controller/maschine3/modes/bookmark_mode");
 const { TabsOnDisplayButtonsMode } = require("./controller/maschine3/modes/tabs_on_display_buttons_mode");
+
 const { TaskDisplayMode } = require("./controller/maschine3/modes/task_display_mode");
 const { TaskPickerMode } = require("./controller/maschine3/modes/task_picker_mode");
+const { TaskSlotMode } = require("./controller/maschine3/modes/task_slot_mode");
 
 const { ActionBookmarkMode } = require("./controller/maschine3/modes/action_bookmark_mode");
 
@@ -315,6 +317,14 @@ function makeDefaultConfigController() {
     taskManager,
     taskPickerMode,
   });
+  const taskSlotMode = new TaskSlotMode({
+    dispatcher,
+    colorHelper,
+    persistedState: configstore.get('taskBookmarks'),
+    saveTaskBookmarks: (taskBookmarks) => {
+      configstore.set('taskBookmarks', taskBookmarks);
+    }
+  });
 
   const actionBookmarkMode = new ActionBookmarkMode({
     brainBoss,
@@ -330,6 +340,7 @@ function makeDefaultConfigController() {
       actionBookmarkMode,
       tabsOnTopMode,
       taskDisplayMode,
+      taskSlotMode,
       bookmarkMode
     ],
   });
