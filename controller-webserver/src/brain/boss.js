@@ -76,15 +76,7 @@ class BrainBoss {
     this.debugStateUpdated();
 
     if (brainConn.isWM) {
-      this.wmConnected = true;
       this.log(`WM connected with prefix: ${brainConn.idPrefix}`);
-      for (const otherConn of this.clientsByPrefix.values()) {
-        if (otherConn === brainConn) {
-          continue;
-        }
-        this.log(`Client connected with prefix: ${otherConn.idPrefix}`);
-        otherConn.stopBufferingAndProcessMessages();
-      }
     } else {
       if (this.wmConnected) {
         // no need to buffer if the WM is connected.
@@ -96,8 +88,21 @@ class BrainBoss {
         return true;
       }
     }
-
   }
+
+  wmGoodToGo(brainConn) {
+    this.log(`WM good to go with prefix: ${brainConn.idPrefix}`);
+    this.wmConnected = true;
+    for (const otherConn of this.clientsByPrefix.values()) {
+      if (otherConn === brainConn) {
+        continue;
+      }
+      this.log(`Client connected with prefix: ${otherConn.idPrefix}`);
+      otherConn.stopBufferingAndProcessMessages();
+    }
+  }
+
+
 
   unregisterClient(brainConn, idPrefix) {
     const barePrefix = idPrefix.slice(0, -1);

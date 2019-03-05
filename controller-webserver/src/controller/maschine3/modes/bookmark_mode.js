@@ -66,6 +66,10 @@ class BookmarkMode extends BankMixin {
     this.activity = 'switch'; // switch is our default.
   }
 
+  onCurrentTaskChanged(task, taskState, updateTaskState) {
+
+  }
+
   /**
    * Mint a window-level bookmark.  This would be favored over the capture
    * button that mints a most-specific bookmark because when you're switching

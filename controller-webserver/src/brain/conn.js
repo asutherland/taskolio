@@ -49,6 +49,7 @@ class BrainConnection {
      * `stopBufferingAndProcessMessages`.
      */
     this.bufferingMessages = null;
+    this.goodToGo = false;
   }
 
   renderDebugDump() {
@@ -56,6 +57,10 @@ class BrainConnection {
   }
 
   stopBufferingAndProcessMessages() {
+    if (!this.bufferingMessages) {
+      return;
+    }
+
     const buffered = this.bufferingMessages;
     this.bufferingMessages = null;
 
@@ -145,6 +150,11 @@ class BrainConnection {
   onMessage_thingsExist(msg) {
     this.visibilityTracker.processThingsExist(
       this.idPrefix, msg.items, this.isWM);
+    if (this.isWM && !this.goodToGo) {
+      this.brainBoss.wmGoodToGo(this);
+    }
+    // XXX this is really a hack, as it's only true for the WM.
+    this.goodToGo = true;
   }
 
   onMessage_thingsGone(msg) {

@@ -165,6 +165,9 @@ export default {
       this.updateAndSendFocusSlotsInventory();
     }));
 
+    // start tunneling immediately so that by the time we connect we might have
+    // already tunneled it.
+    this.tunnelPidThroughWindowTitle(true);
     this.client = new TaskolioClient({
       endpoint: 'ws://localhost:8008/',
 
@@ -217,6 +220,9 @@ export default {
       },
 
       onDisconnect() {
+        // re-enable tunneling when we disconnect so that when we reconnect the
+        // window-manager might already have our info.
+        this.tunnelPidThroughWindowTitle(true);
       },
 
       /**
