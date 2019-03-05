@@ -35,9 +35,9 @@ class BrainBoss {
     const rows = [];
     for (const brainConn of this.clientsByPrefix.values()) {
       rows.push([
-        brainConn.clientType,
-        brainConn.clientName,
-        brainConn.clientUniqueId
+        brainConn.clientType || '<pending>',
+        brainConn.clientName || '<pending>',
+        brainConn.clientUniqueId || '<pending>'
       ]);
     }
     return {

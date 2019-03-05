@@ -30,6 +30,16 @@ file gets corrupted.)
   stored bookmarks before the task-centric stuff started happening and by
   special-casing this, I avoid losing my current bookmarks and lets the per-task
   data be reset periodically without the world ending.
+- actionBookmarks: Storage that binds pushing spare hardware controller buttons
+  to telling a client to do something.  Right now this is hooked up for the
+  Firefox webext client to let specific buttons on webpages be bookmarked by id,
+  allowing me to play/pause and prev/next Google Play Music.  These are
+  currently not impacted by the current task at all, and it's not clear they
+  even would be.  (It makes the most sense for the buttons to either be global
+  or implicitly tied to whatever the currently most focused container is.  Or
+  some kind of more complex memory effect like if there's a youtube video
+  playing, pausing that, with it not actually mattering which container is
+  responsible.)
 - taskBookmarks: Object with the following keys/values:
   - version: Number.  To blow away taskBookmarks and taskStorage when the schema
     changes.

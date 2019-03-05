@@ -240,7 +240,7 @@ focusedFocusSlotId: ${this.getFocusedFocusSlotId()}
     }
   }
 
-  _lookupWindowContainerId(parentDescriptors) {
+  _lookupWindowContainerId(parentDescriptors, traceLines) {
     if (!parentDescriptors) {
       return null;
     }
@@ -255,15 +255,12 @@ focusedFocusSlotId: ${this.getFocusedFocusSlotId()}
     const check = (key) => {
       const hitSet = this.windowContainerIdLookup.get(key);
       if (hitSet) {
-        /*
-        console.log('tracker: lookup resolved', key, 'to hit set of',
-                    hitSet.size);
-        */
+        traceLines.push(`lookup resolved ${key} to hit set of ${hitSet.size}`);
         if (hitSet.size === 1) {
           match = hitSet.values().next().value;
-          //console.log('  using match:', match);
+          traceLines.push(`  using match: ${match}`);
         } else {
-          //console.log('  ignoring match because there was more than 1');
+          traceLines.push(`  ignoring match because there was more than 1`);
         }
       }
     }
@@ -275,37 +272,29 @@ focusedFocusSlotId: ${this.getFocusedFocusSlotId()}
       //console.log("checking", lookupKey);
       const hitSet = this.windowContainerIdLookup.get(lookupKey);
       if (hitSet) {
-        /*
-        console.log('tracker: multi-lookup resolved', lookupKey,
-                    'to hit set of', hitSet.size);
-        */
+        traceLines.push(`tracker: multi-lookup resolved ${lookupKey} to hit set of ${hitSet.size}`);
+
         for (const containerId of hitSet) {
           // Look-up the most recent thingExists report for this window.
           const winMeta = this.containersByFullId.get(containerId);
           if (!winMeta) {
             // TODO: we absolutely need the container id purging logic now.
-            //console.log('no winMeta for containerId', containerId);
+            traceLines.push(`no winMeta for containerId ${containerId}`);
             continue;
           }
           if (checkKey in winMeta && winMeta[checkKey] === checkValue) {
             match = containerId;
-            /*
-            console.log('  containerId', containerId, 'matched on', checkKey,
-                        '=', checkValue);
-            */
+            traceLines.push(`  containerId ${containerId} matched on ${checkKey} = ${checkValue}`);
           } else {
-            /*
-            console.log('  failed containerId match', containerId, 'on',
-                        checkKey, 'had:', winMeta[checkKey], 'wanted:',
-                        checkValue);
-            */
+            traceLines.push(`  failed containerId match ${containerId} on ${checkKey} had: ${winMeta[checkKey]} wanted: ${checkValue}`);
           }
         }
       }
     };
 
     for (const descriptor of parentDescriptors) {
-      //console.log('  investigating descriptor', descriptor);
+      // the caller lists the descriptors they're calling us with, no need to
+      // log them.
       if (descriptor.pid) {
         check(`pid:${descriptor.pid}`);
       }
@@ -362,8 +351,9 @@ focusedFocusSlotId: ${this.getFocusedFocusSlotId()}
     for (const info of focusSlots) {
       //console.log('processing focus slot:', info);
       const fullSlotId = prefix + info.focusSlotId;
+      const lookupTraceLines = [];
       const windowContainerId = !isWM ?
-        this._lookupWindowContainerId(info.parentDescriptors) : null;
+        this._lookupWindowContainerId(info.parentDescriptors, lookupTraceLines) : null;
       //console.log('  setting slot', fullSlotId, 'win', windowContainerId);
 
       const prevWinId = this.focusSlotToWindowContainerId.get(fullSlotId);
@@ -371,12 +361,20 @@ focusedFocusSlotId: ${this.getFocusedFocusSlotId()}
       if (windowContainerId) {
         windowMappedCount++;
       } else if (prevWinId) {
-        this.log(`failed to map already valid ${fullSlotId}???`);
+        this.log(`failed to map already valid ${fullSlotId}???`,
+                 {
+                   parentDescriptors: info.parentDescriptors,
+                   lookupTraceLines
+                 });
       }
 
       // Mappings that must be established here because nowhere else will:
       if (!prevWinId && windowContainerId) {
-        this.log(`successfully mapped ${fullSlotId} to window ${windowContainerId}`);
+        this.log(`successfully mapped ${fullSlotId} to window ${windowContainerId}`,
+                 {
+                   parentDescriptors: info.parentDescriptors,
+                   lookupTraceLines
+                 });
         this.brainBoss.notifyModes('onFocusSlotMapped');
       }
       this.focusSlotToWindowContainerId.set(fullSlotId, windowContainerId);

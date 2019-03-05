@@ -38,11 +38,16 @@ let guiLayout;
 let guiClients;
 let guiVisibilityReport;
 let guiVisDump;
-let guiClientDump;
+let guiDumpTabList;
+let selectedDumpMode = 'clientMessage';
+let logDetail = '';
+let guiDump;
+let guiLogEntries;
 let guiLog;
 let guiFocusRendered = false;
 
 const CONFIG_VERSION = 1;
+const GUI_LOG_MAX_LINES = 300;
 
 ///// EXPERIMENTAL ncurses-style blessed UI to aid understanding of server state
 // Our general strategy here is react-ish based.  We just schedule a complete
@@ -153,9 +158,38 @@ function setupBlessed() {
     clickable: true,
   });
 
-  guiClientDump = blessed.box({
+  guiDumpTabList = blessed.listbar({
     parent: guiLayout,
-    label: 'Client Most Recent Message',
+    label: 'Thing to dump:',
+    width: '100%',
+    border: {
+      type: 'line',
+      fg: 'gray'
+    },
+    interactive: true,
+    keys: true,
+    mouse: true,
+    clickable: true,
+    autoCommandKeys: true,
+    commands: {
+      'Client Most Recent': {
+        callback() {
+          selectedDumpMode = 'clientMessage';
+          blessedDirtied();
+        }
+      },
+      'Log Detail': {
+        callback() {
+          selectedDumpMode = 'logDetail';
+          blessedDirtied();
+        }
+      }
+    }
+  })
+
+  guiDump = blessed.box({
+    parent: guiLayout,
+    label: 'Dump',
     height: 30,
     width: '100%',
     border: {
@@ -163,16 +197,20 @@ function setupBlessed() {
       fg: 'gray'
     },
     align: 'left',
+    tags: true,
     content: '',
     interactive: true,
     keys: true,
     mouse: true,
     clickable: true,
+    scrollable: true
   });
 
+  guiLogEntries = [];
   guiLog = blessed.log({
     parent: guiLayout,
     label: 'Log',
+    scrollback: GUI_LOG_MAX_LINES,
     // height will be auto-calculated since we omitted it.
     width: '100%',
     tags: true,
@@ -185,6 +223,30 @@ function setupBlessed() {
     mouse: true,
     clickable: true,
   });
+  const hackLog = makeLogFunc('hack', 'blue');
+  guiLog.on('click', (data) => {
+    // subtract off one for the border.
+    const logRelLine = data.y - guiLog.atop - 1;
+    // Then add the childBase to get to the actual visible line which is in
+    // "real" space, which is what we have after wrapping occurs.  (Note that
+    // the "fake" line-space is aware of all newslines, so we do require that
+    // there are _no_ newlines in log entries, so we normalize them out.)
+    const iRealLine = logRelLine + guiLog.childBase;
+    // the "rtof" stands for "real to fake" which lets us map back to the
+    // semantic underlying like, which is in "fake" space.
+    const iLine = guiLog._clines.rtof[iRealLine];
+    //hackLog(`dy: ${data.y}  guiLog.iy: ${guiLog.atop} ${guiLog.height} child: ${guiLog.childBase} scroll: ${guiLog.getScroll()}`);
+    //data.y - guiLog.iy
+    const info = guiLogEntries[iLine];
+    if (!info) {
+      return;
+    }
+    //hackLog(`mapped fake line ${iFakeLine} to ${iLine}`);
+    logDetail = `{white-fg}${info.str}{/white-fg}
+
+${JSON.stringify(info.details, null, 2)}`;
+    guiDumpTabList.select(1);
+  });
 
   guiClients.rows.on('select item', () => { blessedDirtied(); });
 
@@ -193,10 +255,17 @@ function setupBlessed() {
 }
 
 function makeLogFunc(label, color) {
-  const prefix = `{${color}-fg}${label}{gray-fg} `;
+  const prefix = `{${color}-fg}${label}{/${color}-fg} `;
 
-  return function(str) {
-    guiLog.log(prefix + str);
+  return function(str, details) {
+    // Our click mapping requires that `str` not include newlines, although it's
+    // okay if it ends up wrapping.
+    const safeStr = (str || '<null>').replace(/\n/g, '\\n');
+    guiLog.log(prefix + safeStr);
+    guiLogEntries.push({ label, str, details });
+    if (guiLogEntries.length > GUI_LOG_MAX_LINES) {
+      guiLogEntries.shift();
+    }
     blessedDirtied(true);
   };
 }
@@ -238,9 +307,19 @@ function renderBlessed() {
       data: selectedConn ? selectedConn.debugVisibilityInventory : []
     });
 
-    if (selectedConn) {
-      guiClientDump.setContent(selectedConn.renderDebugDump());
+    let dumpContent = '';
+    switch (selectedDumpMode) {
+      case 'clientMessage':
+        if (selectedConn) {
+          dumpContent = selectedConn.renderDebugDump();
+        }
+        break;
+      case 'logDetail':
+        dumpContent = logDetail;
+        break;
     }
+    guiDump.setLabel(selectedDumpMode);
+    guiDump.setContent(dumpContent);
 
     guiVisDump.setContent(gVisibilityTracker.renderDebugDump());
   }

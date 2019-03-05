@@ -101,8 +101,8 @@ class TaskManager {
 
     // We want new data if we don't have any recent data and it's over 1 second
     // old.  (Or we're forcing it.)
-    if (force || !this.recentPending ||
-        (this._lastExported - Date.now()) > 1000) {
+    if (force || !this._recentPending ||
+        ((this._lastExported - Date.now()) > 1000)) {
       this._activePendingRequest = this._runExport('export status:pending');
       this._recentPending = await this._activePendingRequest;
       // If any other calls to getRecentPending() blocked above, we'll still be
