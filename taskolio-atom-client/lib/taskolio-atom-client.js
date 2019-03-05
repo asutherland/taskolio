@@ -150,7 +150,10 @@ export default {
     if (!enable) {
       atom.workspace.updateWindowTitle();
     } else {
-      document.title = document.title + ` PID=${process.pid}`;
+      // avoid stacking up the PID more than once.
+      if (!/PID=/.test(document.title)) {
+        document.title = document.title + ` PID=${process.pid}`;
+      }
     }
   },
 

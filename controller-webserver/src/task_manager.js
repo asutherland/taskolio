@@ -29,7 +29,12 @@ const TASKS_PER_PAGE = 16;
  * We have multiple
  */
 class TaskManager {
-  construct() {
+  constructor({ log }) {
+    if (!log) {
+      throw new Error("GIVE ME A LOG");
+    }
+    this.log = log;
+
     this._lastExported = 0;
     /**
      * If non-null, the most recent task data we have, captured at the timestamp
@@ -54,8 +59,7 @@ class TaskManager {
       const cmdStr = 'task ' + argStr;
       exec(cmdStr, (err, stdout, stderr) => {
         if (err) {
-          console.error('Error while running:', cmdstr);
-          console.error(stderr);
+          this.log(`Error while running: ${cmdstr}`, { stderr });
           reject(err);
         }
 
@@ -63,8 +67,7 @@ class TaskManager {
           const result = JSON.parse(stdout);
           resolve(result);
         } catch (ex) {
-          console.error('Error parsing task output:', cmdstr);
-          console.error(ex);
+          this.log(`Error parsing task output: ${cmdstr} ${ex}`);
           reject(ex);
         }
       });
@@ -95,6 +98,7 @@ class TaskManager {
    * pending means.)
    */
   async getRecentPending(force) {
+    // If there's a pending request, wait for it.
     if (this._activePendingRequest) {
       await this._activePendingRequest;
     }
@@ -102,9 +106,10 @@ class TaskManager {
     // We want new data if we don't have any recent data and it's over 1 second
     // old.  (Or we're forcing it.)
     if (force || !this._recentPending ||
-        ((this._lastExported - Date.now()) > 1000)) {
+        ((Date.now() - this._lastExported) > 1000)) {
       this._activePendingRequest = this._runExport('export status:pending');
       this._recentPending = await this._activePendingRequest;
+      //this.log('updated task list', this._recentPending);
       // If any other calls to getRecentPending() blocked above, we'll still be
       // the first one woken up, so us clearing the value next will work as we
       // desire.
@@ -112,6 +117,8 @@ class TaskManager {
       // Track validity starting after we got the response back, not from when
       // we issued the request.
       this._lastExported = Date.now();
+    } else {
+      //this.log(`tasks from ${(this._lastExported - Date.now())/1000} still good enough`);
     }
 
     return this._recentPending;

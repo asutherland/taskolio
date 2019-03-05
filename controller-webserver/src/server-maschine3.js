@@ -223,7 +223,6 @@ function setupBlessed() {
     mouse: true,
     clickable: true,
   });
-  const hackLog = makeLogFunc('hack', 'blue');
   guiLog.on('click', (data) => {
     // subtract off one for the border.
     const logRelLine = data.y - guiLog.atop - 1;
@@ -357,7 +356,9 @@ function makeDefaultConfigController() {
     colorHelper,
   });
 
-  const taskManager = new TaskManager ();
+  const taskManager = new TaskManager({
+    log: makeLogFunc('taskManager', 'green'),
+  });
 
   const dispatcher = new ModeDispatcher();
   brainBoss.notifyModes = dispatcher.notifyModes.bind(dispatcher);
@@ -483,6 +484,11 @@ const run = async (port) => {
     ws.brainConn = brainConn;
   });
 };
+
+const gNodeLog = makeLogFunc('node', 'red');
+process.on('unhandledRejection', (reason, promise) => {
+  gNodeLog('unhandledRejection: ' + reason.message, { stack: reason.stack });
+});
 
 makeDefaultConfigController();
 run(8008);
