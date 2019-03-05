@@ -337,10 +337,15 @@ focusedFocusSlotId: ${this.getFocusedFocusSlotId()}
   }
 
   processFocusSlotsInventory(prefix, focusSlots, isWM, brainConn) {
-    // Purge the old focus slots; the delta is more work than is needed.
+    // Track the slots that existed before this inventory so we can remove them
+    // at the end if they didn't get handled.  We used to just purge them all,
+    // but it results in state churn that causes the LEDs to needlessly flash.
+    // (I originally tried to be lazy here, but it's not that hard and the
+    // workarounds have their own complexity.)
+    const unhandledPreSlots = new Set();
     for (const prefixedSlotId of this.focusSlotContentsById.keys()) {
       if (prefixedSlotId.startsWith(prefix)) {
-        this.focusSlotContentsById.delete(prefixedSlotId);
+        unhandledPreSlots.add(prefixedSlotId);
       }
     }
 
@@ -387,6 +392,7 @@ focusedFocusSlotId: ${this.getFocusedFocusSlotId()}
       if (!this.focusSlotContentsById.has(fullSlotId)) {
         this.focusSlotContentsById.set(fullSlotId, null);
       }
+      unhandledPreSlots.delete(fullSlotId);
       this.windowContainerIdToActiveFocusSlot.set(
         windowContainerId, fullSlotId);
 
@@ -394,6 +400,10 @@ focusedFocusSlotId: ${this.getFocusedFocusSlotId()}
         info.focusSlotId,
         windowContainerId,
       ]);
+    }
+
+    for (const mootSlotId of unhandledPreSlots) {
+      this.focusSlotContentsById.delete(mootSlotId);
     }
 
     // re-derive visible container id's even though this will cause the
