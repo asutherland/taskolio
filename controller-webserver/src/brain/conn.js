@@ -35,6 +35,7 @@ class BrainConnection {
 
     // ## Centrally tracked debug overviews for the client
     // updated by VisibilityTracker.processFocusSlotsInventory
+    this.debugMessages = {};
     this.debugSlotsInventory = [];
     // updated by VisibilityTracker.processThingsVisibilityInventory
     this.debugVisibilityInventory = [];
@@ -58,6 +59,9 @@ class BrainConnection {
       replyResolve(obj.payload);
       return;
     } else {
+      if (obj.type) {
+        this.debugMessages[obj.type] = obj;
+      }
       // If this is anything but a reply, then save it off parsed so that we can
       // re-format it for display.  The reply thing is because the HTML image
       // data is obviously not something useful to dump.

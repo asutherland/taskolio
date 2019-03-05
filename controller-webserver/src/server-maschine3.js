@@ -39,7 +39,7 @@ let guiClients;
 let guiVisibilityReport;
 let guiVisDump;
 let guiDumpTabList;
-let selectedDumpMode = 'clientMessage';
+let selectedDumpMode = 'logDetail';
 let logDetail = '';
 let guiDump;
 let guiLogEntries;
@@ -172,15 +172,21 @@ function setupBlessed() {
     clickable: true,
     autoCommandKeys: true,
     commands: {
+      'Log Detail': {
+        callback() {
+          selectedDumpMode = 'logDetail';
+          blessedDirtied();
+        },
+      },
       'Client Most Recent': {
         callback() {
           selectedDumpMode = 'clientMessage';
           blessedDirtied();
         }
       },
-      'Log Detail': {
+      'Client Latched Messages': {
         callback() {
-          selectedDumpMode = 'logDetail';
+          selectedDumpMode = 'clientMessagesByType';
           blessedDirtied();
         }
       }
@@ -244,7 +250,7 @@ function setupBlessed() {
     logDetail = `{white-fg}${info.str}{/white-fg}
 
 ${JSON.stringify(info.details, null, 2)}`;
-    guiDumpTabList.select(1);
+    guiDumpTabList.select(0);
   });
 
   guiClients.rows.on('select item', () => { blessedDirtied(); });
@@ -313,6 +319,12 @@ function renderBlessed() {
           dumpContent = selectedConn.renderDebugDump();
         }
         break;
+      case 'clientMessagesByType':
+        if (selectedConn) {
+          dumpContent = JSON.stringify(selectedConn.debugMessages, null, 2);
+        }
+        break;
+
       case 'logDetail':
         dumpContent = logDetail;
         break;
