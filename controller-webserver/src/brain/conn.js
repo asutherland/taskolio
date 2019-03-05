@@ -40,13 +40,36 @@ class BrainConnection {
     // updated by VisibilityTracker.processThingsVisibilityInventory
     this.debugVisibilityInventory = [];
     this._mostRecentMessage = null;
+
+    /**
+     * If a client connects and it's not the window-manager client and the
+     * window-manager hasn't connected yet, we tell it to buffer by setting this
+     * to an array for the messages to be stored in.  Later, the BrainBoss will
+     * tell us to drain the buffer and stop buffering via
+     * `stopBufferingAndProcessMessages`.
+     */
+    this.bufferingMessages = null;
   }
 
   renderDebugDump() {
     return JSON.stringify(this._mostRecentMessage, null, 2);
   }
 
+  stopBufferingAndProcessMessages() {
+    const buffered = this.bufferingMessages;
+    this.bufferingMessages = null;
+
+    for (const data of buffered) {
+      this.onMessage(data);
+    }
+  }
+
   onMessage(data) {
+    if (this.bufferingMessages) {
+      this.bufferingMessages.push(data);
+      return;
+    }
+
     const obj = JSON.parse(data);
     //console.log('\n===', this.idPrefix, obj.type);
 
@@ -87,7 +110,12 @@ class BrainConnection {
     this.clientUniqueId = msg.uniqueId;
 
     this.capabilities = msg.capabilities || [];
-    this.brainBoss.reportClientCapabilities(this, this.capabilities);
+    const shouldBuffer =
+      this.brainBoss.reportClientCapabilities(this, this.capabilities);
+
+    if (shouldBuffer) {
+      this.bufferingMessages = [];
+    }
   }
 
   onMessage_focusSlotsInventory(msg) {

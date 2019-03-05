@@ -124,6 +124,20 @@ class VisibilityTracker {
     this.mruFocusSlotIds = [];
 
     /**
+     * Debug helper thing so we can log the first time we hear about a focus
+     * slot and fail to map it to a window.
+     *
+     * TODO: This should get purged on client disconnect, but it's also not a
+     * huge deal.  (We do purge on WM disconnect, at least.)
+     */
+    this.alreadyReportedFailedFocusSlotWindowLookups = new Set();
+    /**
+     * True if the WM is connected and has already told us about all the
+     * windows.
+     */
+    this.wmPopulated = false;
+
+    /**
      * Keys are prefixed string identifiers generated from information told to
      * us by the window-manager client about windows.  This will usually rely
      * on the window manager's ability to map the window back to the application
@@ -326,6 +340,8 @@ focusedFocusSlotId: ${this.getFocusedFocusSlotId()}
       this.focusSlotToWindowContainerId.clear();
       this.windowContainerIdToActiveFocusSlot.clear();
       this.focusedWindowContainerId = null;
+      this.wmPopulated = false;
+      this.alreadyReportedFailedFocusSlotWindowLookups.clear();
     } else {
       removeFromMapUsingPrefix(this.focusSlotToWindowContainerId, mootPrefix);
     }
@@ -371,6 +387,14 @@ focusedFocusSlotId: ${this.getFocusedFocusSlotId()}
                    parentDescriptors: info.parentDescriptors,
                    lookupTraceLines
                  });
+      } else if (this.wmPopulated &&
+            !this.alreadyReportedFailedFocusSlotWindowLookups.has(fullSlotId)) {
+        this.log(`failed to map newly seen slot ${fullSlotId}`,
+                 {
+                   parentDescriptors: info.parentDescriptors,
+                   lookupTraceLines
+                 });
+        this.alreadyReportedFailedFocusSlotWindowLookups.add(fullSlotId);
       }
 
       // Mappings that must be established here because nowhere else will:
@@ -436,6 +460,10 @@ focusedFocusSlotId: ${this.getFocusedFocusSlotId()}
       for (const filteredSub of this.filteredSubscriptions) {
         filteredSub.considerItem(item);
       }
+    }
+
+    if (isWM) {
+      this.wmPopulated = true;
     }
   }
 
