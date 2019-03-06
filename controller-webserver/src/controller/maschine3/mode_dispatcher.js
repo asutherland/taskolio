@@ -383,7 +383,8 @@ width: 100%;
 height: 100%;
 color: white;
 background-color: black;
-font-size: 16px;
+font-size: 14px;
+font-family: sans-serif;
 `.replace(/\n/g, ' ');
     const styleBlock = `<style>
 .mainGrid {
