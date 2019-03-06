@@ -4,7 +4,7 @@
     "blessed": "^0.1.81",
     "blessed-contrib": "^4.8.11",
     "configstore": "^3.1.1",
-    "node-traktor-f1": "github:asutherland/node-traktor-f1#00e236b99c1573d9095c0d0109f7bf6e99282b9e",
+    "node-traktor-f1": "github:asutherland/node-traktor-f1#c31043b928e6540cb5e53f65fb8ab0a90ba58592",
     "tinycolor2": "^1.4.1",
     "usb": "^1.3.3",
     "web-midi-api": "^1.4.4",
