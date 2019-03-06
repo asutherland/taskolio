@@ -7,15 +7,24 @@ class TaskDisplayMode {
     this.dispatcher = dispatcher;
     this.taskManager = taskManager;
     this.taskPickerMode = taskPickerMode;
-
-    this.curTask = null;
   }
 
-  async update() {
-    this.curTask = await this.taskManager.getActiveTask();
+  onNavTouchButton(evt) {
+    // TODO: have this do a peek mode thing for the displays to show what the
+    // group buttons are bound to.  This will actually need a different series
+    // of events, I just want to shut up the controllerDriver's warnings about
+    // this button.
   }
 
-  onNavPushButton() {
+  onNavPushButton(evt) {
+    // If the user held down shift, we mark the current task as done regardless
+    // of whether they go through with picking a new task.
+    if (evt.shift) {
+      this.taskManager.markTaskDone();
+    }
+
+    // we keep it around all the time, we need to force an update...
+    this.taskPickerMode.update();
     this.dispatcher.pushMode(this, this.taskPickerMode);
   }
 
@@ -24,16 +33,18 @@ class TaskDisplayMode {
       return '';
     }
 
-    // kick off an async update so the next time we render we're more accurate.
-    this.update();
-
     let useClass = 'taskDescription';
+
+    // this kicks off an async process to ensure the activeTask we access
+    // directly below is up-to-date.
+    this.taskManager.getActiveTask();
 
     let project = '';
     let text = '';
-    if (this.curTask) {
-      project = this.curTask.project || '';
-      text = this.curTask.description || '';
+    const curTask = this.taskManager.activeTask;
+    if (curTask) {
+      project = curTask.project || '';
+      text = curTask.description || '';
     }
 
     return html`<div class="${useClass}">

@@ -48,6 +48,18 @@ class TaskManager {
      * to _runExport to get the current pending requests.
      */
     this._activePendingRequest = null;
+
+    /**
+     * This is always the currently active task (that is, the most recently
+     * started task).  We always update this whenever we get an updated list of
+     * pending tasks.
+     *
+     * Consumers that want an accurate answer and can wait for an async lookup
+     * should use `getActiveTask`.  Consumers that just want the most-recent
+     * value can use this, but ideally should kick-off a call to getActiveTask()
+     * so that the next re-paint or whatever can have the right answer.
+     */
+    this.activeTask = null;
   }
 
   /**
@@ -117,6 +129,10 @@ class TaskManager {
       // Track validity starting after we got the response back, not from when
       // we issued the request.
       this._lastExported = Date.now();
+
+      // Keep `this.activeTask` up-to-date.  (There's no upside to letting it
+      // get out of date.)
+      this._computeActiveTask();
     } else {
       //this.log(`tasks from ${(this._lastExported - Date.now())/1000} still good enough`);
     }
@@ -210,13 +226,13 @@ class TaskManager {
   }
 
   /**
-   * Return the task with the most recent `start` date or null if there is no
-   * active task.
+   * Find the most recent `start` date or null if there is no active task,
+   * assigning it to `this.activeTask`.  Used to keep the active task
+   * up-to-date.
    */
-  async getActiveTask() {
-    const tasks = await this.getRecentPending();
+  _computeActiveTask() {
     let mostRecentStartedTask = null;
-    for (const task of tasks) {
+    for (const task of this._recentPending) {
       if (task.start) {
         if (!mostRecentStartedTask ||
             (parseTaskDate(task.start) > parseTaskDate(mostRecentStartedTask.start))) {
@@ -224,8 +240,17 @@ class TaskManager {
         }
       }
     }
+    this.activeTask = mostRecentStartedTask;
+  }
 
-    return mostRecentStartedTask;
+  /**
+   * Return the task with the most recent `start` date or null if there is no
+   * active task.
+   */
+  async getActiveTask() {
+    // This updates this.activeTask for side-effect for now.
+    const tasks = await this.getRecentPending();
+    return this.activeTask;
   }
 
   async getPendingTasks() {
@@ -233,17 +258,45 @@ class TaskManager {
     return tasks;
   }
 
+  /**
+   * Mark the given task as active after first marking the prior active task as
+   * not active.  There's probably a more clever taskwarrior flow that can leave
+   * things started, but I'm not there yet.
+   *
+   * Automatically refreshes the set of pending tasks before returning.
+   */
   async setActiveTask(task) {
     if (!task) {
       throw new Error('Pass a task!');
     }
 
+    // Note that we don't force an update here; we're assuming that we are the
+    // only entity messing with taskwarrior, at least in the last second.
     const activeTask = await this.getActiveTask();
     if (activeTask) {
       await this._runCommand(`uuid:${activeTask.uuid} stop`);
     }
 
     await this._runCommand(`uuid:${task.uuid} start`);
+
+    // Force an update of our task status.
+    await this.getRecentPending(true);
+  }
+
+  /**
+   * Mark the given task as done and refreshes the pending task list.  Does not
+   * set a new active task.  If you don't provide a task, we assume you want the
+   * currently active task marked done.
+   */
+  async markTaskDone(task) {
+    if (!task) {
+      task = await this.getActiveTask();
+      if (!task) {
+        return;
+      }
+    }
+
+    await this._runCommand(`uuid:${task.uuid} done`);
 
     // Force an update of our task status.
     await this.getRecentPending(true);
