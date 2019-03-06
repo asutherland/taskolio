@@ -373,7 +373,7 @@ focusedFocusSlotId: ${this.getFocusedFocusSlotId()}
       //console.log('processing focus slot:', info);
       const fullSlotId = prefix + info.focusSlotId;
       const lookupTraceLines = [];
-      const windowContainerId = !isWM ?
+      let windowContainerId = !isWM ?
         this._lookupWindowContainerId(info.parentDescriptors, lookupTraceLines) : null;
       //console.log('  setting slot', fullSlotId, 'win', windowContainerId);
 
