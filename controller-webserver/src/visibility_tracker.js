@@ -382,11 +382,22 @@ focusedFocusSlotId: ${this.getFocusedFocusSlotId()}
       if (windowContainerId) {
         windowMappedCount++;
       } else if (prevWinId) {
-        this.log(`failed to map already valid ${fullSlotId}???`,
-                 {
-                   parentDescriptors: info.parentDescriptors,
-                   lookupTraceLines
-                 });
+        // This is almost certainly the result of a race between the window
+        // manager reporting a title change and the client that lives inside the
+        // window reporting the change.
+        //
+        // We know that this mapping doesn't actually change and that there will
+        // be situations like this, so we just reuse the existing mapping in
+        // this case.
+        windowContainerId = prevWinId;
+        windowMappedCount++;
+        if (0) {
+          this.log(`failed to map already valid ${fullSlotId}???`,
+                   {
+                     parentDescriptors: info.parentDescriptors,
+                     lookupTraceLines
+                   });
+          }
       } else if (this.wmPopulated &&
             !this.alreadyReportedFailedFocusSlotWindowLookups.has(fullSlotId)) {
         this.log(`failed to map newly seen slot ${fullSlotId}`,
