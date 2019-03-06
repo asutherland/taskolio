@@ -219,7 +219,7 @@ export default {
         //   thing.
       },
 
-      onDisconnect() {
+      onDisconnect: () => {
         // re-enable tunneling when we disconnect so that when we reconnect the
         // window-manager might already have our info.
         this.tunnelPidThroughWindowTitle(true);
