@@ -34,20 +34,26 @@ class BankMixin extends GridPickerMixin {
       // populated below.
       this.banks = initialState;
     } else {
-      this.banks = new Array(NUM_BANKS);
-      for (let iBank = 0; iBank < NUM_BANKS; iBank++) {
-        this.banks[iBank] = new Array(GRID_CELLS);
-        for (let iCell = 0; iCell < GRID_CELLS; iCell++) {
-          const iRow = Math.floor(iCell / GRID_COLS);
-          const iCol = iCell % GRID_COLS;
-          this.banks[iBank][iCell] =
-            computeCellValue ? computeCellValue(iBank, iCell, iRow, iCol)
-                            : defaultCellValue;
-        }
-      }
+      this.banks = this.makeEmptyBanks({ computeCellValue, defaultCellValue });
     }
 
     this.modeShortLabel = "cp";
+  }
+
+  makeEmptyBanks({ computeCellValue, defaultCellValue }) {
+    const banks = new Array(NUM_BANKS);
+    for (let iBank = 0; iBank < NUM_BANKS; iBank++) {
+      banks[iBank] = new Array(GRID_CELLS);
+      for (let iCell = 0; iCell < GRID_CELLS; iCell++) {
+        const iRow = Math.floor(iCell / GRID_COLS);
+        const iCol = iCell % GRID_COLS;
+        banks[iBank][iCell] =
+          computeCellValue ? computeCellValue(iBank, iCell, iRow, iCol)
+                           : defaultCellValue;
+      }
+    }
+
+    return banks;
   }
 
   get curBank() {

@@ -39,7 +39,10 @@ class BookmarkMode extends BankMixin {
 
     this.dispatcher = dispatcher;
     this.bookmarkManager = bookmarkManager;
-    this._saveBookmarks = saveBookmarks;
+    this.__saveBookmarks = saveBookmarks;
+    // We want to save off the global bookmarks reference because we clobber
+    // `this.banks` in `onCurrentTaskChanged`.
+    this._globalBookmarks = persistedState;
 
     /** Static 2-charcter label to help convey the current mode. */
     this.modeShortLabel = "bg"; // Bookmark Go
@@ -64,10 +67,41 @@ class BookmarkMode extends BankMixin {
     // - have deletion be its own real sub-mode that makes the existing
     //   bookmarks pulse or something like that to convey they're at risk.
     this.activity = 'switch'; // switch is our default.
+
+    // by default we're in global mode.
+    this.curTask = null;
+    this._taskState = null;
+    this.__updateTaskStateKey = null;
   }
 
-  onCurrentTaskChanged(task, taskState, updateTaskState) {
+  getGlobalBookmarkMainBank() {
+    return this._globalBookmarks[0];
+  }
 
+  onCurrentTaskChanged(task, taskState, updateTaskStateKey, cause) {
+    this.curTask = task;
+    this._taskState = taskState;
+    this.__updateTaskStateKey = updateTaskStateKey;
+
+    // No task means we're operating in global bookmarks mode.
+    if (!task) {
+      this.banks = this._globalBookmarks;
+      return;
+    }
+
+    if (taskState && taskState.bookmarks) {
+      this.banks = taskState.bookmarks;
+    } else {
+      this.banks = this.makeEmptyBanks({ defaultCellValue: null });
+    }
+  }
+
+  _saveBookmarks() {
+    if (!this.curTask) {
+      this.__saveBookmarks(this._globalBookmarks);
+    } else {
+      this.__updateTaskStateKey('bookmarks', this.banks);
+    }
   }
 
   /**
@@ -107,7 +141,7 @@ class BookmarkMode extends BankMixin {
   onBookmarkPositionPicked(index) {
     if (this.activity === 'delete') {
       this.curBank[index] = null;
-      this._saveBookmarks(this.banks);
+      this._saveBookmarks();
     } else if (this.pickingForBookmark) {
       //console.log("Setting bookmark", JSON.stringify(this.pickingForBookmark));
       const oldBookmark = this.curBank[index];
@@ -115,7 +149,7 @@ class BookmarkMode extends BankMixin {
         this.bookmarkManager.maybeMergeBookmarks(
           this.pickingForBookmark, oldBookmark);
       this.pickingForBookmark = null;
-      this._saveBookmarks(this.banks);
+      this._saveBookmarks();
     }
     this.activity = 'switch';
   }
@@ -140,7 +174,7 @@ class BookmarkMode extends BankMixin {
       this.bookmarkManager.setBookmarkColor(
         this.pickingForBookmark, wrappedColor);
       this.pickingForBookmark = null;
-      this._saveBookmarks(this.banks);
+      this._saveBookmarks();
     }
     this.activity = 'switch';
   }

@@ -368,12 +368,25 @@ function makeDefaultConfigController() {
     colorHelper,
   });
 
-  const taskManager = new TaskManager({
-    log: makeLogFunc('taskManager', 'green'),
-  });
-
   const dispatcher = new ModeDispatcher();
   brainBoss.notifyModes = dispatcher.notifyModes.bind(dispatcher);
+
+  const taskManager = new TaskManager({
+    log: makeLogFunc('taskManager', 'green'),
+    taskStorage: configstore.get('taskStorage'),
+    updateUI: () => {
+      if (gControllerDriver) {
+        // This also updates the HTML.  Such misnomer.
+        gControllerDriver.updateLEDs();
+      }
+    },
+    updateTaskStorage: (taskStorage) => {
+      configstore.set('taskStorage', taskStorage);
+    },
+    notifyModesTaskChanged: (...args) => {
+      return dispatcher.notifyModes('onCurrentTaskChanged', ...args);
+    }
+  });
 
   const updateHTML = () => {
     // The controller driver may not exist yet.
@@ -411,6 +424,7 @@ function makeDefaultConfigController() {
   });
   const taskSlotMode = new TaskSlotMode({
     dispatcher,
+    taskManager,
     colorHelper,
     persistedState: configstore.get('taskBookmarks'),
     saveTaskBookmarks: (taskBookmarks) => {

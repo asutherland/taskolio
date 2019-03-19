@@ -51,8 +51,10 @@ file gets corrupted.)
   an object with the following fields.  The idea is that the bookmarks for a
   task are not tied to the specific physical button in question, but just to the
   task.  In the future, this storage could potentially be stored inside the
-  taskwarrior task itself.
-  - lastUseTS: Timestamp of when we last activated the
+  taskwarrior task itself.  For that reason, the `TaskManager` is responsible
+  for managing this storage.
+  - lastUseTS: Timestamp of when we last activated the task.
+  - color: If a color was explicitly chosen, the (indexed) wrappedColor
   - bookmarks: The set of (banked) bookmarks to use when this task is the
     current task.
 
@@ -62,8 +64,9 @@ The "bookmark mode" has a naive Array of Arrays data structure.  The design
 question when getting fancy was how to implement this swap.
 
 The answer is using the `notifyModes` broadcast mechanism.  When the current
-task bookmark is changed, we broadcast a "onCurrentTaskChanged" change with
-the signature `onCurrentTaskChanged(task, taskState, updateTaskState)` where:
+task bookmark is changed, the TaskManager broadcast a "onCurrentTaskChanged"
+change with the signature
+`onCurrentTaskChanged(task, taskState, updateTaskState, cause)` where:
 - task: the TaskWarrior JSON rep.  This will be null if there isn't a task
   associated with the current mode or if we're in the global "H" button which
   can never have a task associated.
@@ -73,6 +76,13 @@ the signature `onCurrentTaskChanged(task, taskState, updateTaskState)` where:
   task state written to disk so that the next time the notification is
   generated, `taskState[keyName] === keyValue`.  This will be null if there is
   no task.
+- cause: One of 'TaskSlotMode' or 'TaskPickerMode':
+  - external: The TaskManager noticed that the current task changes, presumably
+    due to the taskwarrior command-line `task` tool or some other helper.
+  - TaskSlotMode: The change was triggered by switching task slots.
+  - TaskPickerMode: The change was triggered by the user switching between
+    already-assigned task slots.  TaskSlotMode will update the `taskBookmarks`
+    storage as a result.
 
 From a UX level, the method will be invoked when:
 - The program starts.  The task bookmark 'h' will be selected for global mode.

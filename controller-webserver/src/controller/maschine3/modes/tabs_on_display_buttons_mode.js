@@ -66,7 +66,7 @@ class TabsOnDisplayButtonsMode {
   }
 
   rederiveFilter() {
-    const bookmark = this.bookmarkMode.banks[0][0];
+    const bookmark = this.bookmarkMode.getGlobalBookmarkMainBank()[0];
     if (!bookmark) {
       this.log(`no bookmark`);
       this.usingWindowContainerId = null;

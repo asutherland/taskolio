@@ -298,6 +298,25 @@ export default {
        */
       onMessage_focusSlotsLinked: async (msg) => {
         this.tunnelPidThroughWindowTitle(false);
+      },
+
+      /**
+       * This is the server asking us to pretend like it doesn't know any of our
+       * state and to have us re-send it.  This becomes necessary when the
+       * window manager restarts and generates new window container id's and
+       * it becomes necessary for us to re-tunnel our PID.  It's also
+       * potentially helpful in the face of code occasionally having bugs...
+       */
+      onMessage_pleaseReportState: async (msg) => {
+        // Toggle off and back on again after a delay so that we can also ensure
+        // the window manager perceives a change in our state.
+        this.tunnelPidThroughWindowTitle(false);
+        setTimeout(() => {
+          this.tunnelPidThroughWindowTitle(true);
+        }, 0);
+        this.updateAndSendFocusSlotsInventory();
+        // this may still be a no-op.
+        this.sendThingsExistForWorkspace();
       }
     });
   },

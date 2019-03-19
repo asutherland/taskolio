@@ -22,18 +22,23 @@ const TASKS_PER_PAGE = 16;
 
 /**
  * Track and switch between TaskWarrior tasks and associate / lookup metadata
- * stored in the tasks.
+ * stored in the tasks or configstore persistent storage.
  *
- * ## General Operation
- *
- * We have multiple
+ * @param {Function} updateUI
+ *   Function to call when the current task has (asynchronously) changed and we
+ *   need to schedule an update of the LEDs and possibly the screens.
  */
 class TaskManager {
-  constructor({ log }) {
+  constructor({ log, updateUI, taskStorage, updateTaskStorage, notifyModesTaskChanged }) {
     if (!log) {
       throw new Error("GIVE ME A LOG");
     }
     this.log = log;
+
+    this._updateUI = updateUI;
+    this._taskStorage = taskStorage || {};
+    this._updateTaskStorage = updateTaskStorage;
+    this._notifyModesTaskChanged = notifyModesTaskChanged;
 
     this._lastExported = 0;
     /**
@@ -60,6 +65,41 @@ class TaskManager {
      * so that the next re-paint or whatever can have the right answer.
      */
     this.activeTask = null;
+  }
+
+  getStateKeyForTask(task, key, fallbackValue) {
+    if (!task) {
+      return fallbackValue;
+    }
+
+    const state = this._taskStorage[task.uuid];
+    if (!state) {
+      return fallbackValue;
+    }
+
+    return state[key] || fallbackValue;
+  }
+
+  _makeEmptyTaskState() {
+    return {
+      lastUseTS: 0,
+      color: null,
+      bookmarks: null,
+    };
+  }
+
+  setStateKeyForTask(task, key, value) {
+    if (!task) {
+      return;
+    }
+
+    let state = this._taskStorage[task.uuid];
+    if (!state) {
+      state = this._taskStorage[task.uuid] = this._makeEmptyTaskState();
+    }
+
+    state[key] = value;
+    this._updateTaskStorage(this._taskStorage);
   }
 
   /**
@@ -109,7 +149,7 @@ class TaskManager {
    * Asynchronously gets the list of all known unfinished tasks.  (That's what
    * pending means.)
    */
-  async getRecentPending(force) {
+  async getRecentPending(force, cause) {
     // If there's a pending request, wait for it.
     if (this._activePendingRequest) {
       await this._activePendingRequest;
@@ -132,7 +172,7 @@ class TaskManager {
 
       // Keep `this.activeTask` up-to-date.  (There's no upside to letting it
       // get out of date.)
-      this._computeActiveTask();
+      this._computeActiveTask(cause);
     } else {
       //this.log(`tasks from ${(this._lastExported - Date.now())/1000} still good enough`);
     }
@@ -144,8 +184,8 @@ class TaskManager {
    * Get the list of all known unfinished tasks and organizes them into named
    * pages.  This is the original, naive implementation.
    */
-  async getNaivePagedRecentPending() {
-    const tasks = await this.getRecentPending();
+  async getNaivePagedRecentPending(force, cause) {
+    const tasks = await this.getRecentPending(force, cause);
 
     const pages = [];
     let curPage = null;
@@ -175,8 +215,8 @@ class TaskManager {
    * pages.  This is a slightly fancier approach that groups tasks by the first
    * segment of their hierarchical project id.
    */
-  async getProjectPagedRecentPending() {
-    const tasks = await this.getRecentPending();
+  async getProjectPagedRecentPending(force, cause) {
+    const tasks = await this.getRecentPending(force, cause);
 
     const pageMap = new Map();
     const allPages = [];
@@ -230,7 +270,7 @@ class TaskManager {
    * assigning it to `this.activeTask`.  Used to keep the active task
    * up-to-date.
    */
-  _computeActiveTask() {
+  _computeActiveTask(cause) {
     let mostRecentStartedTask = null;
     for (const task of this._recentPending) {
       if (task.start) {
@@ -240,7 +280,44 @@ class TaskManager {
         }
       }
     }
+
+    const oldUuid = this.activeTask && this.activeTask.uuid;
+    const newUuid = mostRecentStartedTask && mostRecentStartedTask.uuid;
+
     this.activeTask = mostRecentStartedTask;
+
+    if (oldUuid !== newUuid) {
+      this._notifyActiveTaskChanged(cause || 'external');
+    }
+  }
+
+  _findTaskByUuid(uuid) {
+    for (const task of this._recentPending) {
+      if (task.uuid === uuid) {
+        return task;
+      }
+    }
+
+    return null;
+  }
+
+  _notifyActiveTaskChanged(cause) {
+    const task = this.activeTask;
+    let taskState = task && this._taskStorage[task.uuid];
+    if (task && !taskState) {
+      taskState = this._taskStorage[task.uuid] = this._makeEmptyTaskState();
+    }
+    // Alternately, we could use setStateKeyForTask, but that allows access from
+    // outside the state, and that's something that would want a different
+    // logging/debugging path, so let's keep that separate.
+    const updateTaskStateKey = (keyName, keyValue) => {
+      taskState[keyName] = keyValue;
+      this._updateTaskStorage(this._taskStorage);
+    };
+    this._notifyModesTaskChanged(
+      task, task && taskState, task && updateTaskStateKey, cause);
+
+    this._updateUI();
   }
 
   /**
@@ -258,6 +335,11 @@ class TaskManager {
     return tasks;
   }
 
+  setActiveTaskByUuid(uuid, cause) {
+    const task = this._findTaskByUuid(uuid);
+    return this.setActiveTask(task, cause);
+  }
+
   /**
    * Mark the given task as active after first marking the prior active task as
    * not active.  There's probably a more clever taskwarrior flow that can leave
@@ -265,11 +347,7 @@ class TaskManager {
    *
    * Automatically refreshes the set of pending tasks before returning.
    */
-  async setActiveTask(task) {
-    if (!task) {
-      throw new Error('Pass a task!');
-    }
-
+  async setActiveTask(task, cause) {
     // Note that we don't force an update here; we're assuming that we are the
     // only entity messing with taskwarrior, at least in the last second.
     const activeTask = await this.getActiveTask();
@@ -277,9 +355,13 @@ class TaskManager {
       await this._runCommand(`uuid:${activeTask.uuid} stop`);
     }
 
-    await this._runCommand(`uuid:${task.uuid} start`);
+    // It's possible task is null and the intent is to have no active tasks.
+    if (task) {
+      await this._runCommand(`uuid:${task.uuid} start`);
+    }
 
-    // Force an update of our task status.
+    // Force an update of our task status.  This will also update the active
+    // task and notify as appropriate.
     await this.getRecentPending(true);
   }
 
@@ -288,7 +370,7 @@ class TaskManager {
    * set a new active task.  If you don't provide a task, we assume you want the
    * currently active task marked done.
    */
-  async markTaskDone(task) {
+  async markTaskDone(task, cause) {
     if (!task) {
       task = await this.getActiveTask();
       if (!task) {
@@ -298,7 +380,8 @@ class TaskManager {
 
     await this._runCommand(`uuid:${task.uuid} done`);
 
-    // Force an update of our task status.
+    // Force an update of our task status.  This will also update the active
+    // task and notify as appropriate.
     await this.getRecentPending(true);
   }
 }

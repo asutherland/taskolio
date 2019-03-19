@@ -58,6 +58,10 @@ class BrainConnection {
 
   stopBufferingAndProcessMessages() {
     if (!this.bufferingMessages) {
+      // If we aren't buffering, this potentially means that the WM restarted
+      // and our client should help us out by reporting its initial connect info
+      // dump, including any window title tunneling activities.
+      this.sendMessage('pleaseReportState', {});
       return;
     }
 

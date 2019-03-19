@@ -24,8 +24,10 @@ const GLOBAL_SLOT = 7;
  * the button you pushed.
  */
 class TaskSlotMode {
-  constructor({ dispatcher, colorHelper, persistedState, saveTaskBookmarks }) {
+  constructor({ dispatcher, taskManager, colorHelper, persistedState,
+                saveTaskBookmarks }) {
     this.dispatcher = dispatcher;
+    this.taskManager = taskManager;
     this.colorHelper = colorHelper;
     this.saveTaskBookmarks = saveTaskBookmarks;
 
@@ -37,10 +39,7 @@ class TaskSlotMode {
         // we do have a slot for the global slot so its color can be configured
         bookmarks: new Array(GROUP_BUTTONS),
       };
-      persistedState.bookmarks[GLOBAL_SLOT] = {
-        uuid: null,
-        color: null
-      };
+      persistedState.bookmarks[GLOBAL_SLOT] = this._makeEmptyBookmark();
       // we don't need to trigger a save of this default state; it's fine if we
       // keep re-creating it.
     } else {
@@ -55,6 +54,47 @@ class TaskSlotMode {
     this.pickColorMode = new ColorPickerMode({
       caller: this
     });
+
+    this._task = null;
+    this._taskState = null;
+    this._updateTaskStateKey = null;
+  }
+
+  _makeEmptyBookmark() {
+    return {
+      uuid: null,
+      color: null,
+    };
+  }
+
+  /**
+   * Notification received
+   */
+  onCurrentTaskChanged(task, taskState, updateTaskStateKey, cause) {
+    this._task = task;
+    this._taskState = taskState;
+    this._updateTaskStateKey = updateTaskStateKey;
+
+    // XXX update our color from the saved state.
+
+    let bookmark = this.slotBookmarks[this.iGroupButton];
+    if (!bookmark && task) {
+      // We didn't have a bookmark in this slot, but now there's a task, so
+      // we're de-facto creating one.
+      bookmark = this.slotBookmarks[this.iGroupButton] =
+        this._makeEmptyBookmark();
+      bookmark.uuid = task.uuid;
+      // Also, propagate the task's color if it had one.
+      if (taskState.color) {
+        bookmark.color = taskState.color;
+      }
+      this.saveTaskBookmarks(this.persistedState);
+    } else if (task && taskState) {
+      // update the task info into the slot, both uuid and color
+      bookmark.uuid = task.uuid;
+      bookmark.color = taskState.color;
+      this.saveTaskBookmarks(this.persistedState);
+    }
   }
 
   isGlobalSlot() {
@@ -63,6 +103,9 @@ class TaskSlotMode {
 
   onGroupButton(evt) {
     this.iGroupButton = evt.index;
+    const bookmark = this.slotBookmarks[this.iGroupButton];
+    const uuid = bookmark && bookmark.uuid;
+    this.taskManager.setActiveTaskByUuid(uuid, 'TaskSlotMode');
   }
 
   computeSwingLED() {
@@ -85,6 +128,10 @@ class TaskSlotMode {
     bookmark.color = wrappedColor;
     // (we mutated the deep state above there)
     this.saveTaskBookmarks(this.persistedState);
+
+    if (this._taskState) {
+      this._updateTaskStateKey('color', wrappedColor);
+    }
   }
 
   computeGroupColors() {

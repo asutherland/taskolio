@@ -41,9 +41,19 @@ class TaskPickerMode extends GridPickerMixin {
 
   async onGridButton(evt) {
     const curPage = this.curPage;
-    const task = curPage && curPage.tasks[evt.index];
+    const iCell = evt.index;
+    const task = curPage && curPage.tasks[iCell];
     if (!task) {
       return;
+    }
+
+    // If the user picked a task and there wasn't already a color assigned for
+    // that task, then upgrade the temporary color we'd assigned for picking to
+    // be its persistent color.
+    const explicitColor = this.taskManager.getStateKeyForTask(task, 'color');
+    if (!explicitColor) {
+      this.taskManager.setStateKeyForTask(task, 'color',
+                                          this.buttonColors[iCell]);
     }
 
     this.dispatcher.popMode(this);
@@ -112,8 +122,14 @@ class TaskPickerMode extends GridPickerMixin {
     for (let iCell = 0; iCell < GRID_CELLS; iCell++) {
       const task = curPage && curPage.tasks[iCell];
       if (task) {
+        // Pull the color out of the task's persisted state if it exists,
+        // otherwise fallback to our default grid color scheme.  We do not
+        // persist the fallback (unless picked).
+        const wrappedColor =
+          this.taskManager.getStateKeyForTask(task, 'color',
+                                              this.buttonColors[iCell]);
         colors[iCell] =
-          this.colorHelper.computeDisplayColor(this.buttonColors[iCell]);
+          this.colorHelper.computeDisplayColor(wrappedColor);
       } else {
         colors[iCell] = this.unlitButtonDisplayColor;
       }
@@ -136,7 +152,11 @@ class TaskPickerMode extends GridPickerMixin {
       return html`<div class="${useClass}"></div>`;
     }
 
-    const wrappedColor = this.buttonColors[iCell];
+    // (Match the computeGridColors logic for the color above.)
+    const wrappedColor = this.taskManager.getStateKeyForTask(
+      task, 'color',
+      this.buttonColors[iCell]);
+
     const colors = this.colorHelper.computeRGBHexColors(wrappedColor);
 
     return html`<div class="${useClass}" style="border: 2px solid ${colors.border}; background-color: ${colors.background};">
