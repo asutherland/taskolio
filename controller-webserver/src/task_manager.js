@@ -65,6 +65,8 @@ class TaskManager {
      * so that the next re-paint or whatever can have the right answer.
      */
     this.activeTask = null;
+
+    this._tasksByUuid = new Map();
   }
 
   getStateKeyForTask(task, key, fallbackValue) {
@@ -78,6 +80,10 @@ class TaskManager {
     }
 
     return state[key] || fallbackValue;
+  }
+
+  syncGetTaskByUuid(uuid) {
+    return this._tasksByUuid.get(uuid) || null;
   }
 
   _makeEmptyTaskState() {
@@ -269,10 +275,16 @@ class TaskManager {
    * Find the most recent `start` date or null if there is no active task,
    * assigning it to `this.activeTask`.  Used to keep the active task
    * up-to-date.
+   *
+   * Also update `_tasksByUuid`.
    */
   _computeActiveTask(cause) {
+    const tasksByUuid = this._tasksByUuid;
+    tasksByUuid.clear();
+
     let mostRecentStartedTask = null;
     for (const task of this._recentPending) {
+      tasksByUuid.set(task.uuid, task);
       if (task.start) {
         if (!mostRecentStartedTask ||
             (parseTaskDate(task.start) > parseTaskDate(mostRecentStartedTask.start))) {

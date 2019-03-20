@@ -5,7 +5,11 @@ const { html } = require('@popeindustries/lit-html-server');
 const { GridPickerMixin, GRID_CELLS } = require('./grid_picker_mixin');
 
 /**
- *
+ * Displays a paged grid UI of all the non-completed tasks known to the
+ * TaskManager.  Triggered by the TaskSlotMode when the navigator knob is
+ * pushed.  (The TaskSlotMode is also in charge of triggering the
+ * TaskSlotDisplayMode when the knob is touched as capacitatively sensed or
+ * what not, which is why it's also in charge of push handling.)
  */
 class TaskPickerMode extends GridPickerMixin {
   constructor({ dispatcher, colorHelper, taskManager, updateHTML }) {
@@ -22,17 +26,33 @@ class TaskPickerMode extends GridPickerMixin {
     this.pages = [];
     this.iPage = 0;
 
-    this.update();
+    this.parentMode = null;
+    this.update(null);
   }
 
   get curPage() {
     return this.pages[this.iPage];
   }
 
-  async update() {
+  async update(parentMode) {
+    this.parentMode = parentMode;
+
     const pages = this.pages =
       await this.taskManager.getProjectPagedRecentPending();
     this.updateHTML();
+  }
+
+  /**
+   * Internal helper to handle common code for when we're done being displayed.
+   * This both pops our mode and tells the parent mode that we're done.  (The
+   * dispatcher could perhaps resolve a promise or something when we get picked
+   * as a future enhancement.)  It needs to know because the slot mode also
+   * potentially pushes the TaskSlotDisplayMode and it's weird for that to be
+   * displayed while we're already pushed.
+   */
+  donePicking() {
+    this.parentMode.pickingTask = false;
+    this.dispatcher.popMode(this);
   }
 
   onDisplayButton(evt) {
@@ -56,14 +76,14 @@ class TaskPickerMode extends GridPickerMixin {
                                           this.buttonColors[iCell]);
     }
 
-    this.dispatcher.popMode(this);
+    this.donePicking();
 
     await this.taskManager.setActiveTask(task);
     this.updateHTML();
   }
 
   onNavPushButton() {
-    this.dispatcher.popMode(this);
+    this.donePicking();
   }
 
   /**

@@ -278,6 +278,8 @@ class ControllerDriver {
       let methodName;
       let index;
       let match;
+      // by default we don't generate an event for something being pressed.
+      let pressMethodName;
       if (/^p\d+$/.test(name)) {
         methodName = "onGridButton";
         index = parseInt(name.slice(1), 10) - 1;
@@ -290,6 +292,10 @@ class ControllerDriver {
       } else if ((match = /^knobTouch(\d+)$/.exec(name))) {
         methodName = "onKnobTouch";
         index = parseInt(match[1], 10) - 1;
+      } else if (initialCap == "NavTouch") {
+        pressMethodName = "onNavTouchPressed";
+        methodName = "onNavTouchReleased";
+        index = null;
       } else {
         methodName = `on${initialCap}Button`;
         index = null;
@@ -299,6 +305,16 @@ class ControllerDriver {
 
       this.controller.on(`${name}:pressed`, () => {
         this.buttonStates[name] = 1;
+
+        if (pressMethodName) {
+          const evt = this._makeButtonEvent(name, index);
+          if (!(pressMethodName in this.dispatcher)) {
+            this.log(`no handler for: ${pressMethodName}`);
+            return;
+          }
+          this.dispatcher[pressMethodName](evt);
+        }
+
         this.updateLEDs();
       });
       this.controller.on(`${name}:released`, () => {

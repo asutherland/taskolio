@@ -25,11 +25,14 @@ const GLOBAL_SLOT = 7;
  */
 class TaskSlotMode {
   constructor({ dispatcher, taskManager, colorHelper, persistedState,
-                saveTaskBookmarks }) {
+                saveTaskBookmarks, taskPickerMode, taskSlotDisplayMode }) {
     this.dispatcher = dispatcher;
     this.taskManager = taskManager;
     this.colorHelper = colorHelper;
     this.saveTaskBookmarks = saveTaskBookmarks;
+
+    this.taskPickerMode = taskPickerMode;
+    this.taskSlotDisplayMode = taskSlotDisplayMode;
 
     this.iGroupButton = GLOBAL_SLOT;
 
@@ -54,6 +57,8 @@ class TaskSlotMode {
     this.pickColorMode = new ColorPickerMode({
       caller: this
     });
+
+    this.pickingTask = false;
 
     this._task = null;
     this._taskState = null;
@@ -99,6 +104,31 @@ class TaskSlotMode {
 
   isGlobalSlot() {
     return this.iGroupButton === GLOBAL_SLOT;
+  }
+
+  onNavTouchPressed(evt) {
+    // Do not display the slot hint if we're picking...
+    if (this.pickingTask) {
+      return;
+    }
+    this.taskSlotDisplayMode.update(this, this.slotBookmarks);
+    this.dispatcher.pushMode(this, this.taskSlotDisplayMode);
+  }
+
+  onNavPushButton(evt) {
+    // If the user held down shift, we mark the current task as done regardless
+    // of whether they go through with picking a new task.
+    if (evt.shift) {
+      this.taskManager.markTaskDone();
+    }
+
+    // Mark that we're in the task-picking sub-state so that we don't try and
+    // layer the taskSlotDisplayMode on top of this sub-mode.
+    this.pickingTask = true;
+
+    // we keep it around all the time, we need to force an update...
+    this.taskPickerMode.update(this);
+    this.dispatcher.pushMode(this, this.taskPickerMode);
   }
 
   onGroupButton(evt) {
