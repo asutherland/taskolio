@@ -402,7 +402,8 @@ function makeDefaultConfigController() {
     persistedState: configstore.get('bookmarks'),
     saveBookmarks(state) {
       configstore.set('bookmarks', state);
-    }
+    },
+    log: makeLogFunc('bookmarkManager', 'gray')
   });
   const tabsOnTopMode = new TabsOnDisplayButtonsMode({
     dispatcher,

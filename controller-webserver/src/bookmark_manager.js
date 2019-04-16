@@ -9,10 +9,11 @@ const NO_BOOKMARK_RGB = [0, 0, 0];
  * in the `VisibilityTracker`.
  */
 class BookmarkManager {
-  constructor({ visibilityTracker, brainBoss, colorHelper }) {
+  constructor({ visibilityTracker, brainBoss, colorHelper, log }) {
     this.visTracker = visibilityTracker;
     this.brainBoss = brainBoss;
     this.colorHelper = colorHelper;
+    this.log = log;
   }
 
   /**
@@ -49,7 +50,7 @@ class BookmarkManager {
     const windowContainerId = this.visTracker.getFocusedWindowContainerId();
     // It's possible nothing is focused.
     if (!windowContainerId) {
-      console.warn('asked to mint window bookmark with nothing focused');
+      this.log('asked to mint window bookmark with nothing focused');
       return null;
     }
 
@@ -76,7 +77,7 @@ class BookmarkManager {
     const containerId = this.visTracker.getFocusedContainerId();
     // It's possible nothing is focused.
     if (!containerId) {
-      console.warn('asked to mint specific bookmark with nothing focused');
+      this.log('asked to mint specific bookmark with nothing focused');
       return null;
     }
 

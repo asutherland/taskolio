@@ -23,6 +23,11 @@ function reverseMapLookup(map, findValue) {
  * to DPI scaling.
  */
 function quantizePixels(x) {
+  // round then quantize to even numbers.  The quantizing was introduced for my
+  // 4k thinkpad screen with 2x scaling.  The rounding was introduced for my
+  // desktop where the scaling is set to 1.25 and Firefox says 33.75 when it
+  // should say 34.
+  x = Math.round(x);
   return x - x%2;
 }
 
@@ -284,6 +289,7 @@ focusedFocusSlotId: ${this.getFocusedFocusSlotId()}
     // meta-info for the window.
     const checkMulti = (lookupKey, checkKey, checkValue) => {
       //console.log("checking", lookupKey);
+      traceLines.push(`tracker: looking up key: ${lookupKey}`);
       const hitSet = this.windowContainerIdLookup.get(lookupKey);
       if (hitSet) {
         traceLines.push(`tracker: multi-lookup resolved ${lookupKey} to hit set of ${hitSet.size}`);

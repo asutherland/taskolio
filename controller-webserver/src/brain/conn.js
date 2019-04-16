@@ -1,3 +1,17 @@
+/**
+ * The maximum number of messages to buffer before disconnecting the connection.
+ * Buffering happens when waiting for the window manager to connect.  The
+ * window manager disconnects when the screen is locked, so if buffering happens
+ * in that case, it can REALLY happen.  As covered at the site the constant is
+ * used, those clients will reconnect and start buffering, so this is a
+ * reasonable failsafe.
+ *
+ * The choice of 64 is arbitarily chosen so that clients aren't constantly in
+ * a state of reconnecting but we also aren't having to process a massive
+ * backlog of outdated information.
+ */
+const MAX_BUFFERED_MESSAGES = 64;
+
 class BrainConnection {
   constructor(ws, { brainBoss, visibilityTracker, triggerUpdate }) {
     this.ws = ws;
@@ -76,6 +90,18 @@ class BrainConnection {
   onMessage(data) {
     if (this.bufferingMessages) {
       this.bufferingMessages.push(data);
+      // Drop the connection if we've buffered too many messages.
+      //
+      // The window manager client disconnects when the screen lock is activated
+      // which results in other reconnecting clients needing to buffer.  But
+      // we don't want to OOM, so at some point we just need to cut the clients
+      // loose.  The clients will re-connect when this happens and send their
+      // current state, so there's no real loss of information.  There won't
+      // even really be too much latency because they will successfully
+      // reconnect and buffer.
+      if (this.bufferingMessages.length > MAX_BUFFERED_MESSAGES) {
+        this.ws.close();
+      }
       return;
     }
 
@@ -88,6 +114,7 @@ class BrainConnection {
         //console.error('got reply we were not waiting for:', obj);
         return;
       }
+      this.awaitingReplies.delete(obj.id);
       replyResolve(obj.payload);
       return;
     } else {
