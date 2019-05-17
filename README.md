@@ -1,47 +1,74 @@
 # Taskolio #
 
 An attempt at task-focused bookmarking of application windows, browser tabs,
-code editor buffers, and terminal tabs/buffers.
+code editor buffers, and terminal tabs/buffers using physical hardware.
 
-The intended interface is that of a 4-by-4 set of RGB-backlit pads like you'd
-find on various MIDI drum or DJ controllers, plus some extra buttons.  I chose a
-Native Instruments Traktor Kontrol F1, a DJ controller, because of its
-dimensions (12cm wide), the surprising rarity of full-RGB buttons in smaller
-form factors, and because its non-velocity-sensitive buttons provide a tactile
-click.  (Compare with velocity sensitive pads which necessarily can't have a
-click experience.)
+The Native Instruments Maschine mk3 is currently the only controller being
+developed for.  It strikes a nice balance in terms of physical size, reasonably
+sized LCD displays, a reasonable number of RGB-ish pads, and a layout that's
+not just a massive homogeneous grid.  The NI Traktor D2 was under consideration
+as a portable solution, but its controls are less densely packed and its form
+factor is still so large that it's only marginally more silly to just transport
+the Mk3.
 
-## What Works ##
+## Status / Plans ##
+### What Works ##
+(And will keep working...)
 
 * Clients:
   * gnome-shell extension reports all your windows to the local node.js server
   * atom extension reports document/text editors to the local node.js server.
-  * Basic WebExtension, works on Firefox directly using the tabs API.  Doesn't
+  * WebExtension, works on Firefox directly using the tabs API.  Doesn't
     work on Google Chrome because it does not implement the "browser" namespace.
     I presume I can address this at some point with a polyfill.  (I don't
     want to deal with the callback-based API...)
-  * vscode extension reports documents/text editors to the local node.js server.
-    * NOTE: This could encounter some bit-rot at some point as I've switched back to atom from vscode.
+    * Uses the session API to persistently bookmark tabs.
 * Physical Controllers:
-  * Native Instruments Kontrol F1 via `server-f1.js`
+  * Native Instruments Maschine Mk3 via `server-maschine3.js`
 
-## What Sorta Works ##
-
-* Physical Controllers
-  * Native Instruments Maschine Mk3
-
-## What's Coming Next ##
+### What's Coming Next ###
 
 In no particular order:
 
 * Clients:
-  * Firefox WebExtension with Tree Style Tab integration.
-  * gnome-terminal tab-bookmarking via accessibility API.  (May work for other
-    apps that expose an accessibility tree via ATK2.0).
-* Physical Controllers:
-  * Novation Launchpad Pro
+  * Firefox WebExtension will:
+    * gain Tree Style Tab integration.
+  * Terminal integration will happen via tmux integration.  (Various tabbed
+    terminal approaches were considered, but tmux seems to have the mindshare
+    and is already used for similar purposes.)
+  * Webextension could support other browsers.
+    * Chrome, at last check, did not support the "browser" namespace and I
+      guess needs a polyfill.
+    * Taskolio only works on linux right now, so I think that rules out the
+      
+* Documentation:
+  * Some type of web mockup of the mk3 that supports tutorial hooks that can
+    demonstrate how things work.  The current operation seems impossible to
+    describe in a way anyone is likely to understand.
 
-### How to get it to work ###
+### What Used to Work ###
+(And might still technically work but no effort will be made to keep it
+working.)
+
+Hoping to cannibalize some code for a more sane endeavor?  Here's some things
+that
+
+* Clients:
+  * vscode extension reports documents/text editors to the local node.js server.
+    vscode is nice, but I want to be able to have a custom tab view UI, and that
+    currently means atom.
+* Physical Controllers:
+  * Native Instruments Kontrol F1 via `server-f1.js`: This was the initial
+    prototype controller and it's an amazing controller, but is insufficiently
+    over the top.
+  * Native Instruments Kontrol D2 had some partial implementation happen.  The
+    node-traktor-f1 fork this codebase should generally support it, but the
+    internal taskolio controller implementation never got very far and will
+    probably be removed.
+
+## How to get it to work ##
+
+### Install Stuff! ###
 
 #### Install the gnome-shell extension
 
@@ -59,6 +86,15 @@ log out and log in again.
 
 The extension will automatically start and try to talk to the node.js server
 every 5 seconds.
+
+#### Install the atom extension
+
+Do something like the following from the root directory of this repo.
+```
+apm link taskolio-atom-client
+```
+
+Using atom-beta?  Use `apm-beta` instead of `apm`.
 
 #### Install the vscode extension
 
@@ -102,6 +138,7 @@ This should be fairly simple:
   currently report what was focused at startup, an oversight.)
 
 ### Using it.
+**somewhat outdated, this was how the F1 worked**
 
 Button pushing:
 - The default mode is "bg" or "bookmark go" mode.  The 2-letter display looks
@@ -148,7 +185,7 @@ Button pushing:
   knows that, so feel free to pretend like they do something cool.
 
 Other info:
-- Your bookmarks get persisted to `~/.config/configustore/taskolio.json`.
+- Your bookmarks get persisted to `~/.config/configstore/taskolio.json`.
   There is currently no magic inference engine to re-establish bookmarks based
   on app names or anything like that.  This persistence means that if you
   ctrl-c the node.js server and make changes, you won't lose your work.  But if
