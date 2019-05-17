@@ -367,6 +367,7 @@ function makeDefaultConfigController() {
     brainBoss,
     visibilityTracker,
     colorHelper,
+    log: makeLogFunc('bookmarkManager', 'yellow'),
   });
 
   const dispatcher = new ModeDispatcher();

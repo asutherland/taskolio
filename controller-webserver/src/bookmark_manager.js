@@ -226,11 +226,15 @@ class BookmarkManager {
     */
     // It's possible nothing is focused.
     if (!focusedId) {
-      //console.log('findFocusedBookmarkInCollection: nothing focused?');
+      this.log(
+        'findFocusedBookmarkInCollection: nothing focused?',
+        {
+          useWindow, focusedId, focusSlotId
+        });
       return null;
     }
 
-    function traverseArray(arr) {
+    const traverseArray = (arr) => {
       for (const obj of arr) {
         if (!obj) {
           continue;
@@ -250,7 +254,11 @@ class BookmarkManager {
       }
 
       // not found.
-      //console.log('findFocusedBookmarkInCollection: no matching thing');
+      this.log(
+        'findFocusedBookmarkInCollection: no matching thing',
+        {
+          useWindow, focusedId, focusSlotId
+        });
       return null;
     }
 
