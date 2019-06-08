@@ -50,6 +50,44 @@ function quantizeFrameRect(bounds) {
 }
 
 /**
+ * Hackily un-transforms CSS pixels transforms that Firefox applies to its
+ * window.screenX/screenLeft and screenY/screenTop.  See call-site for more
+ * context.
+ *
+ * Note that this depends on one of the following being true:
+ * - devicePixelRatio is 1.  This is likely the case for standard 1920x1280
+ *   monitors where the user has reasonably good eyesight.  This works for
+ *   any number of monitors.
+ * - The user only has one monitor.
+ * - The user has two monitors and the second monitor is coordinate-space to the
+ *   right of the first monitor.
+ *
+ * For this to be smart, we would otherwise need to know all of the monitors.
+ * Then we'd resolve to the correct monitor and apply the correct transform.
+ */
+function fixupCSSBounds(bounds, devicePixelRatio, monWidth, monHeight) {
+  // No transforms needed if there's no scaling ratio.
+  if (devicePixelRatio === 1) {
+    return bounds;
+  }
+
+  const monXCoord = Math.floor(bounds.left / monWidth);
+  const monYCoord = Math.floor(bounds.top / monHeight);
+
+  const monitorLeft = monXCoord * monWidth;
+  const monitorTop = monYCoord * monHeight;
+
+  const monX = (bounds.left - monitorLeft);
+  const monY = (bounds.top - monitorTop);
+  return {
+    left: monitorLeft + monX * devicePixelRatio,
+    top: monitorTop + monY * devicePixelRatio,
+    width: bounds.width,
+    height: bounds.height
+  };
+}
+
+/**
  * MRU-List helper.  Ensures that recentThing is at the head of the list and
  * exists at most once in the list.  Reversing the ordering to have the new
  * thing at the tail would be more efficient for a naive Array implementation,
@@ -317,6 +355,25 @@ focusedFocusSlotId: ${this.getFocusedFocusSlotId()}
       // log them.
       if (descriptor.pid) {
         check(`pid:${descriptor.pid}`);
+      }
+      // See the webextension logic for an explanation of what cssBounds are.
+      // We need to make the bounds screen-relative, then multiply by
+      // devicePixelRatio, then add back the screen offsets in order to get into
+      // screen coordinates.  I think gnome-shell in X mode at least doesn't do
+      // any additional scaling, so things work out?
+      if (descriptor.cssBounds && descriptor.title) {
+        // XXX TODO Actually get the screen dimensions from the window manager
+        // via its `focusSlotsInventory`.  As much as I would love to write
+        // that code and the debouncing logic, it's currently the case that all
+        // of my linux displays where scaling is involved have a width of 3840.
+        // I'm going to predicate this hard-coding on a pixel ratio > 1.
+
+        const fixedUpBounds =
+          fixupCSSBounds(descriptor.cssBounds, descriptor.devicePixelRatio,
+                         3840, 2160);
+        const bounds = quantizeBounds(fixedUpBounds);
+        checkMulti(`upperLeft:${bounds.left},${bounds.top}`,
+                   'title', descriptor.title);
       }
       if (descriptor.bounds && descriptor.title) {
         const bounds = quantizeBounds(descriptor.bounds);

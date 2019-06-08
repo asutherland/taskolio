@@ -119,7 +119,7 @@ function makeConnection() {
       // we're Xinerama, one screen on the display that just happens to span
       // N monitors.
 
-      const numMonitors = global.screen.get_n_monitors();
+      const numMonitors = global.display.get_n_monitors();
       // ui/layout.js also maintains an array of JS Monitor instances that hold
       // the monitor geometry.  The array is available via
       // Main.layoutManager.monitors.

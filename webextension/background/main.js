@@ -169,13 +169,30 @@ const ExtCore = {
             // title.  (In the future we can also get better at automatically
             // restoring bookmarks based on window positions and metadata like
             // the unique client persistence id.)
-            bounds: {
-              left: win.left * pxRatio,
-              top: win.top * pxRatio,
-              width: win.width * pxRatio,
-              height: win.height * pxRatio
+            //
+            // Note that the pixel ratio rules as they apply to the window
+            // coordinates are very awkward.  In a multi-monitor setup with two
+            // 3840x2160 displays, the window on the right half of the right
+            // display can have an absolute screen X of 5760 (3840 + 1920).
+            // However, when Firefox goes to apply the scaling, rather than
+            // apply it to the whole 5760, it applies it only to the relative
+            // location of the window on the current monitor.  So the X coord
+            // becomes 3840 + (1920*1.25) = 5376.
+            //
+            // See
+            // https://searchfox.org/mozilla-central/rev/fe7dbedf223c0fc4b37d5bd72293438dfbca6cec/dom/base/nsGlobalWindowOuter.cpp#3638
+            //
+            // Because the webext APIs don't usefully expose screen information,
+            // we just send the confused cssBounds here unscaled so that the
+            // controller can attempt to apply a correction factor knowing the
+            // actual screen coordinates and
+            cssBounds: {
+              left: win.left,
+              top: win.top,
+              width: win.width,
+              height: win.height,
             },
-            devicePixelRatio: pxRatio
+            devicePixelRatio: pxRatio,
           }
         ]
       });

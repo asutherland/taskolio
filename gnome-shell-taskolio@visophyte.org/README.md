@@ -1,6 +1,21 @@
 gnome-shell extension that communicates with the controller-webserver via
 WebSockets.
 
+## Debugging ##
+
+If things seem broken, like the "window-manager" client isn't showing up in the
+CLI's "Clients" pane, or when you select the client the "Client Focus Slots
+Inventory" pane is empty, then you can see logs from gnome-shell via:
+
+```
+journalctl -e /usr/bin/gnome-shell
+```
+
+Once you've made changes, if you're running under X11 you can use "alt-f2" to
+bring up the gnome-shell debug UI thing and type "r" and hit enter to reboot
+gnome-shell.  Less dramatically, you may also be able to use the "Gnome Shell
+Extension Reloader" extension, but it has some limitations.
+
 ## TODO ##
 
 ### Sub-window clients using the AT-SPI Acessibility API ###

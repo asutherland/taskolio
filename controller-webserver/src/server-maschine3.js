@@ -190,6 +190,12 @@ function setupBlessed() {
           selectedDumpMode = 'clientMessagesByType';
           blessedDirtied();
         }
+      },
+      'Container ID Lookups': {
+        callback() {
+          selectedDumpMode = 'containerIdLookups';
+          blessedDirtied();
+        }
       }
     }
   })
@@ -329,9 +335,22 @@ function renderBlessed() {
       case 'logDetail':
         dumpContent = logDetail;
         break;
+
+      case 'containerIdLookups': {
+        let entries = Array.from(gVisibilityTracker.windowContainerIdLookup.entries());
+        let jsonFriendly = entries.map(([descriptor, containerIdSet]) => {
+          let containerInfos = Array.from(containerIdSet).map((containerId) => {
+            return gVisibilityTracker.containersByFullId.get(containerId);
+          });
+          return [descriptor, containerInfos];
+        });
+        dumpContent = JSON.stringify(jsonFriendly, null, 2);
+        break;
+      }
     }
     guiDump.setLabel(selectedDumpMode);
-    guiDump.setContent(dumpContent);
+    guiDump.setContent(blessed.escape(dumpContent));
+    guiDump.scrollTo(0);
 
     guiVisDump.setContent(gVisibilityTracker.renderDebugDump());
   }
