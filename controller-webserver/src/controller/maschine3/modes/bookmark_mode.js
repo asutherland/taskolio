@@ -9,6 +9,19 @@ const { html } = require('@popeindustries/lit-html-server');
 /**
  * UI for 4 "stop" button banks of 4x4 container-bookmark grids.
  *
+ * ## Task Awareness
+ * The bookmark mode is now task-aware.  I had initially gone with giving each
+ * task its own entirely separate set of bookmarks as a first step, but the UX
+ * was event worse than expected.  The sudden loss of some of the "global"
+ * bookmarks meant I didn't actually use the task mode.  So the new solution is
+ * that the top 2 rows of bookmarks always come from/mutate the global bookmark
+ * state.  In order to avoid too much churn / I'm lazy, the per-task bookmarks
+ * will actually still be 4 banks of 4x4 grids, it's just that only the bottom
+ * 2 rows of each bank will be accessible.  This can be cleaned up if it works
+ * out.
+ *
+ * ## Architecture (older comment)
+ *
  * Sub-modes:
  * - SetBookmarkSubMode: Triggered by hitting the "capture" button.  The next
  *   grid button press will be assigned whatever the currently focused window
@@ -43,6 +56,11 @@ class BookmarkMode extends BankMixin {
     // We want to save off the global bookmarks reference because we clobber
     // `this.banks` in `onCurrentTaskChanged`.
     this._globalBookmarks = persistedState;
+    // The banks of whatever the current task's bookmarks are.
+    this._taskBookmarks = null;
+    // The above 2 mashed up so that the top 2 rows of each bank are from
+    // _globalBookmarks and the bottom 2 are from _taskBookmarks if non-null
+    // goes into `this.banks`
 
     /** Static 2-charcter label to help convey the current mode. */
     this.modeShortLabel = "bg"; // Bookmark Go
@@ -78,6 +96,43 @@ class BookmarkMode extends BankMixin {
     return this._globalBookmarks[0];
   }
 
+  _mergeBookmarks() {
+    const top = this._globalBookmarks;
+    const bottom = this._taskBookmarks || this._globalBookmarks;
+    const merged = this.banks = [];
+    for (let iBank = 0; iBank < top.length; iBank++) {
+      merged.push([...top[iBank].slice(0, 8), ...bottom[iBank].slice(8)]);
+    }
+  }
+
+  /**
+   * So this actually returns the same value that this.curBank[index] would
+   * return, but this way is more explicit and should hopefully avoid confusion
+   * going forward.
+   */
+  _getBookmarkAtCell(index) {
+    const top = this._globalBookmarks;
+    const bottom = this._taskBookmarks || this._globalBookmarks;
+
+    if (index < 8) {
+      return top[this.bankSelected][index];
+    } else {
+      return bottom[this.bankSelected][index];
+    }
+  }
+
+  _setBookmarkAtCell(index, bookmark) {
+    const top = this._globalBookmarks;
+    const bottom = this._taskBookmarks || this._globalBookmarks;
+
+    if (index < 8) {
+      top[this.bankSelected][index] = bookmark;
+    } else {
+      bottom[this.bankSelected][index] = bookmark;
+    }
+    this._mergeBookmarks();
+  }
+
   onCurrentTaskChanged(task, taskState, updateTaskStateKey, cause) {
     this.curTask = task;
     this._taskState = taskState;
@@ -85,22 +140,24 @@ class BookmarkMode extends BankMixin {
 
     // No task means we're operating in global bookmarks mode.
     if (!task) {
-      this.banks = this._globalBookmarks;
+      this._taskBookmarks = null;
+      this._mergeBookmarks();
       return;
     }
 
     if (taskState && taskState.bookmarks) {
-      this.banks = taskState.bookmarks;
+      this._taskBookmarks = taskState.bookmarks;
     } else {
-      this.banks = this.makeEmptyBanks({ defaultCellValue: null });
+      this._taskBookmarks = this.makeEmptyBanks({ defaultCellValue: null });
     }
+    this._mergeBookmarks();
   }
 
   _saveBookmarks() {
     if (!this.curTask) {
       this.__saveBookmarks(this._globalBookmarks);
     } else {
-      this.__updateTaskStateKey('bookmarks', this.banks);
+      this.__updateTaskStateKey('bookmarks', this._taskBookmarks);
     }
   }
 
@@ -144,10 +201,11 @@ class BookmarkMode extends BankMixin {
       this._saveBookmarks();
     } else if (this.pickingForBookmark) {
       //console.log("Setting bookmark", JSON.stringify(this.pickingForBookmark));
-      const oldBookmark = this.curBank[index];
-      this.curBank[index] =
+      const oldBookmark = this._getBookmarkAtCell(index);
+      this._setBookmarkAtCell(
+        index,
         this.bookmarkManager.maybeMergeBookmarks(
-          this.pickingForBookmark, oldBookmark);
+          this.pickingForBookmark, oldBookmark));
       this.pickingForBookmark = null;
       this._saveBookmarks();
     }
@@ -235,8 +293,10 @@ class BookmarkMode extends BankMixin {
     if (!desc || !desc.app) {
       return html`<div class="${useClass}"></div>`;
     }
+    const isSetting = this.activity === 'set-bookmark';
+    const useBorder = isSetting ? 'white' : desc.colors.border;
 
-    return html`<div class="${useClass}" style="border: 2px solid ${desc.colors.border}; background-color: ${desc.colors.background};">
+    return html`<div class="${useClass}" style="border: 2px solid ${useBorder}; background-color: ${desc.colors.background};">
   <div>${desc.app.name}: ${desc.app.shortInstance}</div>
   <div>${ desc.container ? desc.container.title : ''}</div>
 </div>`;

@@ -133,7 +133,7 @@ class TaskSlotMode {
 
   onGroupButton(evt) {
     this.iGroupButton = evt.index;
-    const bookmark = this.slotBookmarks[this.iGroupButton];
+    const bookmark = this.isGlobalSlot() ? null : this.slotBookmarks[this.iGroupButton];
     const uuid = bookmark && bookmark.uuid;
     this.taskManager.setActiveTaskByUuid(uuid, 'TaskSlotMode');
   }

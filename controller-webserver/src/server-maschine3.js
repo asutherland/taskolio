@@ -254,7 +254,12 @@ function setupBlessed() {
       return;
     }
     //hackLog(`mapped fake line ${iFakeLine} to ${iLine}`);
-    logDetail = `{white-fg}${info.str}{/white-fg}
+    // XXX The info.str was previously wrapped in {white-fg}{/white-fg} but
+    // we need to improve the escaped/unescaped delineation for that to work.
+    // Right now JSON blobs can have things that look like tags and so we're
+    // currently escaping the entire string at the point of injection into the
+    // blessed UI.
+    logDetail = `${info.str}
 
 ${JSON.stringify(info.details, null, 2)}`;
     guiDumpTabList.select(0);
