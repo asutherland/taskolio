@@ -144,6 +144,10 @@ class ColorHelper {
    * an [r,g,b] tuple is returned.  The indexed variant returns a single index.
    */
   computeBookmarkDisplayColor(wrapped, state, brightnessScale) {
+    if (!wrapped) {
+      return null;
+    }
+
     let brightness;
     switch (state) {
       case 'focused':
@@ -166,6 +170,9 @@ class ColorHelper {
   }
 
   computeDisplayColor(wrapped) {
+    if (!wrapped) {
+      return null;
+    }
     return COLORS_START_OFFSET + wrapped.colorIndex * 4 + BRIGHT_OFFSET;
   }
 

@@ -138,6 +138,18 @@ class BrainBoss {
       });
   }
 
+  styleContainerId(prefixedContainerId, prefixedSlotId, stylingObj) {
+    const focusSlotId = extractUnprefixedContainerId(prefixedSlotId);
+    this.log(`Sending styleThings message to: ${prefixedContainerId}`,
+             stylingObj);
+    return this._messageContainerId(
+      prefixedContainerId, 'styleThings',
+      {
+        focusSlotId,
+        ...stylingObj
+      });
+  }
+
   triggerContainerAction(prefixedContainerId, actionId) {
     this.log(`triggerContainerAction ${prefixedContainerId} ${actionId}`)
     return this._messageContainerId(

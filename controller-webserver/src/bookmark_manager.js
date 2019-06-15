@@ -55,11 +55,17 @@ class BookmarkManager {
     }
 
     const focusSlotId = this.visTracker.getFocusedFocusSlotId();
+    let bookmark;
     if (focusSlotId) {
-      return this._makeBookmark('window', null, focusSlotId);
+      bookmark = this._makeBookmark('window', null, focusSlotId);
+      this.log(`minted window bookmark using focusSlotId: ${focusSlotId}`,
+               bookmark);
     } else {
-      return this._makeBookmark('window', windowContainerId, null);
+      bookmark = this._makeBookmark('window', windowContainerId, null);
+      this.log(`minted window bookmark using windowContainerId: ${windowContainerId}`,
+               bookmark);
     }
+    return bookmark;
   }
 
   /**
@@ -82,20 +88,47 @@ class BookmarkManager {
     }
 
     const focusSlotId = this.visTracker.getFocusedFocusSlotId();
-    return this._makeBookmark('container', containerId, focusSlotId);
+    let bookmark = this._makeBookmark('container', containerId, focusSlotId);
+    this.log(`minted thing bookmark`, bookmark);
+    return bookmark;
   }
 
   /**
-   * Helper to merge visual settings of an old bookmark into a new bookmark.
-   * This is a stop-gap to make life easier when manually re-establishing
-   * bookmarks that ideally should have been automatically re-established.
+   * Invoked by the bookmark mode when a bookmark is being set, potentially atop
+   * an old bookmark.  We want to both propagate the pre-existing color as well
+   * as sending appropriate styling directives to clients so that they can
+   * update the colors of tabs, etc.  In the event there is an old bookmark, we
+   * de-style it.  We then send styling info for the new bookmark.
    */
-  maybeMergeBookmarks(newBookmark, oldBookmark) {
-    if (!oldBookmark) {
-      return newBookmark;
+  replacingBookmarkMaybeMerge(newBookmark, oldBookmark) {
+    if (oldBookmark) {
+      // De-style the old bookmark
+      if (oldBookmark.containerId) {
+        const oldColor = this.colorHelper.computeDisplayColor(oldBookmark.color);
+        if (oldColor !== null) {
+          this.brainBoss.styleContainerId(
+            oldBookmark.containerId,
+            oldBookmark.focusSlotId,
+            {
+              oldColor,
+            });
+        }
+      }
+
+      newBookmark.color = oldBookmark.color;
     }
 
-    newBookmark.color = oldBookmark.color;
+    if (newBookmark.containerId) {
+      const newColor = this.colorHelper.computeDisplayColor(newBookmark.color);
+      if (newColor !== null) {
+        this.brainBoss.styleContainerId(
+          newBookmark.containerId,
+          newBookmark.focusSlotId,
+          {
+            newColor,
+          });
+      }
+    }
 
     return newBookmark;
   }
@@ -270,7 +303,17 @@ class BookmarkManager {
   }
 
   setBookmarkColor(bookmark, color) {
+    const oldColor =
+      bookmark ? this.colorHelper.computeDisplayColor(bookmark.color) : null;
+    const newColor = this.colorHelper.computeDisplayColor(color);
     bookmark.color = color;
+    this.brainBoss.styleContainerId(
+      bookmark.containerId,
+      bookmark.focusSlotId,
+      {
+        oldColor,
+        newColor,
+      });
   }
 
   /**

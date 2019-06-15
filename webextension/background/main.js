@@ -1,6 +1,7 @@
 import TaskolioClient from "./taskolio_ws_client.js";
 import { renderHTMLTo16BitArray } from "../html_renderer/render_html.js";
 import { ElementBookmarker } from "./element_bookmarker.js";
+import { TSTIntegration } from "./tst_integration.js";
 
 /**
  * This implementation is derived from taskolio-atom-client which was somewhat
@@ -38,6 +39,8 @@ const ExtCore = {
   PERSISTENT_TAB_ID_KEY: 'taskolio-id',
   PERSISTENT_WINDOW_ID_KEY: 'taskolio-win-id',
   persistentIdEpoch: Date.now(),
+
+  tst: null,
 
   /**
    * Generate a persistent tab id.  For now we just generate a prefix derived
@@ -344,6 +347,11 @@ const ExtCore = {
     };
     browser.tabs.onRemoved.addListener(sendThingGone);
 
+    if (!this.tst) {
+      this.tst = new TSTIntegration();
+      this.tst.init();
+    }
+
     // XXX it'd be great to get something more deterministic than this, but it's
     // generally contrary to privacy interests to expose the profile name/etc.
     // so let's just generate and persist an id as random numbers.
@@ -406,6 +414,27 @@ const ExtCore = {
 
         //console.log("trying to activate tab:", tabId, "in window", winId);
         browser.tabs.update(tabId, { active: true });
+      },
+
+      onMessage_styleThings: async (msg) => {
+        if (!this.tst) {
+          return;
+        }
+
+        const thing = msg.items[0];
+        const persTabId = thing.containerId;
+        const tabId = this.persistentIdToRawTabId.get(persTabId);
+        if (!tabId) {
+          return;
+        }
+
+        if (thing.oldColor != null) {
+          this.tst.removeIndexedColor(tabId, thing.oldColor);
+        }
+
+        if (thing.newColor != null) {
+          this.tst.addIndexedColor(tabId, thing.newColor);
+        }
       },
 
       onMessage_triggerActionBookmark: async (msg) => {

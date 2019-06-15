@@ -44,7 +44,7 @@ const { html } = require('@popeindustries/lit-html-server');
  *   at least.)
  */
 class BookmarkMode extends BankMixin {
-  constructor({ dispatcher, bookmarkManager, persistedState, saveBookmarks }) {
+  constructor({ dispatcher, bookmarkManager, persistedState, saveBookmarks, log }) {
     super({
       defaultCellValue: null,
       initialState: persistedState
@@ -61,6 +61,7 @@ class BookmarkMode extends BankMixin {
     // The above 2 mashed up so that the top 2 rows of each bank are from
     // _globalBookmarks and the bottom 2 are from _taskBookmarks if non-null
     // goes into `this.banks`
+    this.log = log;
 
     /** Static 2-charcter label to help convey the current mode. */
     this.modeShortLabel = "bg"; // Bookmark Go
@@ -196,18 +197,23 @@ class BookmarkMode extends BankMixin {
   }
 
   onBookmarkPositionPicked(index) {
+    this.log(`bookmark position picked: ${index} in mode ${this.activity}`,
+             this.pickingForBookmark);
     if (this.activity === 'delete') {
       this.curBank[index] = null;
       this._saveBookmarks();
     } else if (this.pickingForBookmark) {
       //console.log("Setting bookmark", JSON.stringify(this.pickingForBookmark));
       const oldBookmark = this._getBookmarkAtCell(index);
+      const newBookmark =
+        this.bookmarkManager.replacingBookmarkMaybeMerge(
+            this.pickingForBookmark, oldBookmark);
       this._setBookmarkAtCell(
         index,
-        this.bookmarkManager.maybeMergeBookmarks(
-          this.pickingForBookmark, oldBookmark));
+        newBookmark);
       this.pickingForBookmark = null;
       this._saveBookmarks();
+      this.log(`set bookmark to index ${index}`, newBookmark);
     }
     this.activity = 'switch';
   }
@@ -323,9 +329,16 @@ class SetBookmarkSubMode {
   }
 
   /**
-   * Hitting capture again toggles out of set-bookmark mode.
+   * Hitting chords again toggles out of set-bookmark mode.
    */
-  onCaptureButton(evt) {
+  onChordsButton(evt) {
+    this.owner.dispatcher.popMode(this);
+  }
+
+  /**
+   * Hitting step again toggles out of set-bookmark mode.
+   */
+  onStepButton(evt) {
     this.owner.dispatcher.popMode(this);
   }
 
