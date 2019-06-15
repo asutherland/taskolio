@@ -176,6 +176,29 @@ class ColorHelper {
     return COLORS_START_OFFSET + wrapped.colorIndex * 4 + BRIGHT_OFFSET;
   }
 
+
+  /**
+   * Given a wrapped color, compute the correct index color to tell the web
+   * extension.  This is mapped to a CSS class name that in turn matches a
+   * selector populated by a copied-and-pasted version of the table in
+   * maschine_mk3_config.json in our fork of node-traktor-f1.
+   *
+   * Since our palette is really just 16 colors (plus black/no color),
+   * the right thing to do is likely to hand curate a list of 16 appropriate
+   * RGB color values that match whatever TST theme is in use and just directly
+   * pass this value through.  But for now, just like for the HTML screen
+   * displays, we use the provided RGB value and their multiple brightness
+   * levels in a sketchy hack where we dodge needing to test our aesthetic
+   * skills.
+   */
+  computeTabColor(wrapped) {
+    if (!wrapped) {
+      return null;
+    }
+    return COLORS_START_OFFSET + wrapped.colorIndex * 4 + DIM_FLASH_OFFSET;
+  }
+
+
   computeRGBHexColors(wrapped) {
     return this.computeBookmarkRGBHexColors(wrapped);
   }

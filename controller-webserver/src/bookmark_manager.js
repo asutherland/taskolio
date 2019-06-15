@@ -104,7 +104,7 @@ class BookmarkManager {
     if (oldBookmark) {
       // De-style the old bookmark
       if (oldBookmark.containerId) {
-        const oldColor = this.colorHelper.computeDisplayColor(oldBookmark.color);
+        const oldColor = this.colorHelper.computeTabColor(oldBookmark.color);
         if (oldColor !== null) {
           this.brainBoss.styleContainerId(
             oldBookmark.containerId,
@@ -119,7 +119,7 @@ class BookmarkManager {
     }
 
     if (newBookmark.containerId) {
-      const newColor = this.colorHelper.computeDisplayColor(newBookmark.color);
+      const newColor = this.colorHelper.computeTabColor(newBookmark.color);
       if (newColor !== null) {
         this.brainBoss.styleContainerId(
           newBookmark.containerId,
@@ -304,8 +304,8 @@ class BookmarkManager {
 
   setBookmarkColor(bookmark, color) {
     const oldColor =
-      bookmark ? this.colorHelper.computeDisplayColor(bookmark.color) : null;
-    const newColor = this.colorHelper.computeDisplayColor(color);
+      bookmark ? this.colorHelper.computeTabColor(bookmark.color) : null;
+    const newColor = this.colorHelper.computeTabColor(color);
     bookmark.color = color;
     this.brainBoss.styleContainerId(
       bookmark.containerId,
