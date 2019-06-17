@@ -46,6 +46,9 @@ class TaskSlotMode {
       // we don't need to trigger a save of this default state; it's fine if we
       // keep re-creating it.
     } else {
+      // always reset the global slot to white; it shouldn't actually be able
+      // to have its color changed anymore.
+      persistedState.bookmarks[GLOBAL_SLOT] = this._makeEmptyBookmark();
       this.persistedState = persistedState;
     }
 
