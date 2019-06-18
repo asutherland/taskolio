@@ -200,10 +200,17 @@ function setupBlessed() {
     }
   })
 
+  let dumpHeight;
+  if (guiScreen.height > 100) {
+    dumpHeight = 30;
+  } else {
+    dumpHeight = 16;
+  }
+
   guiDump = blessed.box({
     parent: guiLayout,
     label: 'Dump',
-    height: 30,
+    height: dumpHeight,
     width: '100%',
     border: {
       type: 'line',
