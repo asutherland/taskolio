@@ -157,9 +157,10 @@ class BookmarkMode extends BankMixin {
   }
 
   _saveBookmarks() {
-    if (!this.curTask) {
-      this.__saveBookmarks(this._globalBookmarks);
-    } else {
+    // Save the global bookmarks every time because they may have been changed.
+    this.__saveBookmarks(this._globalBookmarks);
+    // And save the task bookmarks if we have them.
+    if (this.curTask) {
       this.__updateTaskStateKey('bookmarks', this._taskBookmarks);
     }
   }

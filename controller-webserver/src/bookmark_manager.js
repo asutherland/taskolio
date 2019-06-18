@@ -267,7 +267,7 @@ class BookmarkManager {
       return null;
     }
 
-    const traverseArray = (arr) => {
+    const traverseArray = (arr, depth=0) => {
       for (const obj of arr) {
         if (!obj) {
           continue;
@@ -275,11 +275,13 @@ class BookmarkManager {
 
         // Support nested arrays.
         if (Array.isArray(obj)) {
-          const found = traverseArray(obj);
+          const found = traverseArray(obj, depth + 1);
           if (found) {
             return found;
           }
-        } else if (obj.containerId === focusedId &&
+        } else if (useWindow && obj.focusSlotId && obj.focusSlotId === focusSlotId) {
+          return obj;
+        } else if (!useWindow && obj.containerId === focusedId &&
                    (!obj.focusSlotId || obj.focusSlotId === focusSlotId)) {
           //console.log('findFocusedBookmarkInCollection: found:', obj);
           return obj;
@@ -287,11 +289,13 @@ class BookmarkManager {
       }
 
       // not found.
-      this.log(
-        'findFocusedBookmarkInCollection: no matching thing',
-        {
-          useWindow, focusedId, focusSlotId
-        });
+      if (depth === 0) {
+        this.log(
+          'findFocusedBookmarkInCollection: no matching thing',
+          {
+            useWindow, focusedId, focusSlotId
+          });
+      }
       return null;
     }
 
