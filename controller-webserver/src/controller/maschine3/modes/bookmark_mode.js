@@ -54,8 +54,10 @@ class BookmarkMode extends BankMixin {
     this.bookmarkManager = bookmarkManager;
     this.__saveBookmarks = saveBookmarks;
     // We want to save off the global bookmarks reference because we clobber
-    // `this.banks` in `onCurrentTaskChanged`.
-    this._globalBookmarks = persistedState;
+    // `this.banks` in `onCurrentTaskChanged`.  We want to initialize from
+    // `this.banks`, though, because our superclass provides defualts when there
+    // isn't already persisted data available.
+    this._globalBookmarks = this.banks;
     // The banks of whatever the current task's bookmarks are.
     this._taskBookmarks = null;
     // The above 2 mashed up so that the top 2 rows of each bank are from
