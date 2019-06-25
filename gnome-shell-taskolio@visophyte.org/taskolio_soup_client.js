@@ -25,9 +25,17 @@ var TaskolioClient = new Lang.Class({
     global.log("taskolio connecting");
     this.state = 'connecting';
 
-    const httpSession = this._httpSession =
-      new Soup.Session({ ssl_use_system_ca_file: true });
-    httpSession.httpsAliases = ["wss"];
+    // We should already have cleared any prior session and connection, but just
+    // in case...
+    this._cleanup();
+
+    // Let's only ever create one session.
+    let httpSession = this._httpSession;
+    if (!httpSession) {
+      httpSession = this._httpSession =
+        new Soup.Session({ ssl_use_system_ca_file: true });
+      httpSession.httpsAliases = ["wss"];
+    }
 
     const message = new Soup.Message({
       method: "GET",
@@ -95,10 +103,7 @@ var TaskolioClient = new Lang.Class({
     global.log("taskolio disconnected, shutdown requested: " +
                this.shutdownRequested + ", timeoutId: " + this._timeoutId);
 
-    // XXX uh, will the signals clean up after themselves?  Will something
-    // assert?  So many questions...
-    this._websocketConnection = null;
-    this._httpSession = null;
+    this._cleanup();
 
     // Only notify disconnection if we previously notified connection;
     if (this.state === 'connected') {
@@ -122,6 +127,29 @@ var TaskolioClient = new Lang.Class({
     }
   },
 
+  _cleanup() {
+    // So, we were absolutely leaking file descriptors before if the daemon
+    // wasn't running and the auto-reconnect kept firing.  So now we are trying
+    // to more reliably clean everything up, so we'll close/abort things even
+    // if they should presumably already be in that state.
+    if (this._websocketConnection) {
+      try {
+        this._websocketConnection.close(Soup.WebsocketCloseCode.NORMAL, '');
+      } catch (ex) {
+        // Nothing to do.
+      }
+      this._websocketConnection = null;
+    }
+    if (this._httpSession) {
+      try {
+        this._httpSession.abort();
+      } catch (ex) {
+        // Nothing to do.
+      }
+      // Leave the session around to be reused.
+    }
+  },
+
   onError(connection, err) {
     global.log("taskolio connection error: " + err);
   },
@@ -136,8 +164,6 @@ var TaskolioClient = new Lang.Class({
   },
 
   close() {
-    if (this._websocketConnection) {
-      this._websocketConnection.close(Soup.WebsocketCloseCode.NORMAL, '');
-    }
+    this._cleanup();
   }
 });
