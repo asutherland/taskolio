@@ -105,7 +105,8 @@ class BookmarkManager {
       // De-style the old bookmark
       if (oldBookmark.containerId) {
         const oldColor = this.colorHelper.computeTabColor(oldBookmark.color);
-        if (oldColor !== null) {
+        // window-scoped bookmarks have null containerId's; see other callsite.
+        if (oldColor !== null && oldBookmark.scope !== 'window') {
           this.brainBoss.styleContainerId(
             oldBookmark.containerId,
             oldBookmark.focusSlotId,
@@ -120,7 +121,7 @@ class BookmarkManager {
 
     if (newBookmark.containerId) {
       const newColor = this.colorHelper.computeTabColor(newBookmark.color);
-      if (newColor !== null) {
+      if (newColor !== null && newBookmark.scope !== 'window') {
         this.brainBoss.styleContainerId(
           newBookmark.containerId,
           newBookmark.focusSlotId,
@@ -311,13 +312,19 @@ class BookmarkManager {
       bookmark ? this.colorHelper.computeTabColor(bookmark.color) : null;
     const newColor = this.colorHelper.computeTabColor(color);
     bookmark.color = color;
-    this.brainBoss.styleContainerId(
-      bookmark.containerId,
-      bookmark.focusSlotId,
-      {
-        oldColor,
-        newColor,
-      });
+    // Don't propagate this info if this is for a window bookmark for now.  The
+    // window manager client doesn't currently have an ability to color a window
+    // and we're sending a null containerId if we did try, which is not useful.
+    // We'd need to map to a window container id first.
+    if (bookmark.scope !== 'window') {
+      this.brainBoss.styleContainerId(
+        bookmark.containerId,
+        bookmark.focusSlotId,
+        {
+          oldColor,
+          newColor,
+        });
+    }
   }
 
   /**
