@@ -246,26 +246,46 @@ class BookmarkManager {
    * additional superflouous picker states.
    *
    * @param {'thing'|'window'} [granularity='thing']
-   *   Specifies if we should be dealing with window granularity or not.
+   *   Specifies if we should be dealing with window granularity or not.  Note
+   *   that window granularity actually is dealing with 2 different bookmark
+   *   scenarios.  One of containerId and focusSlotId will be populated and
+   *   one will be null.
    */
   findFocusedBookmarkInCollection(coll, granularity) {
-    const useWindow = (granularity === 'window');
-    const focusedId =
-      useWindow ? this.visTracker.getFocusedWindowContainerId()
-                : this.visTracker.getFocusedContainerId();
-    const focusSlotId = this.visTracker.getFocusedFocusSlotId();
-    /*
-    console.log('findFocusedBookmarkInCollection: looking for',
-                 focusedId, focusSlotId);
-    */
-    // It's possible nothing is focused.
-    if (!focusedId) {
-      this.log(
-        'findFocusedBookmarkInCollection: nothing focused?',
-        {
-          useWindow, focusedId, focusSlotId
-        });
-      return null;
+    // Our 2 branches here are basically re-creating the logic of
+    // `mintBookmarkForFocusedWindow` (for granularity==='window') and
+    // `mintBookmarkForFocusedThing`.
+    let useFocusSlotOnly;
+    let windowContainerId = null;
+    let focusSlotId = null;
+    if (granularity === 'window') {
+      focusSlotId = this.visTracker.getFocusedFocusSlotId();
+      if (focusSlotId) {
+        useFocusSlotOnly = true;
+      } else {
+        useFocusSlotOnly = false;
+        windowContainerId = this.visTracker.getFocusedWindowContainerId();
+        if (!windowContainerId) {
+          this.log(
+            'findFocusedBookmarkInCollection: no window focused',
+            {
+              granularity
+            });
+          return null;
+        }
+      }
+    } else {
+      useFocusSlotOnly = false;
+      windowContainerId = this.getFocusedContainerId();
+      focusSlotId = this.visTracker.getFocusedFocusSlotId();
+      if (!windowContainerId) {
+        this.log(
+          'findFocusedBookmarkInCollection: no thing focused?',
+          {
+            granularity, windowContainerId, focusSlotId
+          });
+        return null;
+      }
     }
 
     const traverseArray = (arr, depth=0) => {
@@ -280,9 +300,10 @@ class BookmarkManager {
           if (found) {
             return found;
           }
-        } else if (useWindow && obj.focusSlotId && obj.focusSlotId === focusSlotId) {
+        } else if (useFocusSlotOnly && obj.focusSlotId &&
+                   obj.focusSlotId === focusSlotId) {
           return obj;
-        } else if (!useWindow && obj.containerId === focusedId &&
+        } else if (!useFocusSlotOnly && obj.containerId === windowContainerId &&
                    (!obj.focusSlotId || obj.focusSlotId === focusSlotId)) {
           //console.log('findFocusedBookmarkInCollection: found:', obj);
           return obj;
@@ -294,7 +315,7 @@ class BookmarkManager {
         this.log(
           'findFocusedBookmarkInCollection: no matching thing',
           {
-            useWindow, focusedId, focusSlotId
+            granularity, windowContainerId, focusSlotId
           });
       }
       return null;
