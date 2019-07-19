@@ -276,7 +276,7 @@ class BookmarkManager {
       }
     } else {
       useFocusSlotOnly = false;
-      windowContainerId = this.getFocusedContainerId();
+      windowContainerId = this.visTracker.getFocusedContainerId();
       focusSlotId = this.visTracker.getFocusedFocusSlotId();
       if (!windowContainerId) {
         this.log(
