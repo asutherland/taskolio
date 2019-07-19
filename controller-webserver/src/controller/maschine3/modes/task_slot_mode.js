@@ -29,7 +29,7 @@ class TaskSlotMode {
     this.dispatcher = dispatcher;
     this.taskManager = taskManager;
     this.colorHelper = colorHelper;
-    this.saveTaskBookmarks = saveTaskBookmarks;
+    this.__saveTaskBookmarks = saveTaskBookmarks;
 
     this.taskPickerMode = taskPickerMode;
     this.taskSlotDisplayMode = taskSlotDisplayMode;
@@ -76,14 +76,37 @@ class TaskSlotMode {
   }
 
   /**
+   * Wrap the save logic to be invoked on mutation.  Exists to also update
+   * subsidiary displays like TaskSlotDisplayMode which may need to update its
+   * HTML or what not.
+   */
+  _saveTaskBookmarks() {
+    this.__saveTaskBookmarks(this.persistedState);
+    this.taskSlotDisplayMode.update(this, this.slotBookmarks);
+  }
+
+  /**
    * Notification received
    */
   onCurrentTaskChanged(task, taskState, updateTaskStateKey, cause) {
+    // Ignore task change announcements if we're the global slot.
+    if (this.iGroupButton === GLOBAL_SLOT) {
+      return;
+    }
+
     this._task = task;
     this._taskState = taskState;
     this._updateTaskStateKey = updateTaskStateKey;
 
-    // XXX update our color from the saved state.
+    // If the task is being removed from the slot, clear out the slot bookmark.
+    // (Although persistence of colors for slots used for consistent purposes
+    // would be interesting, it makes for confusing UX right now, and we already
+    // clobber the colors via the picker.  So I think it's better to provide
+    // a means of associating colors with task project prefixes or the like.)
+    if (cause === 'done' || cause === 'slot-clear') {
+      this.slotBookmarks[this.iGroupButton] = null;
+      this._saveTaskBookmarks();
+    }
 
     let bookmark = this.slotBookmarks[this.iGroupButton];
     if (!bookmark && task) {
@@ -96,12 +119,12 @@ class TaskSlotMode {
       if (taskState.color) {
         bookmark.color = taskState.color;
       }
-      this.saveTaskBookmarks(this.persistedState);
+      this._saveTaskBookmarks();
     } else if (task && taskState) {
       // update the task info into the slot, both uuid and color
       bookmark.uuid = task.uuid;
       bookmark.color = taskState.color;
-      this.saveTaskBookmarks(this.persistedState);
+      this._saveTaskBookmarks();
     }
   }
 
@@ -138,7 +161,7 @@ class TaskSlotMode {
     this.iGroupButton = evt.index;
     const bookmark = this.isGlobalSlot() ? null : this.slotBookmarks[this.iGroupButton];
     const uuid = bookmark && bookmark.uuid;
-    this.taskManager.setActiveTaskByUuid(uuid, 'TaskSlotMode');
+    this.taskManager.setActiveTaskByUuid(uuid, 'slot-pick');
   }
 
   computeSwingLED() {
@@ -160,7 +183,7 @@ class TaskSlotMode {
     const bookmark = this.slotBookmarks[this.iGroupButton];
     bookmark.color = wrappedColor;
     // (we mutated the deep state above there)
-    this.saveTaskBookmarks(this.persistedState);
+    this._saveTaskBookmarks();
 
     if (this._taskState) {
       this._updateTaskStateKey('color', wrappedColor);

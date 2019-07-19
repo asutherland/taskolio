@@ -24,11 +24,25 @@ const TASKS_PER_PAGE = 16;
  * Track and switch between TaskWarrior tasks and associate / lookup metadata
  * stored in the tasks or configstore persistent storage.
  *
- * @param {Function} updateUI
- *   Function to call when the current task has (asynchronously) changed and we
- *   need to schedule an update of the LEDs and possibly the screens.
+ * ### Causes
+ * When switching tasks, the following causes may be referred to:
+ * - external: We noticed this due to polling or code forgot to specify an
+ *   explicit cause and should be updated to provide one.
+ * - slot-switch: We have switched between task slots.  Compare with pick
+ * - slot-pick: A picker UI explicitly just changed the task assigned to the
+ *   current task slot.
+ * - done: The task that previously was the current task has been marked as
+ *   done.  The current task should be changing to null (currently).
+ * - slot-clear: The task that was previously the current task has been
+ *   explicitly removed from the current task slot.
  */
 class TaskManager {
+  /**
+   *
+   * @param {Function} updateUI
+   *   Function to call when the current task has (asynchronously) changed and we
+   *   need to schedule an update of the LEDs and possibly the screens.
+   */
   constructor({ log, updateUI, taskStorage, updateTaskStorage, notifyModesTaskChanged }) {
     if (!log) {
       throw new Error("GIVE ME A LOG");
@@ -394,7 +408,7 @@ class TaskManager {
 
     // Force an update of our task status.  This will also update the active
     // task and notify as appropriate.
-    await this.getRecentPending(true);
+    await this.getRecentPending(true, 'done');
   }
 }
 

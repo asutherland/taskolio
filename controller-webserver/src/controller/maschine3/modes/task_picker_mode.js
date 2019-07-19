@@ -59,6 +59,12 @@ class TaskPickerMode extends GridPickerMixin {
     this.iPage = evt.index;
   }
 
+  onStopButton(evt) {
+    this.donePicking();
+
+    this.taskManager.setActiveTask(null, 'slot-clear');
+  }
+
   async onGridButton(evt) {
     const curPage = this.curPage;
     const iCell = evt.index;
@@ -78,7 +84,7 @@ class TaskPickerMode extends GridPickerMixin {
 
     this.donePicking();
 
-    await this.taskManager.setActiveTask(task);
+    await this.taskManager.setActiveTask(task, 'slot-pick');
     this.updateHTML();
   }
 
