@@ -62,7 +62,9 @@ export default class TaskolioClient {
 
     const handlerName = `onMessage_${data.type}`;
 
-    this._settings[handlerName](data.payload);
+    if (handlerName in this._settings) {
+      this._settings[handlerName](data.payload);
+    }
   }
 
   /**
