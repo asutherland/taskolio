@@ -428,7 +428,9 @@ font-family: sans-serif;
 
 .taskDescription {
   margin-top: 8px;
+  margin-left: 2px;
   grid-column: span 4;
+  font-size: 24px;
 }
 
 .fullCenter {
