@@ -140,7 +140,7 @@ class BookmarkManager {
         this.brainBoss.clientsByPrefix.get(prefixWithDelim.slice(0, -1));
 
     // It's possible there's no client currently present with the given prefix.
-    if (!brainConn) {
+    if (!brainConn || !brainConn.clientUniqueId) {
       return null;
     }
 
