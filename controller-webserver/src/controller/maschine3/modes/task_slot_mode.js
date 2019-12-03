@@ -1,5 +1,7 @@
 "use strict";
 
+const { html } = require('@popeindustries/lit-html-server');
+
 const { ColorPickerMode } = require("./color_picker_mode");
 
 const VERSION = 1;
@@ -25,11 +27,13 @@ const GLOBAL_SLOT = 7;
  */
 class TaskSlotMode {
   constructor({ dispatcher, taskManager, colorHelper, persistedState,
-                saveTaskBookmarks, taskPickerMode, taskSlotDisplayMode }) {
+                saveTaskBookmarks, taskPickerMode, taskSlotDisplayMode,
+                updateHTML }) {
     this.dispatcher = dispatcher;
     this.taskManager = taskManager;
     this.colorHelper = colorHelper;
     this.__saveTaskBookmarks = saveTaskBookmarks;
+    this.updateHTML = updateHTML;
 
     this.taskPickerMode = taskPickerMode;
     this.taskSlotDisplayMode = taskSlotDisplayMode;
@@ -126,6 +130,8 @@ class TaskSlotMode {
       bookmark.color = taskState.color;
       this._saveTaskBookmarks();
     }
+
+    this.updateHTML();
   }
 
   isGlobalSlot() {
@@ -208,6 +214,33 @@ class TaskSlotMode {
     }
 
     return displayColors;
+  }
+
+  computeDeckContentsHTML() {
+    const cells = [];
+
+    for (let i = 0; i < GROUP_BUTTONS; i++) {
+      const slotBookmark = this.slotBookmarks[i];
+
+      const task = slotBookmark &&
+                   this.taskManager.syncGetTaskByUuid(slotBookmark.uuid);
+      if (!task) {
+        cells.push(html`<div>...</div>`);
+        continue;
+      }
+
+      // (Match the computeGridColors logic for the color above.)
+      const wrappedColor = slotBookmark && slotBookmark.color || this.emptyColor;
+
+      const colors = this.colorHelper.computeRGBHexColors(wrappedColor);
+
+      cells.push(html`<div class="" style="border: 2px solid ${colors.border}; background-color: ${colors.background};">
+  <div>${task.project}</div>
+  <div>${task.description}</div>
+</div>`);
+    }
+
+    return html`${cells}`;
   }
 }
 

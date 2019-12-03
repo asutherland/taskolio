@@ -15,7 +15,7 @@ const { renderToString } = require('@popeindustries/lit-html-server');
  * display allow for rendering buttons independently, but it seems likely the
  * HTML might want to be able to span multiple buttons, etc.
  */
-class ControllerDriver {
+class DeckControllerDriver {
   constructor({ dispatcher, log, asyncRenderHTML, colorHelper }) {
     const controller = this.controller = openStreamDeck();
 
@@ -26,8 +26,8 @@ class ControllerDriver {
     this.ROWS = controller.deviceProperties.ROWS;
     this.ICON_SIZE = controller.deviceProperties.ICON_SIZE;
 
-    this.TOTAL_PIX_WIDTH = this.ROWS * this.ICON_SIZE;
-    this.TOTAL_PIX_HEIGHT = this.COLUMNS * this.ICON_SIZE;
+    this.TOTAL_PIX_WIDTH = this.COLUMNS * this.ICON_SIZE;
+    this.TOTAL_PIX_HEIGHT = this.ROWS * this.ICON_SIZE;
 
     const numDisplays = this.numDisplays = 1;
 
@@ -60,6 +60,10 @@ class ControllerDriver {
     this._htmlUpdatePending = false;
 
     this._bindButtons();
+  }
+
+  close() {
+    this.controller.close();
   }
 
   updateLEDs() {
@@ -100,7 +104,7 @@ class ControllerDriver {
                            this.htmlDisplayed[iDisplay];
 
         const desiredHtml = await renderToString(
-          this.dispatcher.computeHTML(stt, iDisplay, ctrl.displays));
+          this.dispatcher.computeDeckHTML(stt, iDisplay));
         if (desiredHtml !== recentHtml) {
           // it's async, but run for side-effect, no need to wait
           //console.log('...want to update display', iDisplay, 'to', desiredHtml);
@@ -136,8 +140,8 @@ class ControllerDriver {
     this.htmlPending[iDisplay] = html;
 
     const { imageArray } = await this.asyncRenderHTML({
-      width: this.controller.displays.width,
-      height: this.controller.displays.height,
+      width: this.TOTAL_PIX_WIDTH,
+      height: this.TOTAL_PIX_HEIGHT,
       mode: 'rgb',
       htmlStr: html
     });
@@ -166,6 +170,8 @@ class ControllerDriver {
    */
   _latchState() {
     const stt = {
+      columns: this.COLUMNS,
+      rows: this.ROWS,
       buttons: this.buttonStates.concat()
     };
     return stt;
@@ -229,4 +235,4 @@ class ControllerDriver {
   }
 }
 
-module.exports.ControllerDriver = ControllerDriver;
+module.exports.DeckControllerDriver = DeckControllerDriver;

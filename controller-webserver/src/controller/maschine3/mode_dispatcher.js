@@ -39,6 +39,9 @@ class ModeDispatcher {
       "computeTopHTML",
       "computeCenterHTML",
       "computeBottomHTML",
+      // deck HTML
+      "computeDeckHTML",
+      "computeDeckContentsHTML",
       // Our base_computeLabeledLEDs method is actually based on spreading over
       // all of these:
       "computeChannelMidiLED",
@@ -449,6 +452,37 @@ font-family: sans-serif;
     ${topHtml}
     ${centerHtml}
     ${bottomHtml}
+  </div>
+</div>`;
+  }
+
+  base_computeDeckHTML(stt, iDisplay) {
+    const outerStyle = `
+width: 100%;
+height: 100%;
+color: white;
+background-color: black;
+font-size: 14px;
+font-family: sans-serif;
+`.replace(/\n/g, ' ');
+    const styleBlock = `<style>
+.mainGrid {
+  display: grid;
+  grid-template-columns: repeat(${stt.columns}, 1fr);
+  grid-template-rows: repeat(${stt.rows}, 1fr);
+}
+
+.mainGrid > div {
+  overflow: hidden;
+}
+</style>`
+
+    const contentsHtml = this.computeDeckContentsHTML(stt, iDisplay);
+
+    return html`<div xmlns="http://www.w3.org/1999/xhtml" style="${outerStyle.replace('"', "''")}">
+  ${unsafeHTML(styleBlock)}
+  <div class="mainGrid">
+    ${contentsHtml}
   </div>
 </div>`;
   }

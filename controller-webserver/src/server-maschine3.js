@@ -24,12 +24,16 @@ const { TaskSlotDisplayMode } = require("./controller/maschine3/modes/task_slot_
 
 const { ActionBookmarkMode } = require("./controller/maschine3/modes/action_bookmark_mode");
 
+const { DeckControllerDriver } = require("./controller/streamdeck/controller_driver");
+
 const { ColorHelper } = require("./indexed_color_helper");
 
 let gBookmarkManager;
 let gBrainBoss;
 let gConfigstore;
 let gControllerDriver;
+let gSecondaryController;
+let gControllers = [];
 let gDispatcher;
 let gVisibilityTracker;
 let gTaskManager;
@@ -70,6 +74,13 @@ function setupBlessed() {
 
   // Hook up keys to quit.
   guiScreen.key(['escape', 'q', 'C-c'], function(ch, key) {
+    if (gSecondaryController) {
+      try {
+        gSecondaryController.close()
+      } catch (ex) {
+        // nop.
+      }
+    }
     return process.exit(0);
   });
 
@@ -412,6 +423,9 @@ function makeDefaultConfigController() {
         // This also updates the HTML.  Such misnomer.
         gControllerDriver.updateLEDs();
       }
+      if (gSecondaryController) {
+        gSecondaryController.updateLEDs();
+      }
     },
     updateTaskStorage: (taskStorage) => {
       configstore.set('taskStorage', taskStorage);
@@ -425,6 +439,9 @@ function makeDefaultConfigController() {
     // The controller driver may not exist yet.
     if (gControllerDriver) {
       return gControllerDriver.updateHTML();
+    }
+    if (gSecondaryController) {
+      gSecondaryController.updateHTML();
     }
   };
 
@@ -471,6 +488,7 @@ function makeDefaultConfigController() {
     },
     taskPickerMode,
     taskSlotDisplayMode,
+    updateHTML,
   });
 
   const actionBookmarkMode = new ActionBookmarkMode({
@@ -508,7 +526,23 @@ function makeDefaultConfigController() {
   gVisibilityTracker = visibilityTracker;
   gTaskManager = taskManager;
 
+  try {
+    gSecondaryController = new DeckControllerDriver({
+      dispatcher,
+      log: makeLogFunc('deckDriver', 'red'),
+      asyncRenderHTML: (args) => {
+        return brainBoss.asyncRenderHTML(args);
+      },
+    });
+  }
+  catch (ex) {
+    // no streamdeck.
+  }
+
   gControllerDriver.updateLEDs();
+  if (gSecondaryController) {
+    gSecondaryController.updateLEDs();
+  }
 }
 
 let gServer;
