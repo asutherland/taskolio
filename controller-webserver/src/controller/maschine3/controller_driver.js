@@ -138,6 +138,7 @@ class ControllerDriver {
       return;
     }
     this._htmlUpdatePending = true;
+    // yield control flow / go async
     await Promise.resolve();
     this._htmlUpdatePending = false;
 
@@ -191,6 +192,7 @@ class ControllerDriver {
     const { imageArray } = await this.asyncRenderHTML({
       width: this.controller.displays.width,
       height: this.controller.displays.height,
+      mode: 'rgb16',
       htmlStr: html
     });
 

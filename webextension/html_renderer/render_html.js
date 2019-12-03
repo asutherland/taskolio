@@ -18,6 +18,37 @@ function rgb16(red, green, blue) {
          (wrongEndian >> 8);
 }
 
+function toRGB16({ width, height, rgbaBytes }) {
+  // create the array to hold the 16-bit values (represented as 16-bit numbers,
+  // not 8-bit.)
+  const pixCount = width * height;
+  const pixels = new Array(pixCount);
+
+  for (let iRGBA = 0, iPix = 0; iPix < pixCount; iRGBA += 4, iPix += 1) {
+    pixels[iPix] = rgb16(rgbaBytes[iRGBA],
+                         rgbaBytes[iRGBA + 1],
+                         rgbaBytes[iRGBA + 2]);
+  }
+
+  return pixels;
+}
+
+/**
+ * We're just dropping the alpha byte.
+ */
+function toRGB({ width, height, rgbaBytes }) {
+  const pixCount = width * height;
+  const pixels = new Array(pixCount * 3);
+
+  for (let iRGBA = 0, iPix = 0; iPix < pixCount; iRGBA += 4, iPix += 3) {
+    pixels[iPix] = rgbaBytes[iRGBA];
+    pixels[iPix + 1] = rgbaBytes[iRGBA + 1];
+    pixels[iPix + 2] = rgbaBytes[iRGBA + 2];
+  }
+
+  return pixels;
+}
+
 /**
  * Render the given HTML string to a 16-bit JS Array suitable for JSON
  * serialization.  Refactor if additional display types start getting used.
@@ -29,7 +60,7 @@ function rgb16(red, green, blue) {
  * constraints on the SVG image are sufficient, but it's so easy to create the
  * sandbox that it would seem negligent not to.
  */
-export async function renderHTMLTo16BitArray({ width, height, sandboxedIframe, htmlStr }) {
+export async function renderHTMLAndConvert({ width, height, convertFunc, sandboxedIframe, htmlStr }) {
   const useWin = sandboxedIframe.contentWindow;
   const useDoc = sandboxedIframe.contentDocument;
   const img = new useWin.Image();
@@ -63,16 +94,24 @@ ${htmlStr}
 
   // get the RGBA bytes backing the image
   const rgbaBytes = ctx.getImageData(0, 0, width, height).data;
-  // create the array to hold the 16-bit values (represented as 16-bit numbers,
-  // not 8-bit.)
-  const pixCount = width * height;
-  const pixels = new Array(pixCount);
+  return convertFunc({ width, height, rgbaBytes })
+}
 
-  for (let iRGBA = 0, iPix = 0; iPix < pixCount; iRGBA += 4, iPix += 1) {
-    pixels[iPix] = rgb16(rgbaBytes[iRGBA],
-                         rgbaBytes[iRGBA + 1],
-                         rgbaBytes[iRGBA + 2]);
+export function renderHTML({ width, height, mode, sandboxedIframe, htmlStr }) {
+  let convertFunc;
+  switch (mode) {
+    case 'rgb16':
+      convertFunc = toRGB16;
+      break;
+
+    case 'rgb':
+      convertFunc = toRGB;
+      break;
+
+    default:
+      throw new Error('not a legit mode');
   }
 
-  return pixels;
+  return renderHTMLAndConvert({
+    width, height, convertFunc, sandboxedIframe, htmlStr });
 }

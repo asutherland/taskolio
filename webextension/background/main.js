@@ -1,5 +1,5 @@
 import TaskolioClient from "./taskolio_ws_client.js";
-import { renderHTMLTo16BitArray } from "../html_renderer/render_html.js";
+import { renderHTML } from "../html_renderer/render_html.js";
 import { ElementBookmarker } from "./element_bookmarker.js";
 import { TSTIntegration } from "./tst_integration.js";
 
@@ -381,7 +381,7 @@ const ExtCore = {
           uniqueId,
           // We're maybe persistent.  Let's see.
           persistence: true,
-          capabilities: ['renderHtml-0'],
+          capabilities: ['renderHtml-1'],
         });
 
         // This will also send a visibility inventory as its last step.
@@ -470,10 +470,11 @@ const ExtCore = {
         const sandboxedIframe = document.getElementById('html-render-frame');
         let imageArray;
         try {
-          imageArray = await renderHTMLTo16BitArray({
+          imageArray = await renderHTML({
             sandboxedIframe,
             width: msg.width,
             height: msg.height,
+            mode: msg.mode,
             htmlStr: msg.htmlStr
           });
         } catch (ex) {

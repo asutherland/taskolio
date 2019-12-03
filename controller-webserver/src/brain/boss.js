@@ -207,7 +207,7 @@ class BrainBoss {
   }
 
   async asyncRenderHTML(args) {
-    const conn = await this._awaitConnWithCapability('renderHtml-0');
+    const conn = await this._awaitConnWithCapability('renderHtml-1');
     //console.log('got connection, sending message and awaiting reply');
     const reply = await conn.sendMessageAwaitingReply('renderHtml', args);
     //console.log('received reply');
