@@ -7,7 +7,7 @@
     "elgato-stream-deck": "^3.2.0",
     "node-traktor-f1": "github:asutherland/node-traktor-f1#c31043b928e6540cb5e53f65fb8ab0a90ba58592",
     "tinycolor2": "^1.4.1",
-    "usb": "^1.6.1",
+    "usb": "^1.6.2",
     "web-midi-api": "^1.4.4",
     "ws": "^5.2.2"
   }

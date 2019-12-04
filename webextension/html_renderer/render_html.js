@@ -2,6 +2,7 @@
  * See README.md for context.
  **/
 
+window.LOG_HTML = false;
 
 /**
  * Pack 8-bit RGB values into 5-bit red, 6-bit green, and 5-bit blue 16-bit
@@ -78,7 +79,7 @@ export async function renderHTMLAndConvert({ width, height, convertFunc, sandbox
   const ctx = canvas.getContext('2d');
 
   const svgStr = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
-<foreignObject width="100%" height="100%">
+<foreignObject width="${width}" height="${height}">
 ${htmlStr}
 </foreignObject>
 </svg>`;
@@ -87,7 +88,10 @@ ${htmlStr}
     img.onload = resolve;
   });
   img.src = 'data:image/svg+xml,' + encodeURIComponent(svgStr);
-  //console.log('rendering:', img.src);
+  if (window.LOG_HTML) {
+    console.log('rendering', { width, height })
+    console.log(img.src);
+  }
   await loadedPromise;
 
   ctx.drawImage(img, 0, 0);

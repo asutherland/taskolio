@@ -221,6 +221,7 @@ class TaskSlotMode {
 
     for (let i = 0; i < GROUP_BUTTONS; i++) {
       const slotBookmark = this.slotBookmarks[i];
+      const isSelected = (i === this.iGroupButton);
 
       const task = slotBookmark &&
                    this.taskManager.syncGetTaskByUuid(slotBookmark.uuid);
@@ -234,7 +235,10 @@ class TaskSlotMode {
 
       const colors = this.colorHelper.computeRGBHexColors(wrappedColor);
 
-      cells.push(html`<div class="" style="border: 2px solid ${colors.border}; background-color: ${colors.background};">
+      const borderStyle = isSelected ? 'dashed' : 'solid';
+
+      const divStyle = `border: 2px ${borderStyle} ${colors.border}; background-color: ${colors.background};`;
+      cells.push(html`<div style="${divStyle}">
   <div>${task.project}</div>
   <div>${task.description}</div>
 </div>`);

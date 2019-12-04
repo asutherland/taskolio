@@ -459,6 +459,7 @@ font-family: sans-serif;
   base_computeDeckHTML(stt, iDisplay) {
     const outerStyle = `
 width: 100%;
+min-height: 100%;
 height: 100%;
 color: white;
 background-color: black;
@@ -468,8 +469,10 @@ font-family: sans-serif;
     const styleBlock = `<style>
 .mainGrid {
   display: grid;
-  grid-template-columns: repeat(${stt.columns}, 1fr);
-  grid-template-rows: repeat(${stt.rows}, 1fr);
+  width: 100%;
+  height: ${stt.rows*stt.iconPix}px;
+  grid-template-columns: repeat(${stt.columns/2}, 1fr);
+  grid-template-rows: repeat(${stt.rows}, ${stt.iconPix}px);
 }
 
 .mainGrid > div {

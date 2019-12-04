@@ -172,6 +172,7 @@ class DeckControllerDriver {
     const stt = {
       columns: this.COLUMNS,
       rows: this.ROWS,
+      iconPix: this.ICON_SIZE,
       buttons: this.buttonStates.concat()
     };
     return stt;
