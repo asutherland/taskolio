@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@julusian/jpeg-turbo": "^0.5.2",
     "@popeindustries/lit-html-server": "^1.6.0",
     "blessed": "^0.1.81",
     "blessed-contrib": "^4.8.18",

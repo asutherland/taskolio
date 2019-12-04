@@ -41,7 +41,7 @@ function toRGB({ width, height, rgbaBytes }) {
   const pixCount = width * height;
   const pixels = new Array(pixCount * 3);
 
-  for (let iRGBA = 0, iPix = 0; iPix < pixCount; iRGBA += 4, iPix += 3) {
+  for (let iRGBA = 0, iPix = 0; iPix < pixels.length; iRGBA += 4, iPix += 3) {
     pixels[iPix] = rgbaBytes[iRGBA];
     pixels[iPix + 1] = rgbaBytes[iRGBA + 1];
     pixels[iPix + 2] = rgbaBytes[iRGBA + 2];

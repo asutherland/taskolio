@@ -463,7 +463,7 @@ min-height: 100%;
 height: 100%;
 color: white;
 background-color: black;
-font-size: 14px;
+font-size: 18px;
 font-family: sans-serif;
 `.replace(/\n/g, ' ');
     const styleBlock = `<style>
