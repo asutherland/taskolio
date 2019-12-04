@@ -74,12 +74,24 @@ function setupBlessed() {
 
   // Hook up keys to quit.
   guiScreen.key(['escape', 'q', 'C-c'], function(ch, key) {
+    if (gControllerDriver) {
+      try {
+        gControllerDriver.controller.device.close();
+      } catch (ex) {
+        console.warn('error closing primary controller', ex);
+      }
+    }
     if (gSecondaryController) {
       try {
         gSecondaryController.close()
       } catch (ex) {
-        // nop.
+        console.warn('error closing secondary controller', ex);
       }
+    }
+    try {
+      gServer.close();
+    } catch (ex) {
+      console.warn('error closing server', ex);
     }
     return process.exit(0);
   });
