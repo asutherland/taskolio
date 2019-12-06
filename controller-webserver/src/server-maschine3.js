@@ -498,6 +498,11 @@ function makeDefaultConfigController() {
     saveTaskBookmarks: (taskBookmarks) => {
       configstore.set('taskBookmarks', taskBookmarks);
     },
+    alterDeckBrightness: (...args) => {
+      if (gSecondaryController) {
+        gSecondaryController.alterDeckBrightness(...args);
+      }
+    },
     taskPickerMode,
     taskSlotDisplayMode,
     updateHTML,

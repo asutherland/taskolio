@@ -28,12 +28,13 @@ const GLOBAL_SLOT = 7;
 class TaskSlotMode {
   constructor({ dispatcher, taskManager, colorHelper, persistedState,
                 saveTaskBookmarks, taskPickerMode, taskSlotDisplayMode,
-                updateHTML }) {
+                updateHTML, alterDeckBrightness }) {
     this.dispatcher = dispatcher;
     this.taskManager = taskManager;
     this.colorHelper = colorHelper;
     this.__saveTaskBookmarks = saveTaskBookmarks;
     this.updateHTML = updateHTML;
+    this.alterDeckBrightness = alterDeckBrightness;
 
     this.taskPickerMode = taskPickerMode;
     this.taskSlotDisplayMode = taskSlotDisplayMode;
@@ -228,6 +229,13 @@ class TaskSlotMode {
     }
 
     return displayColors;
+  }
+
+  onKnobTurned(evt) {
+    // only sensitize when the 8th knob is touched.
+    if (evt.knobTouch8) {
+      this.alterDeckBrightness({ absolute: evt.value * 4 * 100 });
+    }
   }
 
   computeDeckContentsHTML() {

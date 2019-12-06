@@ -67,7 +67,7 @@ class ControllerDriver {
 
     this._bindEventFamily("s", "changed", 4, this.sliderStates,
                           "slider", "onSliderMoved");
-    this._bindEventFamily("k", "changed", 4, this.knobStates,
+    this._bindEventFamily("k", "changed", 8, this.knobStates,
                           "knob", "onKnobTurned");
     this._bindEventFamily("touchStrip", "changed", 2, this.touchStripStates,
                           "touchStrip", "onTouchStripMovement");

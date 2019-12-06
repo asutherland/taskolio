@@ -29,6 +29,9 @@ class DeckControllerDriver {
     this.TOTAL_PIX_WIDTH = this.COLUMNS * this.ICON_SIZE;
     this.TOTAL_PIX_HEIGHT = this.ROWS * this.ICON_SIZE;
 
+    this.deckBrightness = 50;
+    this.controller.setBrightness(this.deckBrightness);
+
     const numDisplays = this.numDisplays = 1;
 
     this.dispatcher = dispatcher;
@@ -64,6 +67,24 @@ class DeckControllerDriver {
 
   close() {
     this.controller.close();
+  }
+
+  alterDeckBrightness(dictArg) {
+    if ('absolute' in dictArg) {
+      const val = dictArg.absolute;
+      this.deckBrightness = val;
+    } else if ('delta' in dictArg) {
+      const delta = dictArg.delta;
+      this.deckBrightness += delta;
+    }
+
+    if (this.deckBrightness > 100) {
+      this.deckBrightness = 100;
+    } else if (this.deckBrightness < 0) {
+      this.deckBrightness = 0;
+    }
+    this.log(`Setting brightness to: ${this.deckBrightness}`);
+    this.controller.setBrightness(this.deckBrightness);
   }
 
   updateLEDs() {
