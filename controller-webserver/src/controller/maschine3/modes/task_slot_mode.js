@@ -170,6 +170,20 @@ class TaskSlotMode {
     this.taskManager.setActiveTaskByUuid(uuid, 'slot-pick');
   }
 
+  onDeckButton(evt) {
+    // We currently spread the task display over 2 buttons.
+    const effectiveButton = Math.floor(evt.index / 2);
+    // We also have more than 8 values that could happen.
+    if (effectiveButton >= GROUP_BUTTONS) {
+      return;
+    }
+
+    this.iGroupButton = effectiveButton;
+    const bookmark = this.isGlobalSlot() ? null : this.slotBookmarks[this.iGroupButton];
+    const uuid = bookmark && bookmark.uuid;
+    this.taskManager.setActiveTaskByUuid(uuid, 'slot-pick');
+  }
+
   computeSwingLED() {
     return this.pickingColor ? 1.0 : 0.2;
   }

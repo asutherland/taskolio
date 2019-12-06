@@ -94,6 +94,9 @@ class ModeDispatcher {
       //
       "computeUnhandledLED",
       // - event handling methods
+      // streamdeck buttons
+      "onDeckButton",
+      "onDeckButtonDown",
       // things we got multiples of
       "onGridButton",
       "onGroupButton",

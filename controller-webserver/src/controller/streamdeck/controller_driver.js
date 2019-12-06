@@ -196,8 +196,8 @@ class DeckControllerDriver {
   }
 
   _bindButtons() {
-    let pressMethodName = "onButtonDown";
-    let methodName = "onButton";
+    let pressMethodName = "onDeckButtonDown";
+    let methodName = "onDeckButton";
     let index;
     let match;
     let name = "button";
