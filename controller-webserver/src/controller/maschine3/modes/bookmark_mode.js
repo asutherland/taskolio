@@ -203,7 +203,7 @@ class BookmarkMode extends BankMixin {
     this.log(`bookmark position picked: ${index} in mode ${this.activity}`,
              this.pickingForBookmark);
     if (this.activity === 'delete') {
-      this.curBank[index] = null;
+      this._setBookmarkAtCell(index, null);
       this._saveBookmarks();
     } else if (this.pickingForBookmark) {
       //console.log("Setting bookmark", JSON.stringify(this.pickingForBookmark));
