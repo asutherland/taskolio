@@ -579,12 +579,21 @@ const run = async (port) => {
      * to browser behavior) will have an empty origin.
      */
     verifyClient(info) {
-      const noOrigin = !info.origin;
+      // Firefox is now sending "null" for WebExtensions... although it's
+      // believable our stack is coercing this to a string?  Or maybe Firefox
+      // does.  The key thing is that we just don't want to listen to web
+      // origins.  But we should be further securing things like requiring a
+      // hello message that allows for pairing.  (Like the server can use the
+      // device to confirm that the new client is allowed and give it a name
+      // or something.  Until then, the client lives in a jail.)
+      const noOrigin = !info.origin || info.origin === '' || info.origin === 'null';
       const isFileOrigin = info.origin === 'file://';
+      // Firefox recently changed its behavior to not expose this prefix because
+      // of fingerprinting concerns.  (The UUIDs can be per-user.)
       const isWebExtOrigin = info.origin && /^moz-extension:/.test(info.origin);
       const allowed = noOrigin || isFileOrigin || isWebExtOrigin;
 
-      //console.log("client origin:", info.origin, "allowed?", allowed);
+      gNodeLog(`client origin: ${info.origin} allowed?: ${allowed}`);
 
       return allowed;
     }

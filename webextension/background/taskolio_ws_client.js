@@ -106,7 +106,7 @@ export default class TaskolioClient {
   }
 
   onError(err) {
-    console.log("taskolio connection error: " + err);
+    console.log("taskolio connection error:", err);
   }
 
   shutdown() {
