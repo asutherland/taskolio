@@ -96,6 +96,9 @@ function updateAndSendThingsVisibilityInventory() {
 }
 
 /**
+ * XXX We abandoned this in atom and it 100% doesn't work on any kind of large
+ * repro.  We just early return immediately.  This was a dubious idea.
+ *
  * Send a thingExists notification for every file in the workspace.  Note that
  * this is different that vscode.workspace.textDocuments (all open files) or
  * vscode.window.textEditors (the currently displayed text editors, one per
@@ -108,7 +111,8 @@ async function sendThingsExistForWorkspace() {
   if (!gClient) {
     return;
   }
-
+  return;
+/*
   const uris = await vscode.workspace.findFiles('**');
 
   const items = uris.map((uri) => {
@@ -129,6 +133,7 @@ async function sendThingsExistForWorkspace() {
   // already happened, so just send a fresh one now that we've run.
   // Alternately, we could have our caller wait for us and call.
   updateAndSendThingsVisibilityInventory();
+*/
 }
 
 function tunnelPidThroughWindowTitle(enable) {
@@ -162,6 +167,9 @@ function activate(context) {
     updateAndSendFocusSlotsInventory();
   }));
 
+  // start tunneling immediately so that by the time we connect we might have
+  // already tunneled it.
+  tunnelPidThroughWindowTitle(true);
   gClient = new TaskolioClient({
     endpoint: 'ws://localhost:8008/',
 
@@ -213,7 +221,10 @@ function activate(context) {
       //   thing.
     },
 
-    onDisconnect() {
+    onDisconnect: () => {
+      // re-enable tunneling when we disconnect so that when we reconnect the
+      // window-manager might already have our info.
+      tunnelPidThroughWindowTitle(true);
     },
 
     /**
@@ -240,7 +251,7 @@ function activate(context) {
       }
     },
 
-    onMessage_fadeThings(msg) {
+    onMessage_fadeThings(/*msg*/) {
       // XXX we currently don't need/want to do anything for fading.
     },
 
@@ -251,9 +262,28 @@ function activate(context) {
      * pid rather than our workspace window's root pid as advertised by
      * process.pid).
      */
-    onMessage_focusSlotsLinked(msg) {
+    onMessage_focusSlotsLinked(/*msg*/) {
       tunnelPidThroughWindowTitle(false);
-    }
+    },
+
+    /**
+     * This is the server asking us to pretend like it doesn't know any of our
+     * state and to have us re-send it.  This becomes necessary when the
+     * window manager restarts and generates new window container id's and
+     * it becomes necessary for us to re-tunnel our PID.  It's also
+     * potentially helpful in the face of code occasionally having bugs...
+     */
+    onMessage_pleaseReportState: async (/*msg*/) => {
+      // Toggle off and back on again after a delay so that we can also ensure
+      // the window manager perceives a change in our state.
+      tunnelPidThroughWindowTitle(false);
+      setTimeout(() => {
+        tunnelPidThroughWindowTitle(true);
+      }, 0);
+      updateAndSendFocusSlotsInventory();
+      // this may still be a no-op.
+      sendThingsExistForWorkspace();
+    },
   });
 }
 exports.activate = activate;
