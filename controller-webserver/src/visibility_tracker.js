@@ -557,9 +557,9 @@ focusedFocusSlotId: ${this.getFocusedFocusSlotId()}
       this.focusSlotContentsById.set(fullSlotId, prefixedContainerId);
 
       debugInfo.push([
-        item.state,
-        item.focusSlotId,
-        item.containerId,
+        item.state || 'missing',
+        item.focusSlotId || 'missing',
+        item.containerId || 'missing',
         this.focusSlotToWindowContainerId.get(fullSlotId) || `<unmapped:${fullSlotId}>`
       ]);
 
