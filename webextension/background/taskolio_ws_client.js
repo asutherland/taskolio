@@ -66,6 +66,10 @@ export default class TaskolioClient {
       this.sendMessage('reply', replyMsg, data.id);
     };
 
+    if (!(handlerName in this._settings)) {
+      console.warn("ignoring unhandled message type:", data.type);
+      return;
+    }
     this._settings[handlerName](data.payload, replyFunc);
   }
 
