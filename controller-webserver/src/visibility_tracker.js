@@ -556,10 +556,19 @@ focusedFocusSlotId: ${this.getFocusedFocusSlotId()}
       const fullSlotId = prefix + item.focusSlotId;
       this.focusSlotContentsById.set(fullSlotId, prefixedContainerId);
 
+      const normDisplay = (v) => {
+        if (v === undefined) {
+          return 'undefined';
+        } else if (v === null) {
+          return 'null';
+        }
+
+        return v;
+      };
       debugInfo.push([
-        item.state || 'missing',
-        item.focusSlotId || 'missing',
-        item.containerId || 'missing',
+        normDisplay(item.state),
+        normDisplay(item.focusSlotId),
+        normDisplay(item.containerId),
         this.focusSlotToWindowContainerId.get(fullSlotId) || `<unmapped:${fullSlotId}>`
       ]);
 
