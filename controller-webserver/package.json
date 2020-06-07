@@ -3,16 +3,16 @@
     "dist"
   ],
   "dependencies": {
-    "@julusian/jpeg-turbo": "^0.5.3",
+    "@julusian/jpeg-turbo": "^0.5.4",
     "@popeindustries/lit-html-server": "^1.6.1",
-    "@types/node": "^14.0.5",
+    "@types/node": "^14.0.11",
     "blessed": "^0.1.81",
-    "blessed-contrib": "^4.8.19",
+    "blessed-contrib": "^4.8.20",
     "configstore": "^3.1.2",
     "elgato-stream-deck": "^3.3.0",
     "node-traktor-f1": "github:asutherland/node-traktor-f1#111ef3843bc888b09c9daad7b61a7101bca8cb83",
     "tinycolor2": "^1.4.1",
-    "usb": "^1.6.2",
+    "usb": "^1.6.3",
     "web-midi-api": "^1.4.4",
     "ws": "^5.2.2"
   },
@@ -23,7 +23,7 @@
     "prettier": "^2.0.5",
     "rimraf": "^3.0.2",
     "ts-node": "^8.10.2",
-    "typescript": "^3.9.3"
+    "typescript": "^3.9.5"
   },
   "scripts": {
     "check:style": "prettier --check '{lib,types}/**/*{.ts,.d.ts,.json,*.md}' '*.md'",
