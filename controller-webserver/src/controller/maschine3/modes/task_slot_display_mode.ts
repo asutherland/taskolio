@@ -1,8 +1,8 @@
 "use strict";
 
-const { html } = require('@popeindustries/lit-html-server');
+import { html } from '@popeindustries/lit-html-server';
 
-const { GridPickerMixin, GRID_CELLS } = require('./grid_picker_mixin');
+import { GridPickerMixin, GRID_CELLS } from './grid_picker_mixin';
 
 /**
  * This mode exists to show the current contents of the TaskSlotMode's slots
@@ -12,7 +12,16 @@ const { GridPickerMixin, GRID_CELLS } = require('./grid_picker_mixin');
  * Note that the slots only contain task uuid and color, so task names are
  * resolved via the TaskManager.
  */
-class TaskSlotDisplayMode extends GridPickerMixin {
+export class TaskSlotDisplayMode extends GridPickerMixin {
+  dispatcher: any;
+  colorHelper: any;
+  taskManager: any;
+  updateHTML: any;
+  emptyColor: any;
+  slotBookmarks: any;
+  parentMode: any;
+  pages: any;
+
   constructor({ dispatcher, colorHelper, taskManager, updateHTML }) {
     super();
 
@@ -93,5 +102,3 @@ class TaskSlotDisplayMode extends GridPickerMixin {
     return html`<div></div>`;
   }
 }
-
-module.exports.TaskSlotDisplayMode = TaskSlotDisplayMode;

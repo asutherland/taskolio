@@ -12,7 +12,29 @@
  */
 const MAX_BUFFERED_MESSAGES = 64;
 
-class BrainConnection {
+export class BrainConnection {
+  ws: any;
+  brainBoss: any;
+  visibilityTracker: any;
+  triggerUpdate: any;
+  capabilities: any[];
+  nextMsgId: number;
+  awaitingReplies: Map<any, any>;
+  idPrefix: string;
+  isWM: boolean;
+  clientType: string;
+  clientName: string;
+  clientUniqudId: string;
+  receivedInitialSlots: boolean;
+  focusSlotsLinked: boolean;
+  debugMessages: {};
+  debugSlotsInventory: any[];
+  debugVisibilityInventory: any[];
+  _mostRecentMessage: any;
+  bufferingMessages: any;
+  goodToGo: boolean;
+  clientUniqueId: any;
+
   constructor(ws, { brainBoss, visibilityTracker, triggerUpdate }) {
     this.ws = ws;
     this.brainBoss = brainBoss;
@@ -235,5 +257,3 @@ class BrainConnection {
     return reply;
   }
 }
-
-module.exports.BrainConnection = BrainConnection;

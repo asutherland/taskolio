@@ -1,8 +1,8 @@
 "use strict";
 
-const Mk3 = require("node-traktor-f1/lib/maschine_mk3");
+import Mk3 from "node-traktor-f1/lib/maschine_mk3";
 
-const { renderToString } = require('@popeindustries/lit-html-server');
+import { renderToString } from '@popeindustries/lit-html-server';
 
 const COLOR_BLACK = 0;
 const BLANK_ROW = [COLOR_BLACK, COLOR_BLACK, COLOR_BLACK, COLOR_BLACK];
@@ -27,7 +27,21 @@ const BLANK_TOUCHSTRIP = [];
  * node-traktor-f1 library style makes sense on its own and directly pushing
  * our changes into it would make for an otherwise useless fork.)
  */
-class ControllerDriver {
+export class ControllerDriver {
+  controller: any;
+  dispatcher: any;
+  log: any;
+  asyncRenderHTML: any;
+  colorHelper: any;
+  buttonStates: {};
+  sliderStates: any[];
+  knobStates: any[];
+  touchStripStates: any[];
+  htmlDisplayed: any[];
+  htmlPending: any[];
+  htmlDesired: any[];
+  _htmlUpdatePending: boolean;
+  touchStrips: any;
   constructor({ dispatcher, log, asyncRenderHTML, colorHelper }) {
     const controller = this.controller = new Mk3();
     this.dispatcher = dispatcher;
@@ -133,7 +147,7 @@ class ControllerDriver {
    * node.js handles differentiating tasks/micro-tasks as to whether that
    * actually changes things.
    */
-  async updateHTML(stt) {
+  async updateHTML(stt=null) {
     if (this._htmlUpdatePending) {
       return;
     }
@@ -219,7 +233,7 @@ class ControllerDriver {
     // the grid button states are currently in the buttonStates too.  If we
     // thought they might be used, it would probably be appropriate to break
     // them out to be their own array too.
-    const stt = Object.assign({}, this.buttonStates);
+    const stt: any = Object.assign({}, this.buttonStates);
     stt.sliders = this.sliderStates.concat();
     stt.knobs = this.knobStates.concat();
     this.touchStrips = this.touchStripStates.concat();
@@ -335,5 +349,3 @@ class ControllerDriver {
     }
   }
 }
-
-module.exports.ControllerDriver = ControllerDriver;

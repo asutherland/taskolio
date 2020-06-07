@@ -1,8 +1,8 @@
 "use strict";
 
-const { openStreamDeck } = require('elgato-stream-deck')
+import { openStreamDeck, StreamDeck } from 'elgato-stream-deck';
 
-const { renderToString } = require('@popeindustries/lit-html-server');
+import { renderToString } from '@popeindustries/lit-html-server';
 
 /**
  * This is a whittled-down version of the mk3 variant of this class.  The
@@ -15,16 +15,30 @@ const { renderToString } = require('@popeindustries/lit-html-server');
  * display allow for rendering buttons independently, but it seems likely the
  * HTML might want to be able to span multiple buttons, etc.
  */
-class DeckControllerDriver {
+export class DeckControllerDriver {
+  controller: StreamDeck;
+  COLUMNS: any;
+  ROWS: any;
+  ICON_SIZE: any;
+  TOTAL_PIX_WIDTH: number;
+  TOTAL_PIX_HEIGHT: number;
+  deckBrightness: number;
+  numDisplays: number;
+  dispatcher: any;
+  log: any;
+  asyncRenderHTML: any;
+  buttonStates: any[];
+  htmlDisplayed: any[];
+  htmlPending: any[];
+  htmlDesired: any[];
+  _htmlUpdatePending: boolean;
+
   constructor({ dispatcher, log, asyncRenderHTML, colorHelper }) {
     const controller = this.controller = openStreamDeck();
 
-    // nb: There are a bunch of getters that expose the properties on the object
-    // more directly.  I didn't see them at first and see no reason to change
-    // yet.
-    this.COLUMNS = controller.deviceProperties.COLUMNS;
-    this.ROWS = controller.deviceProperties.ROWS;
-    this.ICON_SIZE = controller.deviceProperties.ICON_SIZE;
+    this.COLUMNS = controller.KEY_COLUMNS;
+    this.ROWS = controller.KEY_ROWS;
+    this.ICON_SIZE = controller.ICON_SIZE;
 
     this.TOTAL_PIX_WIDTH = this.COLUMNS * this.ICON_SIZE;
     this.TOTAL_PIX_HEIGHT = this.ROWS * this.ICON_SIZE;
@@ -104,7 +118,7 @@ class DeckControllerDriver {
    * node.js handles differentiating tasks/micro-tasks as to whether that
    * actually changes things.
    */
-  async updateHTML(stt) {
+  async updateHTML(stt=null) {
     if (this._htmlUpdatePending) {
       return;
     }
@@ -194,7 +208,10 @@ class DeckControllerDriver {
       columns: this.COLUMNS,
       rows: this.ROWS,
       iconPix: this.ICON_SIZE,
-      buttons: this.buttonStates.concat()
+      buttons: this.buttonStates.concat(),
+      name: null,
+      index: null,
+      value: null,
     };
     return stt;
   }
@@ -256,5 +273,3 @@ class DeckControllerDriver {
     });
   }
 }
-
-module.exports.DeckControllerDriver = DeckControllerDriver;

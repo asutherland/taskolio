@@ -1,10 +1,10 @@
 "use strict";
 
-const { BankMixin, NUM_BANKS, GRID_ROWS, GRID_COLS, GRID_CELLS } =
-  require("./bank_mixin");
-const { ColorPickerMode } = require("./color_picker_mode");
+import { BankMixin, NUM_BANKS, GRID_ROWS, GRID_COLS, GRID_CELLS }
+  from "./bank_mixin";
+import { ColorPickerMode } from "./color_picker_mode";
 
-const { html } = require('@popeindustries/lit-html-server');
+import { html } from '@popeindustries/lit-html-server';
 
 /**
  * UI for 4 "stop" button banks of 4x4 container-bookmark grids.
@@ -43,7 +43,22 @@ const { html } = require('@popeindustries/lit-html-server');
  *   "~/.config/configustore/taskolio.json".  (It seems like it must for reads
  *   at least.)
  */
-class BookmarkMode extends BankMixin {
+export class BookmarkMode extends BankMixin {
+  dispatcher: any;
+  bookmarkManager: any;
+  __saveBookmarks: any;
+  _globalBookmarks: any;
+  _taskBookmarks: any;
+  log: any;
+  pickingForBookmark: any;
+  setBookmarkSubMode: SetBookmarkSubMode;
+  pickColorMode: ColorPickerMode;
+  gridPushCount: number;
+  activity: string;
+  curTask: any;
+  _taskState: any;
+  __updateTaskStateKey: any;
+  
   constructor({ dispatcher, bookmarkManager, persistedState, saveBookmarks, log }) {
     super({
       defaultCellValue: null,
@@ -316,6 +331,9 @@ class BookmarkMode extends BankMixin {
  * Bookmark setting mode.  We use the next
  */
 class SetBookmarkSubMode {
+  owner: any;
+  modeShortLabel: string;
+
   constructor({ owner }) {
     this.owner = owner;
 
@@ -365,5 +383,3 @@ class SetBookmarkSubMode {
     return this.owner.onBankButton(evt);
   }
 }
-
-module.exports.BookmarkMode = BookmarkMode;

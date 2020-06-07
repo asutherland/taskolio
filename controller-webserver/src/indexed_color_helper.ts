@@ -86,7 +86,15 @@ function hexifyRGB({ red, green, blue }) {
  * Mk3-style indexed color helper.  We store the color as { colorIndex } where
  * colorIndex is a value in the inclusive range [0, 15].
  */
-class ColorHelper {
+export class ColorHelper {
+  static computeColorBankColor(iBank: any, arg1: number, iCell: any, arg3: number) {
+    throw new Error("Method not implemented.");
+  }
+  static computeDisplayColor(computeDisplayColor: any) {
+    throw new Error("Method not implemented.");
+  }
+  indexed_led_mapping: any;
+
   constructor() {
     this.indexed_led_mapping = null;
   }
@@ -143,7 +151,7 @@ class ColorHelper {
    * Compute the actual display values to return, since this is the RGB class,
    * an [r,g,b] tuple is returned.  The indexed variant returns a single index.
    */
-  computeBookmarkDisplayColor(wrapped, state, brightnessScale) {
+  computeBookmarkDisplayColor(wrapped, state, brightnessScale=undefined) {
     if (!wrapped) {
       return null;
     }
@@ -203,5 +211,3 @@ class ColorHelper {
     return this.computeBookmarkRGBHexColors(wrapped);
   }
 }
-
-module.exports.ColorHelper = new ColorHelper();

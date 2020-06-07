@@ -1,8 +1,8 @@
 "use strict";
 
-const { html } = require('@popeindustries/lit-html-server');
+import { html } from '@popeindustries/lit-html-server';
 
-const { ColorPickerMode } = require("./color_picker_mode");
+import { ColorPickerMode } from "./color_picker_mode";
 
 const VERSION = 1;
 const GROUP_BUTTONS = 8;
@@ -25,7 +25,32 @@ const GLOBAL_SLOT = 7;
  * lighting up.  But for the task slot group buttons, we literally are tracking
  * the button you pushed.
  */
-class TaskSlotMode {
+export class TaskSlotMode {
+  dispatcher: any;
+  taskManager: any;
+  colorHelper: any;
+  __saveTaskBookmarks: any;
+  updateHTML: any;
+  alterDeckBrightness: any;
+  taskPickerMode: any;
+  taskSlotDisplayMode: any;
+  iGroupButton: number;
+  persistedState: {
+  version: number;
+    // we do have a slot for the global slot so its color can be configured
+    bookmarks: any[];
+  };
+  fallbackColor: any;
+  slotBookmarks: any;
+  pickingColor: boolean;
+  pickColorMode: any;
+  pickingTask: boolean;
+  _task: any;
+  _taskState: any;
+  _updateTaskStateKey: any;
+  emptyColor: any;
+
+
   constructor({ dispatcher, taskManager, colorHelper, persistedState,
                 saveTaskBookmarks, taskPickerMode, taskSlotDisplayMode,
                 updateHTML, alterDeckBrightness }) {
@@ -269,5 +294,3 @@ class TaskSlotMode {
     return html`${cells}`;
   }
 }
-
-module.exports.TaskSlotMode = TaskSlotMode;

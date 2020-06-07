@@ -1,7 +1,7 @@
 "use strict";
 
-const { html } = require('@popeindustries/lit-html-server');
-const { URL } = require('url');
+import { html } from '@popeindustries/lit-html-server';
+import { URL } from 'url';
 
 /**
  * Handles displaying auto-bookmarked pinned browser tabs across the top of the
@@ -14,7 +14,17 @@ const { URL } = require('url');
  * - Map that to a client prefix for the client where the tabs are coming from,
  *   plus the focusSlotId that corresponds to the browser's window.
  */
-class TabsOnDisplayButtonsMode {
+export class TabsOnDisplayButtonsMode {
+  dispatcher: any;
+  visTracker: any;
+  bookmarkMode: any;
+  updateHTML: any;
+  log: any;
+  usingWindowContainerId: any;
+  usingPrefix: any;
+  usingFocusSlotId: any;
+  view: any;
+
   constructor({ dispatcher, visibilityTracker, bookmarkMode, updateHTML, log }) {
     this.dispatcher = dispatcher;
     this.visTracker = visibilityTracker;
@@ -158,5 +168,3 @@ class TabsOnDisplayButtonsMode {
     return pieces;
   }
 }
-
-module.exports.TabsOnDisplayButtonsMode = TabsOnDisplayButtonsMode;

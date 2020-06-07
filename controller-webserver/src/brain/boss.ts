@@ -1,3 +1,5 @@
+import { BrainConnection } from "./conn";
+
 function extractClientId(prefixed) {
   return prefixed.split(':', 1)[0];
 }
@@ -11,7 +13,14 @@ function extractUnprefixedContainerId(prefixed) {
   return prefixed.substring(idxColon + 1);
 }
 
-class BrainBoss {
+export class BrainBoss {
+  clientsByPrefix: Map<String, BrainConnection>;
+  awaitingClientsByCapability: Map<any, any>;
+  notifyModes: any;
+  debugStateUpdated: any;
+  log: any;
+  wmConnected: boolean;
+
   constructor({ debugStateUpdated, log }) {
     /**
      * Clients by "bare" prefix (no ':' delimiter suffix.)
@@ -199,7 +208,7 @@ class BrainBoss {
       pending = [];
       this.awaitingClientsByCapability.set(capability, pending);
     }
-    const promise = new Promise((resolve) => {
+    const promise : Promise<BrainConnection> = new Promise((resolve) => {
       pending.push(resolve);
     });
     conn = await promise;
@@ -214,5 +223,3 @@ class BrainBoss {
     return reply;
   }
 }
-
-module.exports.BrainBoss = BrainBoss;

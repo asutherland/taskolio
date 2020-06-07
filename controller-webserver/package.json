@@ -17,6 +17,9 @@
     "ws": "^5.2.2"
   },
   "devDependencies": {
+    "@types/blessed": "^0.1.17",
+    "@types/configstore": "^4.0.0",
+    "@types/ws": "^7.2.5",
     "prettier": "^2.0.5",
     "rimraf": "^3.0.2",
     "ts-node": "^8.10.2",

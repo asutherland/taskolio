@@ -1,8 +1,8 @@
-const { BankMixin, NUM_BANKS, GRID_ROWS, GRID_COLS, GRID_CELLS } =
-  require("./bank_mixin");
+import { BankMixin, NUM_BANKS, GRID_ROWS, GRID_COLS, GRID_CELLS }
+  from "./bank_mixin";
 
-const { ColorHelper } = require('../../../indexed_color_helper');
-const { html } = require('@popeindustries/lit-html-server');
+import { ColorHelper } from '../../../indexed_color_helper';
+import { html } from '@popeindustries/lit-html-server';
 
 /**
  * Banked color picker.  Uses BankMixin to pre-compute the hue/sat/rgb values at
@@ -10,7 +10,9 @@ const { html } = require('@popeindustries/lit-html-server');
  * picker if desired.
  *
  */
-class ColorPickerMode extends BankMixin {
+export class ColorPickerMode extends BankMixin {
+  caller: any;
+
   constructor({ caller }) {
     super({
       computeCellValue(iBank, iCell, iRow, iCol) {
@@ -48,5 +50,3 @@ class ColorPickerMode extends BankMixin {
     return html`<div>Pick a color!</div>`;
   }
 }
-
-module.exports.ColorPickerMode = ColorPickerMode;

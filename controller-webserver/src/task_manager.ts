@@ -36,7 +36,18 @@ const TASKS_PER_PAGE = 16;
  * - slot-clear: The task that was previously the current task has been
  *   explicitly removed from the current task slot.
  */
-class TaskManager {
+export class TaskManager {
+  log: any;
+  _updateUI: any;
+  _taskStorage: any;
+  _updateTaskStorage: any;
+  _notifyModesTaskChanged: any;
+  _lastExported: number;
+  _recentPending: any;
+  _activePendingRequest: any;
+  activeTask: any;
+  _tasksByUuid: Map<any, any>;
+  
   /**
    *
    * @param {Function} updateUI
@@ -411,5 +422,3 @@ class TaskManager {
     await this.getRecentPending(true, 'done');
   }
 }
-
-module.exports.TaskManager = TaskManager;

@@ -1,54 +1,54 @@
 "use strict";
 
-const WebSocket = require("ws");
-const Configstore = require("configstore");
-const blessed = require('blessed');
-const bcontrib = require('blessed-contrib');
+import WebSocket from "ws";
+import Configstore from "configstore";
+import blessed from 'blessed';
+import bcontrib from 'blessed-contrib';
 
-const { BrainConnection } = require("./brain/conn");
-const { BrainBoss } = require("./brain/boss");
+import { BrainConnection } from "./brain/conn";
+import { BrainBoss } from "./brain/boss";
 
-const { VisibilityTracker } = require("./visibility_tracker");
-const { BookmarkManager } = require("./bookmark_manager");
-const { TaskManager } = require("./task_manager");
+import { VisibilityTracker } from "./visibility_tracker";
+import { BookmarkManager } from "./bookmark_manager";
+import { TaskManager } from "./task_manager";
 
-const { ControllerDriver } = require("./controller/maschine3/controller_driver");
-const { ModeDispatcher } = require("./controller/maschine3/mode_dispatcher");
-const { BookmarkMode } = require("./controller/maschine3/modes/bookmark_mode");
-const { TabsOnDisplayButtonsMode } = require("./controller/maschine3/modes/tabs_on_display_buttons_mode");
+import { ControllerDriver } from "./controller/maschine3/controller_driver";
+import { ModeDispatcher } from "./controller/maschine3/mode_dispatcher";
+import { BookmarkMode } from "./controller/maschine3/modes/bookmark_mode";
+import { TabsOnDisplayButtonsMode } from "./controller/maschine3/modes/tabs_on_display_buttons_mode";
 
-const { TaskDisplayMode } = require("./controller/maschine3/modes/task_display_mode");
-const { TaskPickerMode } = require("./controller/maschine3/modes/task_picker_mode");
-const { TaskSlotMode } = require("./controller/maschine3/modes/task_slot_mode");
-const { TaskSlotDisplayMode } = require("./controller/maschine3/modes/task_slot_display_mode");
+import { TaskDisplayMode } from "./controller/maschine3/modes/task_display_mode";
+import { TaskPickerMode } from "./controller/maschine3/modes/task_picker_mode";
+import { TaskSlotMode } from "./controller/maschine3/modes/task_slot_mode";
+import { TaskSlotDisplayMode } from "./controller/maschine3/modes/task_slot_display_mode";
 
-const { ActionBookmarkMode } = require("./controller/maschine3/modes/action_bookmark_mode");
+import { ActionBookmarkMode } from "./controller/maschine3/modes/action_bookmark_mode";
 
-const { DeckControllerDriver } = require("./controller/streamdeck/controller_driver");
+import { DeckControllerDriver } from "./controller/streamdeck/controller_driver";
 
-const { ColorHelper } = require("./indexed_color_helper");
+import { ColorHelper } from "./indexed_color_helper";
 
-let gBookmarkManager;
-let gBrainBoss;
-let gConfigstore;
-let gControllerDriver;
-let gSecondaryController;
+let gBookmarkManager: BookmarkManager;
+let gBrainBoss: BrainBoss;
+let gConfigstore: Configstore;
+let gControllerDriver: ControllerDriver;
+let gSecondaryController: DeckControllerDriver;
 let gControllers = [];
-let gDispatcher;
-let gVisibilityTracker;
-let gTaskManager;
+let gDispatcher: ModeDispatcher;
+let gVisibilityTracker: VisibilityTracker;
+let gTaskManager: TaskManager;
 
-let guiScreen;
-let guiLayout;
-let guiClients;
-let guiVisibilityReport;
-let guiVisDump;
-let guiDumpTabList;
+let guiScreen: blessed.Widgets.Screen;
+let guiLayout: blessed.Widgets.LayoutElement;
+let guiClients: bcontrib.Widgets.TableElement;
+let guiVisibilityReport: bcontrib.Widgets.TableElement;
+let guiVisDump: blessed.Widgets.BoxElement;
+let guiDumpTabList: blessed.Widgets.ListbarElement;
 let selectedDumpMode = 'logDetail';
 let logDetail = '';
-let guiDump;
-let guiLogEntries;
-let guiLog;
+let guiDump: blessed.Widgets.BoxElement;
+let guiLogEntries: { label: any; str: any; details: any; }[];
+let guiLog: blessed.Widgets.Log;
 let guiFocusRendered = false;
 
 const CONFIG_VERSION = 1;
@@ -304,7 +304,7 @@ ${JSON.stringify(info.details, null, 2)}`;
 function makeLogFunc(label, color) {
   const prefix = `{${color}-fg}${label}{/${color}-fg} `;
 
-  return function(str, details) {
+  return function(str, details=null) {
     // Our click mapping requires that `str` not include newlines, although it's
     // okay if it ends up wrapping.
     const safeStr = (str || '<null>').replace(/\n/g, '\\n');
@@ -327,13 +327,7 @@ let activeBlessedRender = false;
 // to rebuild our concept of state.
 let blessedContentStillValid = false;
 
-function blessedDirtied(contentStillValid) {
-  // Make sure we invalidate the blessed contents before checking whether we
-  // have a render in flight.
-  if (!contentStillValid) {
-    blessedContentStillValid = false;
-  }
-
+function blessedDirtied(contentStillValid=false) {
   if (pendingBlessedRender || activeBlessedRender) {
     return;
   }
@@ -348,7 +342,7 @@ function renderBlessed() {
     guiClients.setData(gBrainBoss.renderDebugState());
 
     // Maps are stable, use the index.
-    const selectedConn = Array.from(gBrainBoss.clientsByPrefix.values())[guiClients.rows.selected];
+    const selectedConn : BrainConnection = Array.from(gBrainBoss.clientsByPrefix.values())[guiClients.rows.selected];
     guiVisibilityReport.setData({
       headers: ['State', 'Focus Slot Id', 'Container Id', 'Window Container Id'],
       data: selectedConn ? selectedConn.debugVisibilityInventory : []
@@ -401,7 +395,7 @@ setupBlessed();
 
 function makeDefaultConfigController() {
   const configstore = new Configstore("taskolio-maschine3");
-  const colorHelper = ColorHelper;
+  const colorHelper = new ColorHelper();
 
   if (configstore.get('version') !== CONFIG_VERSION) {
     configstore.clear();
@@ -498,9 +492,9 @@ function makeDefaultConfigController() {
     saveTaskBookmarks: (taskBookmarks) => {
       configstore.set('taskBookmarks', taskBookmarks);
     },
-    alterDeckBrightness: (...args) => {
+    alterDeckBrightness: (dictArg) => {
       if (gSecondaryController) {
-        gSecondaryController.alterDeckBrightness(...args);
+        gSecondaryController.alterDeckBrightness(dictArg);
       }
     },
     taskPickerMode,
@@ -550,6 +544,7 @@ function makeDefaultConfigController() {
       asyncRenderHTML: (args) => {
         return brainBoss.asyncRenderHTML(args);
       },
+      colorHelper: null,
     });
   }
   catch (ex) {
@@ -613,7 +608,7 @@ const run = async (port) => {
 };
 
 const gNodeLog = makeLogFunc('node', 'red');
-process.on('unhandledRejection', (reason, promise) => {
+process.on('unhandledRejection', (reason: any, promise) => {
   gNodeLog('unhandledRejection: ' + reason.message, { stack: reason.stack });
 });
 
