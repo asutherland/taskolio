@@ -251,6 +251,11 @@ function activate(context) {
       }
     },
 
+    onMessage_styleThings(/*msg*/) {
+      // not handled... but it could be handy to do this if the explorer
+      // extension points make this easy.
+    },
+
     onMessage_fadeThings(/*msg*/) {
       // XXX we currently don't need/want to do anything for fading.
     },
