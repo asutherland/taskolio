@@ -86,9 +86,25 @@ function hexifyRGB({ red, green, blue }) {
  * Mk3-style indexed color helper.  We store the color as { colorIndex } where
  * colorIndex is a value in the inclusive range [0, 15].
  */
-class ColorHelper {
+export class IndexedColorHelper {
+  static computeColorBankColor(iBank: any, nBanks: number, iCell: any, nCells: number) {
+    return { colorIndex: iCell };
+  }
+  static computeDisplayColor(wrapped: any) {
+    if (!wrapped) {
+      return null;
+    }
+    return COLORS_START_OFFSET + wrapped.colorIndex * 4 + BRIGHT_OFFSET;
+  }
+
+  public indexed_led_mapping: any;
+
   constructor() {
     this.indexed_led_mapping = null;
+  }
+
+  updateLedMapping(mapping: any) {
+    this.indexed_led_mapping = mapping;
   }
 
   makeRandomColor() {
@@ -126,7 +142,7 @@ class ColorHelper {
    * high quality monitor, etc.
    */
   computeBookmarkRGBHexColors(wrapped) {
-    if (!this.indexed_led_mapping) {
+    if (this.indexed_led_mapping == null) {
       throw new Error('indexed_led_mapping not initialized!');
     }
 
@@ -143,7 +159,7 @@ class ColorHelper {
    * Compute the actual display values to return, since this is the RGB class,
    * an [r,g,b] tuple is returned.  The indexed variant returns a single index.
    */
-  computeBookmarkDisplayColor(wrapped, state, brightnessScale) {
+  computeBookmarkDisplayColor(wrapped, state, brightnessScale=undefined) {
     if (!wrapped) {
       return null;
     }
@@ -203,5 +219,3 @@ class ColorHelper {
     return this.computeBookmarkRGBHexColors(wrapped);
   }
 }
-
-module.exports.ColorHelper = new ColorHelper();

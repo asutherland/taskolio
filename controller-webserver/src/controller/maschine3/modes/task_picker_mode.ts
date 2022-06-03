@@ -1,8 +1,8 @@
 "use strict";
 
-const { html } = require('@popeindustries/lit-html-server');
+import { html } from '@popeindustries/lit-html-server';
 
-const { GridPickerMixin, GRID_CELLS } = require('./grid_picker_mixin');
+import { GridPickerMixin, GRID_CELLS } from './grid_picker_mixin.js';
 
 /**
  * Displays a paged grid UI of all the non-completed tasks known to the
@@ -11,7 +11,17 @@ const { GridPickerMixin, GRID_CELLS } = require('./grid_picker_mixin');
  * TaskSlotDisplayMode when the knob is touched as capacitatively sensed or
  * what not, which is why it's also in charge of push handling.)
  */
-class TaskPickerMode extends GridPickerMixin {
+export class TaskPickerMode extends GridPickerMixin {
+  dispatcher: any;
+  colorHelper: any;
+  taskManager: any;
+  updateHTML: any;
+  buttonColors: any;
+  unlitButtonDisplayColor: any;
+  pages: any[];
+  iPage: number;
+  parentMode: any;
+
   constructor({ dispatcher, colorHelper, taskManager, updateHTML }) {
     super();
 
@@ -195,5 +205,3 @@ class TaskPickerMode extends GridPickerMixin {
     return html`<div></div>`;
   }
 }
-
-module.exports.TaskPickerMode = TaskPickerMode;

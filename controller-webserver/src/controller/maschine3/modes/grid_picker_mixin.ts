@@ -5,7 +5,7 @@ const GRID_COLS = 4;
 const GRID_CELLS = GRID_ROWS * GRID_COLS;
 const GRID_COLS_PER_DISPLAY = 2;
 
-const { html } = require('@popeindustries/lit-html-server');
+import { html } from '@popeindustries/lit-html-server';
 
 /**
  * Mixin where the subclass provides a computeCellInfo method that is used to
@@ -13,7 +13,11 @@ const { html } = require('@popeindustries/lit-html-server');
  * pad button.  The picker completes by having one of the pad buttons pressed or
  * the subclassing mode invoking `abortPick` via a custom button handler.
  */
-class GridPickerMixin {
+export class GridPickerMixin {
+  get curBank() : any {
+    throw new Error("Not implemented");
+  }
+
   computeCenterHTML(stt, iDisplay) {
     const bank = this.curBank;
     const cellValues = [];
@@ -30,9 +34,15 @@ class GridPickerMixin {
 
     return html`${cellValues}`;
   }
+
+  computeCellHTML(iCell: number, iRow: number, iCol: number) {
+    throw new Error("Method not implemented.");
+  }
 }
 
-module.exports.GridPickerMixin = GridPickerMixin;
-module.exports.GRID_COLS = GRID_COLS;
-module.exports.GRID_ROWS = GRID_ROWS;
-module.exports.GRID_CELLS = GRID_CELLS;
+export {
+  GRID_COLS,
+  GRID_ROWS,
+  GRID_CELLS
+};
+

@@ -1,10 +1,13 @@
-const { html } = require('@popeindustries/lit-html-server');
-const { unsafeHTML } = require('@popeindustries/lit-html-server/directives/unsafe-html.js');
+import { html } from '@popeindustries/lit-html-server';
+import { unsafeHTML } from '@popeindustries/lit-html-server/directives/unsafe-html.js';
 
 /**
  *
  */
-class ModeDispatcher {
+export class ModeDispatcher {
+  rootModes: any;
+  modeStack: any;
+  modeGeneration: number;
   constructor() {
     // Because of circularity and my desire to have the modes have explicit
     // constructor invocations rather than magic poking-in of the dispatcher,
@@ -198,6 +201,12 @@ class ModeDispatcher {
         methodName, fallback);
     }
   }
+  onUnhandledButton(capitalName: any, evt: any) {
+    throw new Error("Method not implemented.");
+  }
+  computeUnhandledLED(capitalName: any) {
+    throw new Error("Method not implemented.");
+  }
 
   get topMode() {
     return this.modeStack[this.modeStack.length - 1];
@@ -368,6 +377,126 @@ class ModeDispatcher {
       muteChoke: this.computeMuteChokeLED(stt),
     };
   }
+  computeChannelMidiLED(stt: any) {
+    throw new Error("Method not implemented.");
+  }
+  computePluginInstanceLED(stt: any) {
+    throw new Error("Method not implemented.");
+  }
+  computeArrangerLED(stt: any) {
+    throw new Error("Method not implemented.");
+  }
+  computeBrowserPluginLED(stt: any) {
+    throw new Error("Method not implemented.");
+  }
+  computeArrowLeftLED(stt: any) {
+    throw new Error("Method not implemented.");
+  }
+  computeArrowRightLED(stt: any) {
+    throw new Error("Method not implemented.");
+  }
+  computeFileSaveLED(stt: any) {
+    throw new Error("Method not implemented.");
+  }
+  computeSettingsLED(stt: any) {
+    throw new Error("Method not implemented.");
+  }
+  computeAutoLED(stt: any) {
+    throw new Error("Method not implemented.");
+  }
+  computeMacroSetLED(stt: any) {
+    throw new Error("Method not implemented.");
+  }
+  computeVolumeLED(stt: any) {
+    throw new Error("Method not implemented.");
+  }
+  computeSwingLED(stt: any) {
+    throw new Error("Method not implemented.");
+  }
+  computeNoteRepeatArpLED(stt: any) {
+    throw new Error("Method not implemented.");
+  }
+  computeTempoLED(stt: any) {
+    throw new Error("Method not implemented.");
+  }
+  computeLockLED(stt: any) {
+    throw new Error("Method not implemented.");
+  }
+  computePitchLED(stt: any) {
+    throw new Error("Method not implemented.");
+  }
+  computeModLED(stt: any) {
+    throw new Error("Method not implemented.");
+  }
+  computePerformFxSelectLED(stt: any) {
+    throw new Error("Method not implemented.");
+  }
+  computeNotesLED(stt: any) {
+    throw new Error("Method not implemented.");
+  }
+  computeRestartLoopLED(stt: any) {
+    throw new Error("Method not implemented.");
+  }
+  computeEraseReplaceLED(stt: any) {
+    throw new Error("Method not implemented.");
+  }
+  computeTapMetroLED(stt: any) {
+    throw new Error("Method not implemented.");
+  }
+  computeFollowGridLED(stt: any) {
+    throw new Error("Method not implemented.");
+  }
+  computePlayLED(stt: any) {
+    throw new Error("Method not implemented.");
+  }
+  computeRecCountInLED(stt: any) {
+    throw new Error("Method not implemented.");
+  }
+  computeStopLED(stt: any) {
+    throw new Error("Method not implemented.");
+  }
+  computeShiftLED(stt: any) {
+    throw new Error("Method not implemented.");
+  }
+  computeFixedVelLED(stt: any) {
+    throw new Error("Method not implemented.");
+  }
+  computePadModeLED(stt: any) {
+    throw new Error("Method not implemented.");
+  }
+  computeKeyboardLED(stt: any) {
+    throw new Error("Method not implemented.");
+  }
+  computeChordsLED(stt: any) {
+    throw new Error("Method not implemented.");
+  }
+  computeStepLED(stt: any) {
+    throw new Error("Method not implemented.");
+  }
+  computeSceneLED(stt: any) {
+    throw new Error("Method not implemented.");
+  }
+  computePatternLED(stt: any) {
+    throw new Error("Method not implemented.");
+  }
+  computeEventsLED(stt: any) {
+    throw new Error("Method not implemented.");
+  }
+  computeVariationNavigateLED(stt: any) {
+    throw new Error("Method not implemented.");
+  }
+  computeDuplicateDoubleLED(stt: any) {
+    throw new Error("Method not implemented.");
+  }
+  computeSelectLED(stt: any) {
+    throw new Error("Method not implemented.");
+  }
+  computeSoloLED(stt: any) {
+    throw new Error("Method not implemented.");
+  }
+  computeMuteChokeLED(stt: any) {
+    throw new Error("Method not implemented.");
+  }
 
   base_computeIndexedLabeledLEDs(stt) {
     return {
@@ -378,6 +507,21 @@ class ModeDispatcher {
       navRight: this.computeNavRightLED(stt),
       navDown: this.computeNavDownLED(stt),
     };
+  }
+  computeSamplerLED(stt: any) {
+    throw new Error("Method not implemented.");
+  }
+  computeNavUpLED(stt: any) {
+    throw new Error("Method not implemented.");
+  }
+  computeNavLeftLED(stt: any) {
+    throw new Error("Method not implemented.");
+  }
+  computeNavRightLED(stt: any) {
+    throw new Error("Method not implemented.");
+  }
+  computeNavDownLED(stt: any) {
+    throw new Error("Method not implemented.");
   }
 
   // we only want to do handle the shift LED ourselves because it's part of our
@@ -458,6 +602,15 @@ font-family: sans-serif;
   </div>
 </div>`;
   }
+  computeTopHTML(stt: any, iDisplay: any) {
+    throw new Error("Method not implemented.");
+  }
+  computeCenterHTML(stt: any, iDisplay: any) {
+    throw new Error("Method not implemented.");
+  }
+  computeBottomHTML(stt: any, iDisplay: any) {
+    throw new Error("Method not implemented.");
+  }
 
   base_computeDeckHTML(stt, iDisplay) {
     const outerStyle = `
@@ -492,6 +645,7 @@ font-family: sans-serif;
   </div>
 </div>`;
   }
+  computeDeckContentsHTML(stt: any, iDisplay: any) {
+    throw new Error("Method not implemented.");
+  }
 }
-
-module.exports.ModeDispatcher = ModeDispatcher;

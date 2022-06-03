@@ -1,4 +1,4 @@
-const { FilteredSubscription } = require('./filtered_subscription');
+import { FilteredSubscription } from './filtered_subscription.js';
 
 /**
  * Hacky helper to find the key that maps to a given value in a Map.  For use
@@ -126,7 +126,22 @@ function extractPrefixWithDelim(prefixed) {
  * Processes and latches the thingsVisibilityInventory reports for each client,
  * applying window-manager visibility to non-WM clients.
  */
-class VisibilityTracker {
+export class VisibilityTracker {
+  brainBoss: any;
+  log: any;
+  containersByFullId: Map<any, any>;
+  focusSlotContentsById: Map<any, any>;
+  visibleContainerIds: Set<unknown>;
+  mruFocusSlotIds: any[];
+  alreadyReportedFailedFocusSlotWindowLookups: Set<unknown>;
+  wmPopulated: boolean;
+  windowContainerIdLookup: Map<any, any>;
+  focusSlotToWindowContainerId: Map<any, any>;
+  windowContainerIdToActiveFocusSlot: Map<any, any>;
+  focusedWindowContainerId: any;
+  focusedContainerId: any;
+  filteredSubscriptions: any[];
+
   constructor({ brainBoss, log }) {
     this.brainBoss = brainBoss;
     this.log = log;
@@ -861,7 +876,7 @@ focusedFocusSlotId: ${this.getFocusedFocusSlotId()}
     }
 
     // Fall back to the general focusWindow call.
-    return this.focusThing(containerId);
+    return this.focusThing(containerId, undefined);
   }
 
   /**
@@ -952,5 +967,3 @@ focusedFocusSlotId: ${this.getFocusedFocusSlotId()}
     return fs;
   }
 }
-
-module.exports.VisibilityTracker = VisibilityTracker;

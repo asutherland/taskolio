@@ -13,7 +13,7 @@ class TaskolioClient {
     this.state = 'disconnected';
     this.shutdownRequested = false;
 
-    this._timeoutId = 0;
+    this._timeoutId = null;
 
     this.connect();
   }
@@ -51,7 +51,11 @@ class TaskolioClient {
 
     const handlerName = `onMessage_${data.type}`;
 
-    this._settings[handlerName](data.payload);
+    if (handlerName in this._settings) {
+      this._settings[handlerName](data.payload);
+    } else {
+      console.warn("Unhandled message type:", data.type);
+    }
   }
 
   /**
