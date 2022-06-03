@@ -1,1 +1,8 @@
-{"name": "Taskolio", "description": "Fancy bookmarking via DJ/MIDI controllers..", "uuid": "gnome-shell-taskolio@visophyte.org", "shell-version": ["3.26.1"]}
+{
+    "name": "Taskolio",
+    "description": "Fancy bookmarking via DJ/MIDI controllers..",
+    "uuid": "gnome-shell-taskolio@visophyte.org",
+    "shell-version": [
+        "42.1"
+    ]
+}

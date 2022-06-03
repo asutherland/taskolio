@@ -1,4 +1,4 @@
-const tinycolor = require("tinycolor2");
+import tinycolor from "tinycolor2";
 
 const NO_BOOKMARK_RGB = [0, 0, 0];
 
@@ -8,7 +8,12 @@ const NO_BOOKMARK_RGB = [0, 0, 0];
  * colors and retrieving the current derived RGB color given the reported status
  * in the `VisibilityTracker`.
  */
-class BookmarkManager {
+export class BookmarkManager {
+  visTracker: any;
+  brainBoss: any;
+  colorHelper: any;
+  log: any;
+
   constructor({ visibilityTracker, brainBoss, colorHelper, log }) {
     this.visTracker = visibilityTracker;
     this.brainBoss = brainBoss;
@@ -417,4 +422,3 @@ class BookmarkManager {
   }
 }
 
-module.exports.BookmarkManager = BookmarkManager;

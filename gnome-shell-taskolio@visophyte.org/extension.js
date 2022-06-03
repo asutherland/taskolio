@@ -1,7 +1,6 @@
 'use strict';
 const St = imports.gi.St;
 const Main = imports.ui.main;
-const Tweener = imports.ui.tweener;
 
 // This is weird.  Maybe this is just a cargo-culted idiom?
 const Self = imports.misc.extensionUtils.getCurrentExtension();

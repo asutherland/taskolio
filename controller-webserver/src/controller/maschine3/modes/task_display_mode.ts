@@ -1,9 +1,12 @@
 "use strict";
 
-const { html } = require('@popeindustries/lit-html-server');
+import { html } from '@popeindustries/lit-html-server';
 
-class TaskDisplayMode {
-  constructor({ dispatcher, taskManager, taskPickerMode }) {
+export class TaskDisplayMode {
+  dispatcher: any;
+  taskManager: any;
+
+  constructor({ dispatcher, taskManager, taskPickerMode=null }) {
     this.dispatcher = dispatcher;
     this.taskManager = taskManager;
   }
@@ -33,5 +36,3 @@ class TaskDisplayMode {
 </div>`;
   }
 }
-
-module.exports.TaskDisplayMode = TaskDisplayMode;

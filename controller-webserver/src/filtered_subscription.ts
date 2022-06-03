@@ -1,9 +1,14 @@
-"use strict";
-
 /**
  *
  */
-class FilteredSubscription {
+export class FilteredSubscription {
+  visTracker: any;
+  filterPred: any;
+  compare: any;
+  onUpdate: any;
+  itemsById: Map<any, any>;
+  items: any[];
+  
   constructor({ visTracker, callerArgs: { filterPred, compare, onUpdate } }) {
     this.visTracker = visTracker;
     this.filterPred = filterPred;
@@ -66,5 +71,3 @@ class FilteredSubscription {
     this.visTracker.filteredSubscriptions.splice(idx, 1);
   }
 }
-
-module.exports.FilteredSubscription = FilteredSubscription;

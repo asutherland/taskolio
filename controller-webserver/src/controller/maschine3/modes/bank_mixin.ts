@@ -2,8 +2,8 @@
 
 const NUM_BANKS = 4;
 
-const { GRID_ROWS, GRID_COLS, GRID_CELLS, GridPickerMixin } =
-  require('./grid_picker_mixin');
+import { GRID_ROWS, GRID_COLS, GRID_CELLS, GridPickerMixin } from
+  './grid_picker_mixin.js';
 
 /**
  * Supports multiple grid banks.
@@ -22,8 +22,12 @@ const { GRID_ROWS, GRID_COLS, GRID_CELLS, GridPickerMixin } =
  *   Each entry in the outer array is a bank.  Each entry in the inner array is
  *   a cell in that bank's grid.
  */
-class BankMixin extends GridPickerMixin {
-  constructor({ computeCellValue, defaultCellValue, initialState }) {
+export class BankMixin extends GridPickerMixin {
+  bankSelected: number;
+  banks: any;
+  modeShortLabel: string;
+
+  constructor({ computeCellValue=null, defaultCellValue=undefined, initialState=undefined }) {
     super();
 
     /** The bank to display. */
@@ -40,7 +44,7 @@ class BankMixin extends GridPickerMixin {
     this.modeShortLabel = "cp";
   }
 
-  makeEmptyBanks({ computeCellValue, defaultCellValue }) {
+  makeEmptyBanks({ computeCellValue=null, defaultCellValue=null }) {
     const banks = new Array(NUM_BANKS);
     for (let iBank = 0; iBank < NUM_BANKS; iBank++) {
       banks[iBank] = new Array(GRID_CELLS);
@@ -82,8 +86,9 @@ class BankMixin extends GridPickerMixin {
   }
 }
 
-module.exports.BankMixin = BankMixin;
-module.exports.NUM_BANKS = NUM_BANKS;
-module.exports.GRID_COLS = GRID_COLS;
-module.exports.GRID_ROWS = GRID_ROWS;
-module.exports.GRID_CELLS = GRID_CELLS;
+export {
+  NUM_BANKS,
+  GRID_COLS,
+  GRID_ROWS,
+  GRID_CELLS
+};

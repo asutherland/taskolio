@@ -1,11 +1,11 @@
-const tinycolor = require("tinycolor2");
+import tinycolor from "tinycolor2";
 
 const EMPTY_RGB = [0, 0, 0];
 
 /**
  * This is the RGB color helper.
  */
-class ColorHelper {
+export class RGBColorHelper {
   makeRandomColor() {
     let hue = 360 * Math.random();
     let sat = 1.0;
@@ -73,5 +73,3 @@ class ColorHelper {
     return wrappedColor.rgb;
   }
 }
-
-module.exports.ColorHelper = new ColorHelper();

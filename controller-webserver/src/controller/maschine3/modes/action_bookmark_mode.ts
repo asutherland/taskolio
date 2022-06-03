@@ -6,7 +6,12 @@
  * that means being able to click on a button/link in a webpage, primarily
  * intended for being able to do media things in Google Play Music right now.
  */
-class ActionBookmarkMode {
+export class ActionBookmarkMode {
+  brainBoss: any;
+  bookmarkActions: any;
+  _saveState: any;
+  log: any;
+  pickingButton: boolean;
   constructor({ brainBoss, persistedState, saveState, log }) {
     this.brainBoss = brainBoss;
     this.bookmarkActions = persistedState || {};
@@ -53,5 +58,3 @@ class ActionBookmarkMode {
     this.log(`entering button picking mode`);
   }
 }
-
-module.exports.ActionBookmarkMode = ActionBookmarkMode;
