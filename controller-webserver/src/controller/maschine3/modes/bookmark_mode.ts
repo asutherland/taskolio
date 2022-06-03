@@ -1,8 +1,8 @@
 "use strict";
 
 import { BankMixin, NUM_BANKS, GRID_ROWS, GRID_COLS, GRID_CELLS }
-  from "./bank_mixin";
-import { ColorPickerMode } from "./color_picker_mode";
+  from "./bank_mixin.js";
+import { ColorPickerMode } from "./color_picker_mode.js";
 
 import { html } from '@popeindustries/lit-html-server';
 

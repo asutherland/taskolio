@@ -2,7 +2,7 @@
 
 import { html } from '@popeindustries/lit-html-server';
 
-import { GridPickerMixin, GRID_CELLS } from './grid_picker_mixin';
+import { GridPickerMixin, GRID_CELLS } from './grid_picker_mixin.js';
 
 /**
  * Displays a paged grid UI of all the non-completed tasks known to the

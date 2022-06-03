@@ -4,7 +4,6 @@ const Lang = imports.lang;
 const St = imports.gi.St;
 const Shell = imports.gi.Shell;
 const Main = imports.ui.main;
-const Tweener = imports.ui.tweener;
 const Meta = imports.gi.Meta;
 
 const RE_NATIVE_PTR = /^.+ native@([^\]]+)]$/;

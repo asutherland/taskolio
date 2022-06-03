@@ -5,7 +5,7 @@ const EMPTY_RGB = [0, 0, 0];
 /**
  * This is the RGB color helper.
  */
-export class ColorHelper {
+export class RGBColorHelper {
   makeRandomColor() {
     let hue = 360 * Math.random();
     let sat = 1.0;

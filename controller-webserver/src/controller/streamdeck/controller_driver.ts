@@ -1,6 +1,6 @@
 "use strict";
 
-import { openStreamDeck, StreamDeck } from 'elgato-stream-deck';
+import { openStreamDeck, StreamDeck } from '@elgato-stream-deck/node';
 
 import { renderToString } from '@popeindustries/lit-html-server';
 
@@ -186,7 +186,7 @@ export class DeckControllerDriver {
 
     //console.log('got rendering data, blitting');
     // we wait for this to fully be sent as a form of flow-control
-    this.controller.fillPanel(buf);
+    this.controller.fillPanelBuffer(buf);
 
     this.htmlDisplayed[iDisplay] = html;
     this.htmlPending[iDisplay] = null;

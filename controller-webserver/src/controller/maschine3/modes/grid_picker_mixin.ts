@@ -14,7 +14,9 @@ import { html } from '@popeindustries/lit-html-server';
  * the subclassing mode invoking `abortPick` via a custom button handler.
  */
 export class GridPickerMixin {
-  curBank: any;
+  get curBank() : any {
+    throw new Error("Not implemented");
+  }
 
   computeCenterHTML(stt, iDisplay) {
     const bank = this.curBank;

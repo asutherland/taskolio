@@ -3,7 +3,7 @@
 const NUM_BANKS = 4;
 
 import { GRID_ROWS, GRID_COLS, GRID_CELLS, GridPickerMixin } from
-  './grid_picker_mixin';
+  './grid_picker_mixin.js';
 
 /**
  * Supports multiple grid banks.

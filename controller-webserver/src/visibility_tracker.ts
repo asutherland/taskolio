@@ -1,4 +1,4 @@
-import { FilteredSubscription } from './filtered_subscription';
+import { FilteredSubscription } from './filtered_subscription.js';
 
 /**
  * Hacky helper to find the key that maps to a given value in a Map.  For use

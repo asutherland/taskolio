@@ -1,5 +1,5 @@
-const { html } = require('@popeindustries/lit-html-server');
-const { unsafeHTML } = require('@popeindustries/lit-html-server/directives/unsafe-html.js');
+import { html } from '@popeindustries/lit-html-server';
+import { unsafeHTML } from '@popeindustries/lit-html-server/directives/unsafe-html.js';
 
 /**
  *

@@ -1,4 +1,4 @@
-import { BrainConnection } from "./conn";
+import { BrainConnection } from "./conn.js";
 
 function extractClientId(prefixed) {
   return prefixed.split(':', 1)[0];

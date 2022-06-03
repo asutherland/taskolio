@@ -86,17 +86,25 @@ function hexifyRGB({ red, green, blue }) {
  * Mk3-style indexed color helper.  We store the color as { colorIndex } where
  * colorIndex is a value in the inclusive range [0, 15].
  */
-export class ColorHelper {
-  static computeColorBankColor(iBank: any, arg1: number, iCell: any, arg3: number) {
-    throw new Error("Method not implemented.");
+export class IndexedColorHelper {
+  static computeColorBankColor(iBank: any, nBanks: number, iCell: any, nCells: number) {
+    return { colorIndex: iCell };
   }
-  static computeDisplayColor(computeDisplayColor: any) {
-    throw new Error("Method not implemented.");
+  static computeDisplayColor(wrapped: any) {
+    if (!wrapped) {
+      return null;
+    }
+    return COLORS_START_OFFSET + wrapped.colorIndex * 4 + BRIGHT_OFFSET;
   }
-  indexed_led_mapping: any;
+
+  public indexed_led_mapping: any;
 
   constructor() {
     this.indexed_led_mapping = null;
+  }
+
+  updateLedMapping(mapping: any) {
+    this.indexed_led_mapping = mapping;
   }
 
   makeRandomColor() {
@@ -134,7 +142,7 @@ export class ColorHelper {
    * high quality monitor, etc.
    */
   computeBookmarkRGBHexColors(wrapped) {
-    if (!this.indexed_led_mapping) {
+    if (this.indexed_led_mapping == null) {
       throw new Error('indexed_led_mapping not initialized!');
     }
 

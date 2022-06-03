@@ -1,6 +1,6 @@
 'use strict';
 
-const { exec } = require('child_process');
+import { exec } from 'child_process';
 
 /**
  * Mangle taskwarrior's delimiter-less ISO 8601 format into one Date.parse can

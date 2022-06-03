@@ -1,7 +1,7 @@
 import { BankMixin, NUM_BANKS, GRID_ROWS, GRID_COLS, GRID_CELLS }
-  from "./bank_mixin";
+  from "./bank_mixin.js";
 
-import { ColorHelper } from '../../../indexed_color_helper';
+import { IndexedColorHelper } from '../../../indexed_color_helper.js';
 import { html } from '@popeindustries/lit-html-server';
 
 /**
@@ -16,7 +16,7 @@ export class ColorPickerMode extends BankMixin {
   constructor({ caller }) {
     super({
       computeCellValue(iBank, iCell, iRow, iCol) {
-        return ColorHelper.computeColorBankColor(iBank, 4, iCell, 16);
+        return IndexedColorHelper.computeColorBankColor(iBank, 4, iCell, 16);
       }
     });
 
@@ -42,7 +42,7 @@ export class ColorPickerMode extends BankMixin {
   }
 
   computeGridColors() {
-    return this.curBank.map(ColorHelper.computeDisplayColor);
+    return this.curBank.map(IndexedColorHelper.computeDisplayColor);
   }
 
   // XXX do something better than this.

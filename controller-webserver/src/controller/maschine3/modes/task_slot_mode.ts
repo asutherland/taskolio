@@ -2,7 +2,7 @@
 
 import { html } from '@popeindustries/lit-html-server';
 
-import { ColorPickerMode } from "./color_picker_mode";
+import { ColorPickerMode } from "./color_picker_mode.js";
 
 const VERSION = 1;
 const GROUP_BUTTONS = 8;

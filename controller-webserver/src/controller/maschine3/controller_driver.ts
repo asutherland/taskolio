@@ -1,6 +1,6 @@
 "use strict";
 
-import Mk3 from "node-traktor-f1/lib/maschine_mk3";
+import { createNodeHidAdapter, createNodeUsbAdapter, MaschineMk3} from "ni-controllers-lib";
 
 import { renderToString } from '@popeindustries/lit-html-server';
 
@@ -42,13 +42,17 @@ export class ControllerDriver {
   htmlDesired: any[];
   _htmlUpdatePending: boolean;
   touchStrips: any;
-  constructor({ dispatcher, log, asyncRenderHTML, colorHelper }) {
-    const controller = this.controller = new Mk3();
+  constructor() {
+  }
+
+  async init({ dispatcher, log, asyncRenderHTML, colorHelper }) {
+    const controller = this.controller = new MaschineMk3(createNodeHidAdapter, createNodeUsbAdapter);
+    await controller.init();
     this.dispatcher = dispatcher;
     this.log = log;
     this.asyncRenderHTML = asyncRenderHTML;
     this.colorHelper = colorHelper;
-    this.colorHelper.indexed_led_mapping = controller.indexed_led_mapping;
+    this.colorHelper.updateLedMapping(controller.config.indexed_led_mapping);
 
     this.buttonStates = {};
     this.sliderStates = [];
@@ -206,13 +210,13 @@ export class ControllerDriver {
     const { imageArray } = await this.asyncRenderHTML({
       width: this.controller.displays.width,
       height: this.controller.displays.height,
-      mode: 'rgb16',
+      mode: 'rgb',
       htmlStr: html
     });
 
     //console.log('got rendering data, blitting');
     // we wait for this to fully be sent as a form of flow-control
-    await this.controller.displays.paintDisplayFromArray(iDisplay, imageArray);
+    await this.controller.displays.paintDisplay(iDisplay, imageArray);
 
     this.htmlDisplayed[iDisplay] = html;
     this.htmlPending[iDisplay] = null;

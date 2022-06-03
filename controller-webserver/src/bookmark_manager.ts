@@ -1,4 +1,4 @@
-const tinycolor = require("tinycolor2");
+import tinycolor from "tinycolor2";
 
 const NO_BOOKMARK_RGB = [0, 0, 0];
 
