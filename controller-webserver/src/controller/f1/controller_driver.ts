@@ -1,6 +1,8 @@
 "use strict";
 
-// This file forms the basis of the F1 re-fork.
+// This file is derived from the Maschine Mk3 controller again.  (There was an
+// F1 controller that evolved into the maschine controller, but given the drift
+// it makes sense to start from the mk3.)
 
 import { createNodeHidAdapter, createNodeUsbAdapter, MaschineMk3} from "ni-controllers-lib";
 
