@@ -1,6 +1,7 @@
 import { html } from '@popeindustries/lit-html-server';
 import { unsafeHTML } from '@popeindustries/lit-html-server/directives/unsafe-html.js';
 
+// This is forked from Maschine, changes not yet made.
 export class ModeDispatcher {
   rootModes: any;
   modeStack: any;

@@ -4,7 +4,7 @@
 // F1 controller that evolved into the maschine controller, but given the drift
 // it makes sense to start from the mk3.)
 
-import { createNodeHidAdapter, createNodeUsbAdapter, MaschineMk3} from "ni-controllers-lib";
+import { createNodeHidAdapter, createNodeUsbAdapter, TraktorF1 } from "ni-controllers-lib";
 
 import { renderToString } from '@popeindustries/lit-html-server';
 
@@ -32,7 +32,7 @@ const BLANK_TOUCHSTRIP: number[] = [];
  * our changes into it would make for an otherwise useless fork.)
  */
 export class ControllerDriver {
-  controller: MaschineMk3;
+  controller: TraktorF1;
   dispatcher: any;
   log: any;
   asyncRenderHTML: any;
@@ -48,7 +48,7 @@ export class ControllerDriver {
   touchStrips: any;
 
   constructor() {
-    this.controller = new MaschineMk3(createNodeHidAdapter, createNodeUsbAdapter);
+    this.controller = new TraktorF1(createNodeHidAdapter, createNodeUsbAdapter);
   }
 
   async init({ dispatcher, log, asyncRenderHTML, colorHelper }): Promise<void> {
@@ -63,38 +63,13 @@ export class ControllerDriver {
     this.buttonStates = {};
     this.sliderStates = [];
     this.knobStates = [];
-    this.touchStripStates = [];
-
-    /**
-     * For each display, the HTML of what is currently displayed.
-     */
-    this.htmlDisplayed = new Array(controller.displays.numDisplays);
-    /**
-     * For each display, the HTML of what we most recently asked to be rendered.
-     * When we get the render back for a display, the value moves to
-     * `htmlDisplayed`.  If there is a value for the display in `htmlDesired`,
-     * we kick off another render and move the value to `htmlPending`.
-     */
-    this.htmlPending = new Array(controller.displays.numDisplays);
-    /**
-     * The most recently desired HTML contents for the given display, and which
-     * has not yet been issued to a html-rendering-capable client.  This can
-     * be clobbered if we are generating new desired HTML state faster than we
-     * can render it or, more likely, if we're simply not connected to such a
-     * client at the current moment.
-     */
-    this.htmlDesired = new Array(controller.displays.numDisplays);
-    // See updateHTML().
-    this._htmlUpdatePending = false;
 
     this._bindButtons();
 
     this._bindEventFamily("s", "changed", 4, this.sliderStates,
                           "slider", "onSliderMoved");
-    this._bindEventFamily("k", "changed", 8, this.knobStates,
+    this._bindEventFamily("k", "changed", 4, this.knobStates,
                           "knob", "onKnobTurned");
-    this._bindEventFamily("touchStrip", "changed", 2, this.touchStripStates,
-                          "touchStrip", "onTouchStripMovement");
     // TODO: expose the stepper's onStepperTurned event.  I'm not doing it yet
     // because it looks like node-traktor-f1 likely has a wraparound bug.
   }
@@ -109,20 +84,6 @@ export class ControllerDriver {
     for (let iGrid = 0; iGrid < 16; iGrid++) {
       const index = gridColors[iGrid];
       ctrl.setIndexedColor(`p${ iGrid + 1}`, index);
-    }
-
-    // -- Group
-    const groupColors = this.dispatcher.computeGroupColors(stt) || BLANK_GROUPS;
-    for (let iGroup = 0; iGroup < 8; iGroup++) {
-      const index = groupColors[iGroup];
-      ctrl.setIndexedColor(`g${ iGroup + 1}`, index);
-    }
-
-    // -- Touch Strip
-    const tsColors = this.dispatcher.computeTouchStripColors(stt) || BLANK_TOUCHSTRIP;
-    for (let iTS = 0; iTS < 25; iTS++) {
-      const index = tsColors[iTS];
-      ctrl.setIndexedColor(`ts${ iTS + 1}`, index);
     }
 
     // -- Display Buttons
