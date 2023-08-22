@@ -1,6 +1,6 @@
 "use strict";
 
-// forked to srever-f1.ts too.
+// Forked from maschine mk3 server.
 
 import WebSocket from "ws";
 import Configstore from "configstore";

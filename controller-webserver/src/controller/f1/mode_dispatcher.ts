@@ -10,6 +10,11 @@ export class ModeDispatcher {
     // Because of circularity and my desire to have the modes have explicit
     // constructor invocations rather than magic poking-in of the dispatcher,
     // all the actual initialization logic happens in init().
+
+    /**
+     * Everytime the mode stack changes, the generation is incremented.
+     */
+    this.modeGeneration = 0;
   }
 
   /**
@@ -21,145 +26,40 @@ export class ModeDispatcher {
     this.rootModes = rootModes.concat();
     this.modeStack = rootModes.concat();
 
-    /**
-     * Everytime the mode stack changes, the generation is incremented.
-     */
-    this.modeGeneration = 0;
-
     // -- stack-bound methods
     const boundMethods = [
       // the high level display computation methods
       "computeGridColors",
-      "computeGroupColors",
-      "computeTouchStripColors",
-      "computeDisplayLEDs",
+      "computeBankLEDs",
       "computeLabeledLEDs",
-      "computeIndexedLabeledLEDs",
-      "computeHTML",
-      // base_computeHTML spreads over these:
-      "computeTopHTML",
-      "computeCenterHTML",
-      "computeBottomHTML",
-      // deck HTML
-      "computeDeckHTML",
-      "computeDeckContentsHTML",
       // Our base_computeLabeledLEDs method is actually based on spreading over
       // all of these:
-      "computeChannelMidiLED",
-      "computePluginInstanceLED",
-      "computeArrangerLED",
-      "computeMixerLED",
-      "computeBrowserPluginLED",
-      "computeArrowLeftLED",
-      "computeArrowRightLED",
-      "computeFileSaveLED",
-      "computeSettingsLED",
-      "computeAutoLED",
-      "computeMacroSetLED",
-      "computeVolumeLED",
-      "computeSwingLED",
-      "computeNoteRepeatArpLED",
-      "computeTempoLED",
-      "computeLockLED",
-      "computePitchLED",
-      "computeModLED",
-      "computePerformFxSelectLED",
-      "computeNotesLED",
-      "computeRestartLoopLED",
-      "computeEraseReplaceLED",
-      "computeTapMetroLED",
-      "computeFollowGridLED",
-      "computePlayLED",
-      "computeRecCountInLED",
-      "computeStopLED",
+      "computeSyncLED",
+      "computeQuantLED",
+      "computeCaptureLED",
       "computeShiftLED",
-      "computeFixedVelLED",
-      "computePadModeLED",
-      "computeKeyboardLED",
-      "computeChordsLED",
-      "computeStepLED",
-      "computeSceneLED",
-      "computePatternLED",
-      "computeEventsLED",
-      "computeVariationNavigateLED",
-      "computeDuplicateDoubleLED",
-      "computeSelectLED",
-      "computeSoloLED",
-      "computeMuteChokeLED",
-      // And then we have base_computeIndexedLabeledLEDs is over these...
-      "computeSamplerLED",
-      "computeNavUpLED",
-      "computeNavLeftLED",
-      "computeNavRightLED",
-      "computeNavDownLED",
-      //
-      "computeUnhandledLED",
+      "computeReverseLED",
+      "computeTypeLED",
+      "computeSizeLED",
+      "computeBrowseLED",
       // - event handling methods
-      // streamdeck buttons
-      "onDeckButton",
-      "onDeckButtonDown",
       // things we got multiples of
       "onGridButton",
-      "onGroupButton",
-      "onDisplayButton",
+      "onBankButton",
       "onKnobTurned",
       "onSliderMoved",
-      "onTouchStripMovement",
-      // XXX nav button mapping stuff here?
-      "onNavTouchPressed",
-      "onNavTouchReleased",
-      "onNavPushButton",
-      "onNavUpButton",
-      "onNavRightButton",
-      "onNavDownButton",
-      "onNavLeftButton",
-
-      "onKnobTouch",
-
+      // stepper
+      "onStepperButton",
+      "onStepperTurned",
       // specific labeled buttons
-      "onChannelMidiButton",
-      "onPluginInstanceButton",
-      "onArrangerButton",
-      "onMixerButton",
-      "onBrowserPluginButton",
-      "onSamplingButton",
-      "onArrowLeftButton",
-      "onArrowRightButton",
-      "onFileSaveButton",
-      "onSettingsButton",
-      "onAutoButton",
-      "onMacroSetButton",
-      "onVolumeButton",
-      "onSwingButton",
-      "onNoteRepeatArpButton",
-      "onTempoButton",
-      "onLockButton",
-      "onPitchButton",
-      "onModButton",
-      "onPerformFxSelectButton",
-      "onNotesButton",
-      "onRestartLoopButton",
-      "onEraseReplaceButton",
-      "onTapMetroButton",
-      "onFollowGridButton",
-      "onPlayButton",
-      "onRecCountInButton",
-      "onStopButton",
+      "onSyncButton",
+      "onQuantButton",
+      "onCaptureButton",
       "onShiftButton",
-      "onFixedVelButton",
-      "onPadModeButton",
-      "onKeyboardButton",
-      "onChordsButton",
-      "onStepButton",
-      "onSceneButton",
-      "onPatternButton",
-      "onEventsButton",
-      "onVariationNavigateButton",
-      "onDuplicateDoubleButton",
-      "onSelectButton",
-      "onSoloButton",
-      "onMuteChokeButton",
-      "onUnhandledButton",
+      "onReverseButton",
+      "onTypeButton",
+      "onSizeButton",
+      "onBrowseButton",
     ];
 
     const nop = () => null;
@@ -309,341 +209,63 @@ export class ModeDispatcher {
     }
   }
 
-  base_computeGridColors(stt) {
+  base_computeGridColors(stt: any) {
     // The driver knows to map this to an all-black 4x4 grid.
     return null;
   }
 
-  base_computeGroupColors(stt) {
+  base_computeGroupColors(stt: any) {
     // The driver knows to map this to an all-black 4x2 grid.
     return null;
   }
 
-  base_computeTouchStripColors(stt) {
+  base_computeTouchStripColors(stt: any) {
     // The driver knows to map this to all 25 LEDs being black.
     return null;
   }
 
-  base_computeDisplayLEDs(stt) {
+  base_computeDisplayLEDs(stt: any) {
     return [0, 0, 0, 0, 0, 0, 0, 0];
   }
 
-  base_computeLabeledLEDs(stt) {
+  base_computeLabeledLEDs(stt: any) {
     return {
-      channelMidi: this.computeChannelMidiLED(stt),
-      pluginInstance: this.computePluginInstanceLED(stt),
-      arranger: this.computeArrangerLED(stt),
-      browserPlugin: this.computeBrowserPluginLED(stt),
-
-      arrowLeft: this.computeArrowLeftLED(stt),
-      arrowRight: this.computeArrowRightLED(stt),
-      fileSave: this.computeFileSaveLED(stt),
-      settings: this.computeSettingsLED(stt),
-      auto: this.computeAutoLED(stt),
-      macroSet: this.computeMacroSetLED(stt),
-      // d1-d8
-      volume: this.computeVolumeLED(stt),
-      swing: this.computeSwingLED(stt),
-      noteRepeatArp: this.computeNoteRepeatArpLED(stt),
-      tempo: this.computeTempoLED(stt),
-      lock: this.computeLockLED(stt),
-      pitch: this.computePitchLED(stt),
-      mod: this.computeModLED(stt),
-      performFxSelect: this.computePerformFxSelectLED(stt),
-      notes: this.computeNotesLED(stt),
-
-      restartLoop: this.computeRestartLoopLED(stt),
-      eraseReplace: this.computeEraseReplaceLED(stt),
-      tapMetro: this.computeTapMetroLED(stt),
-      followGrid: this.computeFollowGridLED(stt),
-      play: this.computePlayLED(stt),
-      recCountIn: this.computeRecCountInLED(stt),
-      stop: this.computeStopLED(stt),
-      shift: this.computeShiftLED(stt),
-      fixedVel: this.computeFixedVelLED(stt),
-      padMode: this.computePadModeLED(stt),
-      keyboard: this.computeKeyboardLED(stt),
-      chords: this.computeChordsLED(stt),
-      step: this.computeStepLED(stt),
-      scene: this.computeSceneLED(stt),
-      pattern: this.computePatternLED(stt),
-      events: this.computeEventsLED(stt),
-      variationNavigate: this.computeVariationNavigateLED(stt),
-      duplicateDouble: this.computeDuplicateDoubleLED(stt),
-      select: this.computeSelectLED(stt),
-      solo: this.computeSoloLED(stt),
-      muteChoke: this.computeMuteChokeLED(stt),
+      browse: this.computeBrowseLED(stt),
+      sync: this.computeSyncLED(stt),
+      quant: this.computeQuantLED(stt),
+      capture: this.computeCaptureLED(stt),
+      shift: this.base_computeShiftLED(stt),
+      reverse: this.computeReverseLED(stt),
+      type: this.computeTypeLED(stt),
+      size: this.computeSizeLED(stt),
     };
-  }
-  computeChannelMidiLED(stt: any) {
-    throw new Error("Method not implemented.");
-  }
-  computePluginInstanceLED(stt: any) {
-    throw new Error("Method not implemented.");
-  }
-  computeArrangerLED(stt: any) {
-    throw new Error("Method not implemented.");
-  }
-  computeBrowserPluginLED(stt: any) {
-    throw new Error("Method not implemented.");
-  }
-  computeArrowLeftLED(stt: any) {
-    throw new Error("Method not implemented.");
-  }
-  computeArrowRightLED(stt: any) {
-    throw new Error("Method not implemented.");
-  }
-  computeFileSaveLED(stt: any) {
-    throw new Error("Method not implemented.");
-  }
-  computeSettingsLED(stt: any) {
-    throw new Error("Method not implemented.");
-  }
-  computeAutoLED(stt: any) {
-    throw new Error("Method not implemented.");
-  }
-  computeMacroSetLED(stt: any) {
-    throw new Error("Method not implemented.");
-  }
-  computeVolumeLED(stt: any) {
-    throw new Error("Method not implemented.");
-  }
-  computeSwingLED(stt: any) {
-    throw new Error("Method not implemented.");
-  }
-  computeNoteRepeatArpLED(stt: any) {
-    throw new Error("Method not implemented.");
-  }
-  computeTempoLED(stt: any) {
-    throw new Error("Method not implemented.");
-  }
-  computeLockLED(stt: any) {
-    throw new Error("Method not implemented.");
-  }
-  computePitchLED(stt: any) {
-    throw new Error("Method not implemented.");
-  }
-  computeModLED(stt: any) {
-    throw new Error("Method not implemented.");
-  }
-  computePerformFxSelectLED(stt: any) {
-    throw new Error("Method not implemented.");
-  }
-  computeNotesLED(stt: any) {
-    throw new Error("Method not implemented.");
-  }
-  computeRestartLoopLED(stt: any) {
-    throw new Error("Method not implemented.");
-  }
-  computeEraseReplaceLED(stt: any) {
-    throw new Error("Method not implemented.");
-  }
-  computeTapMetroLED(stt: any) {
-    throw new Error("Method not implemented.");
-  }
-  computeFollowGridLED(stt: any) {
-    throw new Error("Method not implemented.");
-  }
-  computePlayLED(stt: any) {
-    throw new Error("Method not implemented.");
-  }
-  computeRecCountInLED(stt: any) {
-    throw new Error("Method not implemented.");
-  }
-  computeStopLED(stt: any) {
-    throw new Error("Method not implemented.");
-  }
-  computeShiftLED(stt: any) {
-    throw new Error("Method not implemented.");
-  }
-  computeFixedVelLED(stt: any) {
-    throw new Error("Method not implemented.");
-  }
-  computePadModeLED(stt: any) {
-    throw new Error("Method not implemented.");
-  }
-  computeKeyboardLED(stt: any) {
-    throw new Error("Method not implemented.");
-  }
-  computeChordsLED(stt: any) {
-    throw new Error("Method not implemented.");
-  }
-  computeStepLED(stt: any) {
-    throw new Error("Method not implemented.");
-  }
-  computeSceneLED(stt: any) {
-    throw new Error("Method not implemented.");
-  }
-  computePatternLED(stt: any) {
-    throw new Error("Method not implemented.");
-  }
-  computeEventsLED(stt: any) {
-    throw new Error("Method not implemented.");
-  }
-  computeVariationNavigateLED(stt: any) {
-    throw new Error("Method not implemented.");
-  }
-  computeDuplicateDoubleLED(stt: any) {
-    throw new Error("Method not implemented.");
-  }
-  computeSelectLED(stt: any) {
-    throw new Error("Method not implemented.");
-  }
-  computeSoloLED(stt: any) {
-    throw new Error("Method not implemented.");
-  }
-  computeMuteChokeLED(stt: any) {
-    throw new Error("Method not implemented.");
-  }
-
-  base_computeIndexedLabeledLEDs(stt) {
-    return {
-      sampler: this.computeSamplerLED(stt),
-
-      navUp: this.computeNavUpLED(stt),
-      navLeft: this.computeNavLeftLED(stt),
-      navRight: this.computeNavRightLED(stt),
-      navDown: this.computeNavDownLED(stt),
-    };
-  }
-  computeSamplerLED(stt: any) {
-    throw new Error("Method not implemented.");
-  }
-  computeNavUpLED(stt: any) {
-    throw new Error("Method not implemented.");
-  }
-  computeNavLeftLED(stt: any) {
-    throw new Error("Method not implemented.");
-  }
-  computeNavRightLED(stt: any) {
-    throw new Error("Method not implemented.");
-  }
-  computeNavDownLED(stt: any) {
-    throw new Error("Method not implemented.");
   }
 
   // we only want to do handle the shift LED ourselves because it's part of our
   // expected idiom to have shift work.
-  base_computeShiftLED(stt) {
+  base_computeShiftLED(stt: any) {
     return stt.shift;
   }
 
-  base_computeHTML(stt, iDisplay) {
-    const outerStyle = `
-width: 100%;
-height: 100%;
-color: white;
-background-color: black;
-font-size: 14px;
-font-family: sans-serif;
-`.replace(/\n/g, ' ');
-    const styleBlock = `<style>
-.mainGrid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  grid-column-gap: 8px;
-}
-
-.displayButton {
-  grid-column: span 2;
-  padding: 0 2px;
-}
-.displayButton:nth-child(odd) {
-  border-left: 2px solid #ccc;
-  border-right: 2px solid #666;
-}
-.displayButton:nth-child(even) {
-  grid-row: 2;
-  border-right: 2px solid #ccc;
-  text-align: right;
-}
-
-/* Separate the display button top tabs from the grid area. */
-.topGridRow {
-  margin-top: 8px;
-}
-.gridButton {
-  grid-column: span 2;
-  min-height: 2.2em;
-  max-height: 2.2em;
-  line-height: 1.1em;
-  border: 2px solid #222;
-}
-
-.mainGrid > div {
-  overflow: hidden;
-}
-
-.taskDescription {
-  margin-top: 8px;
-  margin-left: 2px;
-  grid-column: span 4;
-  font-size: 24px;
-}
-
-.fullCenter {
-  grid-column-start: 1;
-  grid-column-end: 4;
-}
-</style>`
-
-    const topHtml = this.computeTopHTML(stt, iDisplay);
-    const centerHtml = this.computeCenterHTML(stt, iDisplay);
-    const bottomHtml = this.computeBottomHTML(stt, iDisplay);
-
-    return html`<div xmlns="http://www.w3.org/1999/xhtml" style="${outerStyle.replace('"', "''")}">
-  ${unsafeHTML(styleBlock)}
-  <div class="mainGrid">
-    ${topHtml}
-    ${centerHtml}
-    ${bottomHtml}
-  </div>
-</div>`;
-  }
-  computeTopHTML(stt: any, iDisplay: any) {
+  computeBrowseLED(stt: any) {
     throw new Error("Method not implemented.");
   }
-  computeCenterHTML(stt: any, iDisplay: any) {
+  computeSyncLED(stt: any) {
     throw new Error("Method not implemented.");
   }
-  computeBottomHTML(stt: any, iDisplay: any) {
+  computeQuantLED(stt: any) {
     throw new Error("Method not implemented.");
   }
-
-  base_computeDeckHTML(stt, iDisplay) {
-    const outerStyle = `
-width: 100%;
-min-height: 100%;
-height: 100%;
-color: white;
-background-color: black;
-font-size: 18px;
-font-family: sans-serif;
-`.replace(/\n/g, ' ');
-    const styleBlock = `<style>
-.mainGrid {
-  display: grid;
-  width: 100%;
-  height: ${stt.rows*stt.iconPix}px;
-  grid-template-columns: repeat(${stt.columns/2}, 1fr);
-  grid-template-rows: repeat(${stt.rows}, ${stt.iconPix}px);
-}
-
-.mainGrid > div {
-  overflow: hidden;
-}
-</style>`
-
-    const contentsHtml = this.computeDeckContentsHTML(stt, iDisplay);
-
-    return html`<div xmlns="http://www.w3.org/1999/xhtml" style="${outerStyle.replace('"', "''")}">
-  ${unsafeHTML(styleBlock)}
-  <div class="mainGrid">
-    ${contentsHtml}
-  </div>
-</div>`;
+  computeCaptureLED(stt: any) {
+    throw new Error("Method not implemented.");
   }
-  computeDeckContentsHTML(stt: any, iDisplay: any) {
+  computeReverseLED(stt: any) {
+    throw new Error("Method not implemented.");
+  }
+  computeTypeLED(stt: any) {
+    throw new Error("Method not implemented.");
+  }
+  computeSizeLED(stt: any) {
     throw new Error("Method not implemented.");
   }
 }
