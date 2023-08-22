@@ -10,7 +10,7 @@ const BLANK_GRID = [...BLANK_ROW, ...BLANK_ROW, ...BLANK_ROW, ...BLANK_ROW];
 const BLANK_GROUPS = [COLOR_BLACK, COLOR_BLACK, COLOR_BLACK, COLOR_BLACK,
                       COLOR_BLACK, COLOR_BLACK, COLOR_BLACK, COLOR_BLACK];
 const BLANK_BANKS = [0, 0, 0, 0, 0, 0, 0, 0];
-const BLANK_TOUCHSTRIP = [];
+const BLANK_TOUCHSTRIP: number[] = [];
 {
   for (let i=0; i < 25; i++) {
     BLANK_TOUCHSTRIP.push(COLOR_BLACK);
@@ -28,25 +28,27 @@ const BLANK_TOUCHSTRIP = [];
  * our changes into it would make for an otherwise useless fork.)
  */
 export class ControllerDriver {
-  controller: any;
+  controller: MaschineMk3;
   dispatcher: any;
   log: any;
   asyncRenderHTML: any;
   colorHelper: any;
-  buttonStates: {};
-  sliderStates: any[];
-  knobStates: any[];
-  touchStripStates: any[];
-  htmlDisplayed: any[];
-  htmlPending: any[];
-  htmlDesired: any[];
-  _htmlUpdatePending: boolean;
+  buttonStates!: {};
+  sliderStates!: any[];
+  knobStates!: any[];
+  touchStripStates!: any[];
+  htmlDisplayed!: any[];
+  htmlPending!: any[];
+  htmlDesired!: any[];
+  _htmlUpdatePending!: boolean;
   touchStrips: any;
+
   constructor() {
+    this.controller = new MaschineMk3(createNodeHidAdapter, createNodeUsbAdapter);
   }
 
-  async init({ dispatcher, log, asyncRenderHTML, colorHelper }) {
-    const controller = this.controller = new MaschineMk3(createNodeHidAdapter, createNodeUsbAdapter);
+  async init({ dispatcher, log, asyncRenderHTML, colorHelper }): Promise<void> {
+    const controller = this.controller;
     await controller.init();
     this.dispatcher = dispatcher;
     this.log = log;
@@ -295,11 +297,11 @@ export class ControllerDriver {
   _bindButtons() {
     for (const name of Object.keys(this.controller.buttons)) {
       const initialCap = name.slice(0, 1).toUpperCase() + name.slice(1);
-      let methodName;
-      let index;
+      let methodName: string;
+      let index: number | null;
       let match;
       // by default we don't generate an event for something being pressed.
-      let pressMethodName;
+      let pressMethodName: string;
       if (/^p\d+$/.test(name)) {
         methodName = "onGridButton";
         index = parseInt(name.slice(1), 10) - 1;

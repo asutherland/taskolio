@@ -4,10 +4,11 @@
     "target": "es2022",
     "noImplicitAny": true,
     "strict": true,
+    "moduleResolution": "NodeNext",
     "esModuleInterop": true,
     "declaration": true,
     "sourceMap": true,
     "outDir": "dist"
   },
-  "include": ["lib", "types"]
+  "include": ["src"]
 }

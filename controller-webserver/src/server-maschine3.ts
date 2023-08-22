@@ -574,9 +574,9 @@ async function makeDefaultConfigController() {
   }
 }
 
-let gServer;
+let gServer: WebSocket.Server;
 
-const run = async (port) => {
+const run = async (port: number) => {
   gServer = new WebSocket.Server({
     port,
     // track the clients on gServer.clients so we don't have to.
@@ -590,7 +590,7 @@ const run = async (port) => {
      * gnome-shell extension's libsoup connection though, and it (not conforming
      * to browser behavior) will have an empty origin.
      */
-    verifyClient(info) {
+    verifyClient(info: { origin: string; }) {
       // Firefox is now sending "null" for WebExtensions... although it's
       // believable our stack is coercing this to a string?  Or maybe Firefox
       // does.  The key thing is that we just don't want to listen to web

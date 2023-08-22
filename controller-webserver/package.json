@@ -35,6 +35,7 @@
     "build": "tsc",
     "watch": "tsc --watch",
     "prepack": "npm run clean && npm run build",
-    "server": "ts-node --esm --transpile-only src/server-maschine3.ts"
+    "server": "ts-node --esm --transpile-only src/server-maschine3.ts",
+    "nop-server": "ts-node --esm --transpile-only src/server-nop.ts"
   }
 }
