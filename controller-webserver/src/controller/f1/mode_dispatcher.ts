@@ -22,7 +22,7 @@ export class ModeDispatcher {
    * @param {ControllerMode[]} rootModes
    *   Ordered array of root modes to live at the bottom of the mode stack.
    */
-  init({ rootModes }) {
+  init({ rootModes, log }) {
     this.rootModes = rootModes.concat();
     this.modeStack = rootModes.concat();
 
@@ -96,7 +96,7 @@ export class ModeDispatcher {
         fallback = nop;
       }
       this[methodName] = this._bindMagicModeStackMethodCallingHelper(
-        methodName, fallback);
+        methodName, fallback, log);
     }
   }
   onUnhandledButton(capitalName: any, evt: any) {
@@ -173,7 +173,7 @@ export class ModeDispatcher {
    * stack changes.  The caching isn't particularly essential, but we already
    * needed the traversal helper, so why not add caching.
    */
-  _bindMagicModeStackMethodCallingHelper(methodName, defaultMethod) {
+  _bindMagicModeStackMethodCallingHelper(methodName, defaultMethod, log) {
     let cachedBound = null;
     let cachedGeneration = -1;
     return (...args) => {
@@ -191,7 +191,11 @@ export class ModeDispatcher {
         }
       }
 
-      return cachedBound(...args);
+      try {
+        return cachedBound(...args);
+      } catch (ex) {
+        log(`Ex: ${ex}`, { stack: ex.stack.split("\n") });
+      }
     };
   }
 

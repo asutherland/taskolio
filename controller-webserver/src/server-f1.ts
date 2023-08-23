@@ -393,7 +393,7 @@ setupBlessed();
 
 async function makeDefaultConfigController() {
   gNodeLog("start of controller creation");
-  const configstore = new Configstore("taskolio-maschine3");
+  const configstore = new Configstore("taskolio-f1");
   gNodeLog("got config");
   const colorHelper = new RGBColorHelper();
   gNodeLog("got colorHelper");
@@ -482,6 +482,8 @@ async function makeDefaultConfigController() {
       actionBookmarkMode,
       bookmarkMode
     ],
+
+    log: makeLogFunc('dispatcher', 'red'),
   });
   gNodeLog("about to create F1 ControllerDriver");
   const controllerDriver = new ControllerDriver();

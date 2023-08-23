@@ -15,7 +15,7 @@ export class ColorPickerMode extends BankMixin {
   constructor({ caller, colorHelper }) {
     super({
       computeCellValue(iBank, iCell, iRow, iCol) {
-        colorHelper.computeColorBankColor(iBank, 4, iCell, 16);
+        return colorHelper.computeColorBankColor(iBank, 4, iCell, 16);
       }
     });
 

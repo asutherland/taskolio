@@ -18,6 +18,15 @@ export class RGBColorHelper {
     };
   }
 
+  // XXX From the comments in the indexed helper it seems like this was already
+  // a hack; this should be revisited.
+  computeTabColor(wrapped) {
+    if (!wrapped) {
+      return null;
+    }
+    return 5;
+  }
+
   /**
    * Generate a color-bank color over 2 axes: banks, and cells for that bank.
    */
@@ -44,6 +53,10 @@ export class RGBColorHelper {
    * an [r,g,b] tuple is returned.  The indexed variant returns a single index.
    */
   computeBookmarkDisplayColor(wrapped, state, brightnessScale) {
+    if (!wrapped) {
+      return EMPTY_RGB;
+    }
+
     let brightness;
     switch (state) {
       case 'focused':
@@ -70,6 +83,10 @@ export class RGBColorHelper {
   }
 
   computeDisplayColor(wrappedColor) {
+    if (!wrappedColor) {
+      return EMPTY_RGB;
+    }
+
     return wrappedColor.rgb;
   }
 }

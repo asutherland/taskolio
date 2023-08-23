@@ -534,6 +534,8 @@ async function makeDefaultConfigController() {
       taskSlotMode,
       bookmarkMode
     ],
+
+    log: makeLogFunc('dispatcher', 'red'),
   });
   gNodeLog("about to create Mk3 ControllerDriver");
   const controllerDriver = new ControllerDriver();
