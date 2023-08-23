@@ -180,6 +180,20 @@ export class BookmarkMode extends BankMixin {
     }
   }
 
+  // f1 forwards
+  onSizeButton(evt) {
+    return this.onChordsButton(evt);
+  }
+  onBrowseButton(evt) {
+    return this.onStepButton(evt);
+  }
+  onReverseButton(evt) {
+    return this.onPadModeButton(evt);
+  }
+  onTypeButton(evt) {
+    return this.onKeyboardButton(evt);
+  }
+
   /**
    * Mint a window-level bookmark.  This would be favored over the capture
    * button that mints a most-specific bookmark because when you're switching
@@ -282,6 +296,7 @@ export class BookmarkMode extends BankMixin {
   }
 
   // Turn on the LEDs that we do stuff for.
+  // Mk3
   computePadModeLED() {
     return 1;
   }
@@ -294,6 +309,21 @@ export class BookmarkMode extends BankMixin {
   computeStepLED() {
     return 1;
   }
+
+  // The F1 buttons are boolean, leave them off unless we're in the state.
+  computeReverseLED(stt: any) {
+    return 0;
+  }
+  computeTypeLED(stt: any) {
+    return 0;
+  }
+  computeSizeLED(stt: any) {
+    return 0;
+  }
+  computeBrowseLED(stt: any) {
+    return 0;
+  }
+
 
   computeGridColors() {
     return this._internalComputeGridColors(1);

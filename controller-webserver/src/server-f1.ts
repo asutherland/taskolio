@@ -14,21 +14,15 @@ import { VisibilityTracker } from "./visibility_tracker.js";
 import { BookmarkManager } from "./bookmark_manager.js";
 import { TaskManager } from "./task_manager.js";
 
-import { ControllerDriver } from "./controller/maschine3/controller_driver.js";
-import { ModeDispatcher } from "./controller/maschine3/mode_dispatcher.js";
+import { ControllerDriver } from "./controller/f1/controller_driver.js";
+import { ModeDispatcher } from "./controller/f1/mode_dispatcher.js";
 import { BookmarkMode } from "./controller/maschine3/modes/bookmark_mode.js";
-import { TabsOnDisplayButtonsMode } from "./controller/maschine3/modes/tabs_on_display_buttons_mode.js";
-
-import { TaskDisplayMode } from "./controller/maschine3/modes/task_display_mode.js";
-import { TaskPickerMode } from "./controller/maschine3/modes/task_picker_mode.js";
-import { TaskSlotMode } from "./controller/maschine3/modes/task_slot_mode.js";
-import { TaskSlotDisplayMode } from "./controller/maschine3/modes/task_slot_display_mode.js";
 
 import { ActionBookmarkMode } from "./controller/maschine3/modes/action_bookmark_mode.js";
 
 import { DeckControllerDriver } from "./controller/streamdeck/controller_driver.js";
 
-import { IndexedColorHelper } from "./indexed_color_helper.js";
+import { RGBColorHelper } from "./rgb_color_helper.js";
 
 let gBookmarkManager: BookmarkManager;
 let gBrainBoss: BrainBoss;
@@ -399,7 +393,7 @@ async function makeDefaultConfigController() {
   gNodeLog("start of controller creation");
   const configstore = new Configstore("taskolio-maschine3");
   gNodeLog("got config");
-  const colorHelper = new IndexedColorHelper();
+  const colorHelper = new RGBColorHelper();
   gNodeLog("got colorHelper");
 
   if (configstore.get('version') !== CONFIG_VERSION) {
@@ -468,51 +462,6 @@ async function makeDefaultConfigController() {
     },
     log: makeLogFunc('bookmarkMode', 'gray')
   });
-  gNodeLog("About to init tabs display");
-  const tabsOnTopMode = new TabsOnDisplayButtonsMode({
-    dispatcher,
-    visibilityTracker,
-    bookmarkMode,
-    updateHTML,
-    log: makeLogFunc('tabsOnTop', 'cyan')
-  });
-
-  gNodeLog("About to init task modes");
-  const taskPickerMode = new TaskPickerMode({
-    dispatcher,
-    colorHelper,
-    taskManager,
-    updateHTML,
-  });
-  gNodeLog("task slot mode 1");
-  const taskDisplayMode = new TaskDisplayMode({
-    dispatcher,
-    taskManager,
-  });
-  gNodeLog("task slot mode 2");
-  const taskSlotDisplayMode = new TaskSlotDisplayMode({
-    dispatcher,
-    colorHelper,
-    taskManager,
-    updateHTML,
-  });
-  const taskSlotMode = new TaskSlotMode({
-    dispatcher,
-    taskManager,
-    colorHelper,
-    persistedState: configstore.get('taskBookmarks'),
-    saveTaskBookmarks: (taskBookmarks) => {
-      configstore.set('taskBookmarks', taskBookmarks);
-    },
-    alterDeckBrightness: (dictArg) => {
-      if (gSecondaryController) {
-        gSecondaryController.alterDeckBrightness(dictArg);
-      }
-    },
-    taskPickerMode,
-    taskSlotDisplayMode,
-    updateHTML,
-  });
 
   gNodeLog("about to init action bookmarks");
   const actionBookmarkMode = new ActionBookmarkMode({
@@ -528,20 +477,14 @@ async function makeDefaultConfigController() {
   dispatcher.init({
     rootModes: [
       actionBookmarkMode,
-      tabsOnTopMode,
-      taskDisplayMode,
-      taskSlotMode,
       bookmarkMode
     ],
   });
-  gNodeLog("about to create Mk3 ControllerDriver");
+  gNodeLog("about to create F1 ControllerDriver");
   const controllerDriver = new ControllerDriver();
   await controllerDriver.init({
     dispatcher,
     log: makeLogFunc('controllerDriver', 'red'),
-    asyncRenderHTML: (args) => {
-      return brainBoss.asyncRenderHTML(args);
-    },
     colorHelper,
   });
 

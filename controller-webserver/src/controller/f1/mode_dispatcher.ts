@@ -100,10 +100,10 @@ export class ModeDispatcher {
     }
   }
   onUnhandledButton(capitalName: any, evt: any) {
-    throw new Error("Method not implemented.");
+    throw new Error(`Button Method not implemented: ${capitalName}`);
   }
   computeUnhandledLED(capitalName: any) {
-    throw new Error("Method not implemented.");
+    throw new Error(`LED Method not implemented: ${capitalName}`);
   }
 
   get topMode() {
@@ -247,25 +247,25 @@ export class ModeDispatcher {
     return stt.shift;
   }
 
-  computeBrowseLED(stt: any) {
-    throw new Error("Method not implemented.");
+  base_computeBrowseLED(stt: any) {
+    return 0;
   }
-  computeSyncLED(stt: any) {
-    throw new Error("Method not implemented.");
+  base_computeSyncLED(stt: any) {
+    return 0;
   }
-  computeQuantLED(stt: any) {
-    throw new Error("Method not implemented.");
+  base_computeQuantLED(stt: any) {
+    return 0;
   }
-  computeCaptureLED(stt: any) {
-    throw new Error("Method not implemented.");
+  base_computeCaptureLED(stt: any) {
+    return 0;
   }
-  computeReverseLED(stt: any) {
-    throw new Error("Method not implemented.");
+  base_computeReverseLED(stt: any) {
+    return 0;
   }
-  computeTypeLED(stt: any) {
-    throw new Error("Method not implemented.");
+  base_computeTypeLED(stt: any) {
+    return 0;
   }
-  computeSizeLED(stt: any) {
-    throw new Error("Method not implemented.");
+  base_computeSizeLED(stt: any) {
+    return 0;
   }
 }

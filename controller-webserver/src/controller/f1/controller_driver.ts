@@ -51,14 +51,12 @@ export class ControllerDriver {
     this.controller = new TraktorF1(createNodeHidAdapter, createNodeUsbAdapter);
   }
 
-  async init({ dispatcher, log, asyncRenderHTML, colorHelper }): Promise<void> {
+  async init({ dispatcher, log, colorHelper }): Promise<void> {
     const controller = this.controller;
     await controller.init();
     this.dispatcher = dispatcher;
     this.log = log;
-    this.asyncRenderHTML = asyncRenderHTML;
     this.colorHelper = colorHelper;
-    this.colorHelper.updateLedMapping(controller.config.indexed_led_mapping);
 
     this.buttonStates = {};
     this.sliderStates = [];
@@ -82,14 +80,15 @@ export class ControllerDriver {
     // -- Grid
     const gridColors = this.dispatcher.computeGridColors(stt) || BLANK_GRID;
     for (let iGrid = 0; iGrid < 16; iGrid++) {
-      const index = gridColors[iGrid];
-      ctrl.setIndexedColor(`p${ iGrid + 1}`, index);
+      const rgb = gridColors[iGrid];
+      ctrl.setRGB(`p${ iGrid + 1}`, rgb[0], rgb[1], rgb[2]);
     }
 
-    // -- Display Buttons
-    const displayLEDs = this.dispatcher.computeDisplayLEDs(stt) || BLANK_BANKS;
-    for (let iDisplay = 0; iDisplay < 8; iDisplay++) {
-      ctrl.setLED(`d${iDisplay + 1}`, displayLEDs[iDisplay]);
+    // -- Banks
+    const bankLEDs = this.dispatcher.computeBankLEDs(stt) || BLANK_BANKS;
+    for (let iBank = 0; iBank < 4; iBank++) {
+      ctrl.setLED(`l${iBank + 1}_l`, bankLEDs[iBank * 2]);
+      ctrl.setLED(`l${iBank + 1}_r`, bankLEDs[iBank * 2 + 1]);
     }
 
     // -- Labeled LEDs (monocolor, usually white)
@@ -98,102 +97,8 @@ export class ControllerDriver {
       ctrl.setLED(key, value);
     }
 
-    // -- Indexed Labeled LEDs
-    const indexedLEDs = this.dispatcher.computeIndexedLabeledLEDs(stt);
-    for (let [key, value] of Object.entries(indexedLEDs)) {
-      ctrl.setIndexedColor(key, value);
-    }
-
-    // -- HTML
-    this.updateHTML(stt);
-  }
-
-  /**
-   * Recomputes HTML displays for the modes and issues rendering requests if
-   * needed.  This uses a very dumb/simple Promise-based debouncing to minimize
-   * same-event-loop-dispatch churn.  There's slightly more complicated flow
-   * control going on beyond that state, but we're assuming the calls to
-   * computeHTML aren't free, hence the Promise debouncing.  A setTimeout(0)
-   * approach might also be appropriate, although I need to understand how
-   * node.js handles differentiating tasks/micro-tasks as to whether that
-   * actually changes things.
-   */
-  async updateHTML(stt=null) {
-    if (this._htmlUpdatePending) {
-      return;
-    }
-    this._htmlUpdatePending = true;
-    // yield control flow / go async
-    await Promise.resolve();
-    this._htmlUpdatePending = false;
-
-    const ctrl = this.controller;
-    if (!stt) {
-      stt = this._latchState();
-    }
-
-    if (ctrl.displays) {
-      for (let iDisplay = 0; iDisplay < ctrl.displays.numDisplays; iDisplay++) {
-        const recentHtml = this.htmlDesired[iDisplay] ||
-                           this.htmlPending[iDisplay] ||
-                           this.htmlDisplayed[iDisplay];
-
-        const desiredHtml = await renderToString(
-          this.dispatcher.computeHTML(stt, iDisplay, ctrl.displays));
-        if (desiredHtml !== recentHtml) {
-          // it's async, but run for side-effect, no need to wait
-          //console.log('...want to update display', iDisplay, 'to', desiredHtml);
-          this.setDisplayHTML(iDisplay, desiredHtml);
-        }
-      }
-    }
-  }
-
-  async setDisplayHTML(iDisplay, html) {
-    // If we already have a pending render, then just stash the HTML in desired
-    // and the active instance of ourselves will re-trigger once it's done.
-    if (this.htmlPending[iDisplay]) {
-      //console.log('  already pending HTML, saving to desired');
-      this.htmlDesired[iDisplay] = html;
-      return;
-    }
-
-    // Check that this isn't already what we've displayed.  This has some
-    // overlap with the logic in updateHTML, but we may potentially end up
-    // having this method called directly as we experiment here...
-    if (this.htmlDisplayed[iDisplay] === html) {
-      //console.log('  already displaying desired HTML, bailing');
-      return;
-    }
-
-    /*
-    console.log('updating display', iDisplay,
-     'to', html
-    );
-    */
-    // Otherwise do note that this is now the pending HTML...
-    this.htmlPending[iDisplay] = html;
-
-    const { imageArray } = await this.asyncRenderHTML({
-      width: this.controller.displays.width,
-      height: this.controller.displays.height,
-      mode: 'rgb',
-      htmlStr: html
-    });
-
-    //console.log('got rendering data, blitting');
-    // we wait for this to fully be sent as a form of flow-control
-    await this.controller.displays.paintDisplay(iDisplay, imageArray);
-
-    this.htmlDisplayed[iDisplay] = html;
-    this.htmlPending[iDisplay] = null;
-
-    if (this.htmlDesired[iDisplay]) {
-      html = this.htmlDesired[iDisplay];
-      this.htmlDesired[iDisplay] = null;
-      return this.setDisplayHTML(iDisplay, html);
-    }
-    // otherwise, we're done.
+    // -- LCD display
+    ctrl.setLCDString(this.dispatcher.topModeShortLabel);
   }
 
   /**
@@ -207,7 +112,6 @@ export class ControllerDriver {
     const stt: any = Object.assign({}, this.buttonStates);
     stt.sliders = this.sliderStates.concat();
     stt.knobs = this.knobStates.concat();
-    this.touchStrips = this.touchStripStates.concat();
     return stt;
   }
 
@@ -270,19 +174,9 @@ export class ControllerDriver {
       if (/^p\d+$/.test(name)) {
         methodName = "onGridButton";
         index = parseInt(name.slice(1), 10) - 1;
-      } else if (/^g\d+$/.test(name)) {
-        methodName = "onGroupButton";
+      } else if (/^l\d+$/.test(name)) {
+        methodName = "onBankButton";
         index = parseInt(name.slice(1), 10) - 1;
-      } else if (/^d\d+$/.test(name)) {
-        methodName = "onDisplayButton";
-        index = parseInt(name.slice(1), 10) - 1;
-      } else if ((match = /^knobTouch(\d+)$/.exec(name))) {
-        methodName = "onKnobTouch";
-        index = parseInt(match[1], 10) - 1;
-      } else if (initialCap == "NavTouch") {
-        pressMethodName = "onNavTouchPressed";
-        methodName = "onNavTouchReleased";
-        index = null;
       } else {
         methodName = `on${initialCap}Button`;
         index = null;
