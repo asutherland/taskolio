@@ -295,6 +295,7 @@ ${JSON.stringify(info.details, null, 2)}`;
 
   // Start out with the clients list focused.
   guiClients.focus();
+  blessedDirtied();
 }
 
 function makeLogFunc(label, color) {
@@ -328,6 +329,7 @@ function blessedDirtied(contentStillValid=false) {
     return;
   }
 
+  blessedContentStillValid = false;
   pendingBlessedRender = true;
   setTimeout(renderBlessed, 0);
 }
@@ -460,6 +462,7 @@ async function makeDefaultConfigController() {
     saveBookmarks(state) {
       configstore.set('bookmarks', state);
     },
+    colorHelper,
     log: makeLogFunc('bookmarkMode', 'gray')
   });
 

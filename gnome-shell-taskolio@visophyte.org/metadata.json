@@ -3,6 +3,6 @@
     "description": "Fancy bookmarking via DJ/MIDI controllers..",
     "uuid": "gnome-shell-taskolio@visophyte.org",
     "shell-version": [
-        "42.1"
+        "42.9"
     ]
 }

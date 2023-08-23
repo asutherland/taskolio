@@ -466,6 +466,7 @@ async function makeDefaultConfigController() {
     saveBookmarks(state) {
       configstore.set('bookmarks', state);
     },
+    colorHelper,
     log: makeLogFunc('bookmarkMode', 'gray')
   });
   gNodeLog("About to init tabs display");

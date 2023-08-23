@@ -59,7 +59,7 @@ export class BookmarkMode extends BankMixin {
   _taskState: any;
   __updateTaskStateKey: any;
   
-  constructor({ dispatcher, bookmarkManager, persistedState, saveBookmarks, log }) {
+  constructor({ dispatcher, bookmarkManager, persistedState, saveBookmarks, colorHelper, log }) {
     super({
       defaultCellValue: null,
       initialState: persistedState
@@ -88,7 +88,8 @@ export class BookmarkMode extends BankMixin {
       owner: this,
     });
     this.pickColorMode = new ColorPickerMode({
-      caller: this
+      caller: this,
+      colorHelper,
     });
 
     this.gridPushCount = 0;
@@ -232,6 +233,7 @@ export class BookmarkMode extends BankMixin {
     this.log(`bookmark position picked: ${index} in mode ${this.activity}`,
              this.pickingForBookmark);
     if (this.activity === 'delete') {
+      this.log(`deleting bookmark at index ${index}`);
       this._setBookmarkAtCell(index, null);
       this._saveBookmarks();
     } else if (this.pickingForBookmark) {
@@ -246,6 +248,8 @@ export class BookmarkMode extends BankMixin {
       this.pickingForBookmark = null;
       this._saveBookmarks();
       this.log(`set bookmark to index ${index}`, newBookmark);
+    } else {
+      this.log(`bookmark position mode is weird: ${this.activity}`);
     }
     this.activity = 'switch';
   }
