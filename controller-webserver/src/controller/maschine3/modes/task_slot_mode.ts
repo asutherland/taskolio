@@ -88,7 +88,8 @@ export class TaskSlotMode {
 
     this.pickingColor = false;
     this.pickColorMode = new ColorPickerMode({
-      caller: this
+      caller: this,
+      colorHelper,
     });
 
     this.pickingTask = false;
