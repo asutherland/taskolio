@@ -33,16 +33,16 @@ var TaskolioClient = new Lang.Class({
     let httpSession = this._httpSession;
     if (!httpSession) {
       httpSession = this._httpSession =
-        new Soup.Session({ ssl_use_system_ca_file: true });
+        new Soup.Session();
       httpSession.httpsAliases = ["wss"];
     }
 
-    const message = new Soup.Message({
-      method: "GET",
-      uri: new Soup.URI(this._settings.endpoint),
-    });
+    const message = Soup.Message.new(
+      "GET",
+      this._settings.endpoint
+    );
     httpSession.websocket_connect_async(
-      message, null, null, null, this.onConnected.bind(this));
+      message, null, null, /* normal */ 2, null, this.onConnected.bind(this));
   },
 
   sendMessage(type, payload) {
