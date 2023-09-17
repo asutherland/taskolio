@@ -283,6 +283,8 @@ function setupBlessed() {
     //data.y - guiLog.iy
     const info = guiLogEntries[iLine];
     if (!info) {
+      logDetail = `No info for line ${iLine} (realLine: ${iRealLine}`
+      guiDumpTabList.select(0);
       return;
     }
     //hackLog(`mapped fake line ${iFakeLine} to ${iLine}`);
@@ -301,6 +303,7 @@ ${JSON.stringify(info.details, null, 2)}`;
 
   // Start out with the clients list focused.
   guiClients.focus();
+  blessedDirtied();
 }
 
 function makeLogFunc(label, color) {
@@ -334,6 +337,7 @@ function blessedDirtied(contentStillValid=false) {
     return;
   }
 
+  blessedContentStillValid = false;
   pendingBlessedRender = true;
   setTimeout(renderBlessed, 0);
 }
@@ -581,6 +585,8 @@ async function makeDefaultConfigController() {
 
 let gServer: WebSocket.Server;
 
+let gEnableProtocolDebugging = false;
+
 const run = async (port: number) => {
   gServer = new WebSocket.Server({
     port,
@@ -617,12 +623,18 @@ const run = async (port: number) => {
   });
 
   gServer.on("connection", (ws) => {
+    let log = null;
+    if (gEnableProtocolDebugging) {
+      log = makeLogFunc('conn', 'cyan');
+    }
+
     const brainConn = new BrainConnection(ws, {
       brainBoss: gBrainBoss,
       visibilityTracker: gVisibilityTracker,
       triggerUpdate: () => {
         gControllerDriver.updateLEDs();
-      }
+      },
+      log,
     });
     // Am I allowed to stick random expandos on the ws?  Hope so!
     ws.brainConn = brainConn;

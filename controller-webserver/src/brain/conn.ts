@@ -35,11 +35,13 @@ export class BrainConnection {
   goodToGo: boolean;
   clientUniqueId: any;
 
-  constructor(ws, { brainBoss, visibilityTracker, triggerUpdate }) {
+  constructor(ws, { brainBoss, visibilityTracker, triggerUpdate, log}) {
     this.ws = ws;
     this.brainBoss = brainBoss;
     this.visibilityTracker = visibilityTracker;
     this.triggerUpdate = triggerUpdate;
+    // This may be null.
+    this.log = log;
     this.capabilities = [];
     this.nextMsgId = 1;
     /**
@@ -110,6 +112,9 @@ export class BrainConnection {
   }
 
   onMessage(data) {
+    if (this.log) {
+      this.log("received message", data);
+    }
     if (this.bufferingMessages) {
       this.bufferingMessages.push(data);
       // Drop the connection if we've buffered too many messages.
