@@ -120,13 +120,16 @@ emacs keybindings may have clobbered that).
 #### Get the server thing working.
 
 This should be fairly simple:
-- Have node.js installed.  I use v8.9.x.
+- Have node.js installed.  I currently use whatever the version in
+  `controller-webserver/.nvmrc` is.  Use whatever mechanism you like to pick
+  node versions; that file implies https://github.com/nvm-sh/nvm but I've also
+  recently tried https://github.com/jdx/rtx for use with searchfox.
 - `cd controller-webserver`
 - `npm install`
   - If this didn't work, you probably need to install libhid and/or its
     development libraries.  Check out https://github.com/node-hid/node-hid
     and the helpful docs there if something went wrong.
-- `node server.js`
+- `npm run server` for the Maschine Mk3.
 - Curse if you were already using the port the websocket server listens on,
   because it's not configurable and you'll have to refresh gnome-shell again
   if you change its source.
