@@ -1,11 +1,9 @@
-'use strict';
-const St = imports.gi.St;
-const Main = imports.ui.main;
+import St from 'gi://St';
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 // This is weird.  Maybe this is just a cargo-culted idiom?
-const Self = imports.misc.extensionUtils.getCurrentExtension();
-const TaskolioClient = Self.imports.taskolio_soup_client.TaskolioClient;
-const WindowTracker = Self.imports.window_tracker.WindowTracker;
+import { TaskolioClient } from './taskolio_soup_client.js';
+import { WindowTracker } from './window_tracker.js';
 
 // Our auto-reconnecting TaskolioClient.  Initialized in enable() and destroyed
 // in disable().
@@ -137,7 +135,7 @@ function makeConnection() {
       });
 
       if (gWindowTracker) {
-        global.log("taskolio window tracker almost duplicated!");
+        console.log("taskolio window tracker almost duplicated!");
         gWindowTracker.shutdown();
       }
       gWindowTracker = new WindowTracker({
@@ -236,16 +234,17 @@ function makeConnection() {
   });
 }
 
-function init() {
-}
+import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-function enable() {
-  gClient = makeConnection();
-}
+export default class TaskolioExtension extends Extension {
+  enable() {
+    gClient = makeConnection();
+  }
 
-function disable() {
-  if (gClient) {
-    gClient.shutdown();
-    gClient = null;
+  disable() {
+    if (gClient) {
+      gClient.shutdown();
+      gClient = null;
+    }
   }
 }

@@ -1,10 +1,9 @@
 'use strict';
 
-const Lang = imports.lang;
-const St = imports.gi.St;
-const Shell = imports.gi.Shell;
-const Main = imports.ui.main;
-const Meta = imports.gi.Meta;
+import St from 'gi://St';
+import Shell from 'gi://Shell';
+import Meta from 'gi://Meta';
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 const RE_NATIVE_PTR = /^.+ native@([^\]]+)]$/;
 
@@ -92,9 +91,8 @@ function extractWindowDetails(win, id) {
 /**
  * See extension.js' "Window Tracking" block comment.
  */
-var WindowTracker = new Lang.Class({
-  Name: 'WindowTracker',
-  _init({ onWindowAdded, onWindowTitleChanged, onWindowFocused,
+export class WindowTracker {
+  constructor({ onWindowAdded, onWindowTitleChanged, onWindowFocused,
           onWindowRemoved }) {
     this._windowCreatedId = global.display.connect(
       'window-created', this.onWindowCreated.bind(this));
@@ -110,7 +108,7 @@ var WindowTracker = new Lang.Class({
     this._cb_onWindowTitleChanged = onWindowTitleChanged;
     this._cb_onWindowFocused = onWindowFocused;
     this._cb_onWindowRemoved = onWindowRemoved;
-  },
+  }
 
   shutdown() {
     for (let { win, titleId, unmanageId } of this.winInfoById.values()) {
@@ -126,7 +124,7 @@ var WindowTracker = new Lang.Class({
 
     global.display.disconnect(this._focusWindowId);
     this._focusWindowId = 0;
-  },
+  }
 
   pretendExistingWindowsWereJustAdded() {
     const actors = global.get_window_actors();
@@ -137,21 +135,21 @@ var WindowTracker = new Lang.Class({
       // safer to stay a level up from X given the ascendance of Wayland, etc.
       this.onWindowCreated(global.display, actor.get_meta_window());
     }
-  },
+  }
 
   onWindowCreated(display, win) {
     const winId = extractWindowId(win);
 
     const titleId = win.connect('notify::title', this._bound_onTitleChanged);
     const unmanageId = win.connect('unmanaged', this._bound_onWindowDestroyed);
-    //global.log('unmanaged hookup: ' + unmanageId);
+    //console.log('unmanaged hookup: ' + unmanageId);
 
     let data, details;
     try {
       details = extractWindowDetails(win, winId);
       data = this._cb_onWindowAdded(details);
     } catch (ex) {
-      global.log('problem invoking onWindowAdded callback:' + ex);
+      console.log('problem invoking onWindowAdded callback:' + ex);
     }
 
     const winfo = {
@@ -167,7 +165,7 @@ var WindowTracker = new Lang.Class({
       data
     };
     this.winInfoById.set(winId, winfo);
-  },
+  }
 
   /**
    * The window's title changed, which we know from explicitly listening on the
@@ -189,9 +187,9 @@ var WindowTracker = new Lang.Class({
       winfo.details = extractWindowDetails(win, winId);
       this._cb_onWindowTitleChanged(winfo.details, winfo.data);
     } catch (ex) {
-      global.log('problem invoking onWindowTitleChanged callback:' + ex);
+      console.log('problem invoking onWindowTitleChanged callback:' + ex);
     }
-  },
+  }
 
   onFocusedWindowChanged() {
     const win = global.display.focus_window;
@@ -214,15 +212,15 @@ var WindowTracker = new Lang.Class({
     try {
       this._cb_onWindowFocused(details, winfo.data);
     } catch (ex) {
-      global.log('problem invoking onWindowFocused callback:' + ex);
+      console.log('problem invoking onWindowFocused callback:' + ex);
     }
-  },
+  }
 
   onWindowDestroyed(win) {
     const winId = extractWindowId(win);
     const winfo = this.winInfoById.get(winId);
 
-    //global.log('disconnecting unmanageId: ' + winfo.unmanageId);
+    //console.log('disconnecting unmanageId: ' + winfo.unmanageId);
     win.disconnect(winfo.titleId);
     winfo.titleId = 0;
     win.disconnect(winfo.unmanageId);
@@ -233,9 +231,9 @@ var WindowTracker = new Lang.Class({
     try {
       this._cb_onWindowRemoved(winfo.details, winfo.data);
     } catch (ex) {
-      global.log('problem invoking onWindowRemoved callback:' + ex);
+      console.log('problem invoking onWindowRemoved callback:' + ex);
     }
-  },
+  }
 
   /**
    * Make the window active and presumably focused.
@@ -247,7 +245,7 @@ var WindowTracker = new Lang.Class({
     }
 
     winfo.win.activate(global.get_current_time());
-  },
+  }
 
   getWindow(winId) {
     const winfo = this.winInfoById.get(winId);
@@ -257,4 +255,4 @@ var WindowTracker = new Lang.Class({
 
     return winfo.win;
   }
-});
+}

@@ -1,16 +1,12 @@
-const Lang = imports.lang;
-const Soup = imports.gi.Soup;
-const Mainloop = imports.mainloop;
-const GLib = imports.gi.GLib;
+import Soup from 'gi://Soup?version=3.0';
+import GLib from 'gi://GLib';
 
 
 /**
  * An allegedly auto-reconnecting websocket connection to the server.
  */
-var TaskolioClient = new Lang.Class({
-  Name: "TaskolioClient",
-
-  _init: function(settings) {
+export class TaskolioClient {
+  constructor(settings) {
     this._settings = settings;
 
     this.state = 'disconnected';
@@ -19,10 +15,10 @@ var TaskolioClient = new Lang.Class({
     this._timeoutId = 0;
 
     this.connect();
-  },
+  }
 
   connect() {
-    global.log("taskolio connecting");
+    console.log("taskolio connecting");
     this.state = 'connecting';
 
     // We should already have cleared any prior session and connection, but just
@@ -43,7 +39,7 @@ var TaskolioClient = new Lang.Class({
     );
     httpSession.websocket_connect_async(
       message, null, null, /* normal */ 2, null, this.onConnected.bind(this));
-  },
+  }
 
   sendMessage(type, payload) {
     if (!this._websocketConnection) {
@@ -53,31 +49,31 @@ var TaskolioClient = new Lang.Class({
     const obj = { type, payload };
 
     this._websocketConnection.send_text(JSON.stringify(obj));
-  },
+  }
 
   onConnected(session, res) {
     // XXX this may throw on error?  Not sure how the bindings map.
     try {
       this._websocketConnection = session.websocket_connect_finish(res);
     } catch (ex) {
-      global.log("taskolio connection error, will try and reconnect");
+      console.log("taskolio connection error, will try and reconnect");
       this.onClosed();
       return;
     }
 
-    global.log("taskolio connected");
+    console.log("taskolio connected");
     this.state = 'connected';
 
     try {
       this._settings.onConnect();
     } catch (ex) {
-      global.log("taskolio connect handler threw: " + ex);
+      console.log("taskolio connect handler threw: " + ex);
     }
 
     this._websocketConnection.connect('message', this.onMessage.bind(this));
     this._websocketConnection.connect('closed', this.onClosed.bind(this));
     this._websocketConnection.connect('error', this.onError.bind(this));
-  },
+  }
 
   onMessage(connection, type, message) {
     const data = JSON.parse(message.get_data());
@@ -85,7 +81,7 @@ var TaskolioClient = new Lang.Class({
     const handlerName = `onMessage_${data.type}`;
 
     this._settings[handlerName](data.payload);
-  },
+  }
 
   /**
    * On close, notify about our disconnect and schedule an auto-reconnect.  This
@@ -96,11 +92,11 @@ var TaskolioClient = new Lang.Class({
     // immmediately, but leave a log message for debugging assistance.
     if (this.state === 'disconnected' ||
         this.state === 'waiting') {
-      global.log("taskolio redundant close notification, ignored.");
+      console.log("taskolio redundant close notification, ignored.");
       return;
     }
 
-    global.log("taskolio disconnected, shutdown requested: " +
+    console.log("taskolio disconnected, shutdown requested: " +
                this.shutdownRequested + ", timeoutId: " + this._timeoutId);
 
     this._cleanup();
@@ -113,8 +109,9 @@ var TaskolioClient = new Lang.Class({
 
     if (!this.shutdownRequested && !this._timeoutId) {
       this.state = 'waiting';
-      this._timeoutId = Mainloop.timeout_add(5000, () => {
-        global.log("taskolio reconnect wakeup, state: " + this.state);
+      this._timeoutId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT,
+        5, () => {
+        console.log("taskolio reconnect wakeup, state: " + this.state);
         this._timeoutId = 0;
         if (this.state === 'waiting') {
           this.connect();
@@ -125,7 +122,7 @@ var TaskolioClient = new Lang.Class({
       GLib.Source.set_name_by_id(this._timeoutId,
                                  '[gnome-shell] ext: taskolio connect timer');
     }
-  },
+  }
 
   _cleanup() {
     // So, we were absolutely leaking file descriptors before if the daemon
@@ -148,11 +145,11 @@ var TaskolioClient = new Lang.Class({
       }
       // Leave the session around to be reused.
     }
-  },
+  }
 
   onError(connection, err) {
-    global.log("taskolio connection error: " + err);
-  },
+    console.log("taskolio connection error: " + err);
+  }
 
   shutdown() {
     this.shutdownRequested = true;
@@ -161,9 +158,9 @@ var TaskolioClient = new Lang.Class({
     // logic is idempotent;
     this._settings.onDisconnect();
     this.close();
-  },
+  }
 
   close() {
     this._cleanup();
   }
-});
+}
