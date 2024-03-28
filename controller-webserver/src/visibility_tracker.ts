@@ -1,5 +1,19 @@
 import { FilteredSubscription } from './filtered_subscription.js';
 
+interface LeftTopRect {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+}
+
+interface XYRect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 /**
  * Hacky helper to find the key that maps to a given value in a Map.  For use
  * in the VisibilityTracker where data structures are undergoing evolutionary
@@ -31,7 +45,7 @@ function quantizePixels(x) {
   return x - x%2;
 }
 
-function quantizeBounds(bounds) {
+function quantizeBounds(bounds : LeftTopRect) : LeftTopRect {
   return {
     left: quantizePixels(bounds.left),
     top: quantizePixels(bounds.top),
@@ -40,7 +54,7 @@ function quantizeBounds(bounds) {
   };
 }
 
-function quantizeFrameRect(bounds) {
+function quantizeFrameRect(bounds : XYRect) : XYRect {
   return {
     x: quantizePixels(bounds.x),
     y: quantizePixels(bounds.y),
@@ -65,7 +79,7 @@ function quantizeFrameRect(bounds) {
  * For this to be smart, we would otherwise need to know all of the monitors.
  * Then we'd resolve to the correct monitor and apply the correct transform.
  */
-function fixupCSSBounds(bounds, devicePixelRatio, monWidth, monHeight) {
+function fixupCSSBounds(bounds: LeftTopRect, devicePixelRatio: number, monWidth: number, monHeight: number) {
   // No transforms needed if there's no scaling ratio.
   if (devicePixelRatio === 1) {
     return bounds;
@@ -93,7 +107,7 @@ function fixupCSSBounds(bounds, devicePixelRatio, monWidth, monHeight) {
  * thing at the tail would be more efficient for a naive Array implementation,
  * but we do not care.  This is more useful for console.log() purposes.
  */
-function mruBump(array, recentThing) {
+function mruBump(array: any[], recentThing: any) {
   const existingIdx = array.findIndex(x => (x === recentThing));
   if (existingIdx != -1) {
     array.splice(existingIdx, -1);
@@ -101,7 +115,7 @@ function mruBump(array, recentThing) {
   array.unshift(recentThing);
 }
 
-function removeFromMapUsingPrefix(map, prefix) {
+function removeFromMapUsingPrefix(map: Map<string, any>, prefix: string) {
   for (const key of map.keys()) {
     if (key.startsWith(prefix)) {
       map.delete(key);
@@ -109,7 +123,7 @@ function removeFromMapUsingPrefix(map, prefix) {
   }
 }
 
-function removeFromArrayUsingPrefix(array, prefix) {
+function removeFromArrayUsingPrefix(array: string[], prefix: string) {
   for (let i = array.length - 1; i >= 0; i--) {
     if (array[i].startsWith(prefix)) {
       array.splice(i, 1);
@@ -117,7 +131,7 @@ function removeFromArrayUsingPrefix(array, prefix) {
   }
 }
 
-function extractPrefixWithDelim(prefixed) {
+function extractPrefixWithDelim(prefixed: string) {
   const idxColon = prefixed.indexOf(':');
   return prefixed.substring(0, idxColon + 1);
 }
