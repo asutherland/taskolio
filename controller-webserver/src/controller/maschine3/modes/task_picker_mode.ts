@@ -40,6 +40,10 @@ export class TaskPickerMode extends GridPickerMixin {
     this.update(null);
   }
 
+  get curBank() : any {
+    return this.curPage;
+  }
+
   get curPage() {
     return this.pages[this.iPage];
   }
