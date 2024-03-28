@@ -37,6 +37,11 @@ export class TaskSlotDisplayMode extends GridPickerMixin {
     this.parentMode = null;
   }
 
+  get curBank() : any {
+    // There is only a single page / bank
+    return this.slotBookmarks;
+  }
+
   async update(parentMode, slotBookmarks) {
     this.parentMode = parentMode;
     this.slotBookmarks = slotBookmarks;
