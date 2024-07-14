@@ -396,10 +396,16 @@ focusedFocusSlotId: ${this.getFocusedFocusSlotId()}
         // that code and the debouncing logic, it's currently the case that all
         // of my linux displays where scaling is involved have a width of 3840.
         // I'm going to predicate this hard-coding on a pixel ratio > 1.
+        //
+        // Okay, so now the left monitor is at +0+0 with a portrait orientation,
+        // so it's 2160x3840+0+0.  And the right monitor is currently
+        // 3840x2160+2160+819.
+
 
         const fixedUpBounds =
           fixupCSSBounds(descriptor.cssBounds, descriptor.devicePixelRatio,
-                         3840, 2160);
+                         // 3840, 2160
+                         2134, 798);
         const bounds = quantizeBounds(fixedUpBounds);
         checkMulti(`upperLeft:${bounds.left},${bounds.top}`,
                    'title', descriptor.title);
