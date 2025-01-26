@@ -401,11 +401,10 @@ focusedFocusSlotId: ${this.getFocusedFocusSlotId()}
         // so it's 2160x3840+0+0.  And the right monitor is currently
         // 3840x2160+2160+819.
 
-
         const fixedUpBounds =
           fixupCSSBounds(descriptor.cssBounds, descriptor.devicePixelRatio,
                          // 3840, 2160
-                         2134, 798);
+                         2134, 796);
         const bounds = quantizeBounds(fixedUpBounds);
         checkMulti(`upperLeft:${bounds.left},${bounds.top}`,
                    'title', descriptor.title);
