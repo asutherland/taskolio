@@ -10,5 +10,13 @@
     "sourceMap": true,
     "outDir": "dist"
   },
+
+  "ts-node": {
+    "esm": true,
+    "transpileOnly": true,
+    "experimentalSpecifierResolution": "node",
+    "preferTsExts": true
+  },
+
   "include": ["src"]
 }

@@ -142,7 +142,7 @@ export class TaskManager {
       const cmdStr = 'task ' + argStr;
       exec(cmdStr, (err, stdout, stderr) => {
         if (err) {
-          this.log(`Error while running: ${cmdstr}`, { stderr });
+          this.log(`Error while running: ${cmdStr}`, { stderr });
           reject(err);
         }
 
@@ -150,7 +150,7 @@ export class TaskManager {
           const result = JSON.parse(stdout);
           resolve(result);
         } catch (ex) {
-          this.log(`Error parsing task output: ${cmdstr} ${ex}`);
+          this.log(`Error parsing task output: ${cmdStr} ${ex}`);
           reject(ex);
         }
       });
@@ -166,7 +166,7 @@ export class TaskManager {
       const cmdStr = 'task ' + argStr;
       exec(cmdStr, (err, stdout, stderr) => {
         if (err) {
-          console.error('Error while running:', cmdstr);
+          console.error('Error while running:', cmdStr);
           console.error(stderr);
           reject(err);
         }
